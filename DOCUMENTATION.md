@@ -45,16 +45,26 @@ graph TD
 
 ### `src/voxels.js` (Asset Factory)
 - Builds low-poly meshes out of combined `THREE.BoxGeometry` pieces.
-- Rigged limb pivots: Exposes rotating arm/leg subgroups (via `userData`) to animators.
-- Models: Player runner, Floppy disk, Spikes, CRT TV, and Music Cassette.
+- **Rigged pivots**: Exposes wheels arrays and spring submeshes (via `userData`) to animators.
+- **Models**:
+  - **Car**: Sleek sports vehicle with active spoilers and compact tires.
+  - **Monster Truck**: Elevated chassis with shock absorber struts and giant wheels.
+  - **Truck**: Semi-cab delivery vehicle with a large cargo trailer and 6 wheels.
+  - **Spring**: Interleaved stacked coil segments designed to scale on jumps.
+  - **Obstacles**: CRT TVs, cassette tapes, spikes.
+  - **Points**: Floppy disk.
 
 ### `src/game.js` (Core Game Controller)
 - **Lane Interpolation**: Player lateral lane swaps are calculated using linear interpolation (`THREE.MathUtils.lerp`) toward targeted coordinates.
 - **Jump Physics**: Simple vector calculus updates player coordinates:
   - Jump trigger sets upward velocity: $V_y = 10$ m/s.
   - Gravity exerts a constant downward force: $a_y = -25$ m/s$^2$.
+- **Dynamic Wheels Spin**: Rotates tires around the X-axis based on current speed.
+- **Spring-Jump Mechanics**: Scales spring length dynamically:
+  - During jump: stretches spring down to $y = 0$ by setting scale $S = (playerY + springY) / 0.6$.
+  - On landing: compresses scale back to $0$ inside the chassis.
 - **Infinite Grid Scrolling**: Two adjacent 100m road grid meshes scroll back relative to speed. When a grid passes the viewport, its offset loops forward by 200m.
-- **Collisions**: Calculated via bounding distances between meshes on X/Y/Z planes inside `checkCollision()`.
+- **Collisions**: Calculated via bounding distances inside `checkCollision()`. Calibrates center height offset and tolerance thresholds dynamically based on chosen vehicle size.
 
 ---
 

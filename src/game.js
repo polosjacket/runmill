@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createPlayerModel, createFloppyDiskModel, createObstacleModel } from './voxels.js';
+import { createVehicleModel, createFloppyDiskModel, createObstacleModel } from './voxels.js';
 import { audio } from './audio.js';
 
 // Game Configuration Constants
@@ -33,6 +33,7 @@ class GameEngine {
     this.cameraShakeTimer = 0;      // Time remaining for crash impact camera shake
     this.multiplier = 1;            // Floyd disk collection score multiplier
     this.multiplierTimer = 0;       // Expiry countdown for active score multiplier
+    this.selectedCharacter = 'car';  // Selected vehicle ('car', 'monster_truck', 'truck')
 
     // 3. Player Movement & Physics
     this.currentLane = 1;           // Starting lane index (Middle)
@@ -293,6 +294,16 @@ class GameEngine {
     touchRight.addEventListener('pointerdown', () => this.moveLane(1));
     touchJump.addEventListener('pointerdown', () => this.jump());
 
+    // Character selection buttons
+    this.domCharButtons = document.querySelectorAll('.char-btn');
+    this.domCharButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.domCharButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.selectedCharacter = btn.getAttribute('data-char');
+      });
+    });
+
     // Menu overlays
     this.btnStart.addEventListener('click', () => this.startGame());
     this.btnRestart.addEventListener('click', () => this.startGame());
@@ -343,7 +354,7 @@ class GameEngine {
 
     // Spawn player mesh
     if (this.player) this.scene.remove(this.player);
-    this.player = createPlayerModel();
+    this.player = createVehicleModel(this.selectedCharacter);
     this.player.position.set(0, 0, PLAYER_START_Z);
     this.scene.add(this.player);
 
@@ -609,27 +620,31 @@ class GameEngine {
     }
     this.player.position.y = this.playerY;
 
-    // 8. Dynamic Voxel Running Animation
-    // We oscillate the rotation angles of arms and legs pivots to animate character motion
-    const limbs = this.player.userData;
-    if (limbs) {
-      if (this.isJumping) {
-        // Stretched mid-air jumping pose
-        limbs.leftLeg.rotation.x = -0.5;
-        limbs.rightLeg.rotation.x = 0.5;
-        limbs.leftArm.rotation.x = 0.8;
-        limbs.rightArm.rotation.x = -0.8;
-      } else {
-        // Alternating swing cycle rotation
-        const swingSpeed = 16 + (this.speed * 0.1);
-        const swingAngle = Math.sin(time * swingSpeed) * 0.6;
-        limbs.leftLeg.rotation.x = swingAngle;
-        limbs.rightLeg.rotation.x = -swingAngle;
-        limbs.leftArm.rotation.x = -swingAngle * 0.8;
-        limbs.rightArm.rotation.x = swingAngle * 0.8;
-        
-        // bounce torso height slightly while running
-        limbs.torso.position.y = 1.0 + Math.abs(Math.sin(time * swingSpeed * 2)) * 0.08;
+    // 8. Dynamic Voxel Vehicle Wheels & Spring Animation
+    const vehicleData = this.player.userData;
+    if (vehicleData) {
+      // A. Wheels Spin
+      const wheels = vehicleData.wheels;
+      if (wheels && wheels.length > 0) {
+        const spinSpeed = this.speed * 1.5;
+        wheels.forEach(wheel => {
+          wheel.rotation.x += spinSpeed * dt;
+        });
+      }
+
+      // B. Spring Jump Extension/Retraction
+      const spring = vehicleData.spring;
+      if (spring) {
+        if (this.isJumping) {
+          // During jump, spring shoots out to touch ground (y=0) from vehicle chassis base (vehicleData.springY)
+          const totalHeight = this.playerY + vehicleData.springY;
+          const targetScaleY = totalHeight / 0.6;
+          
+          spring.scale.y = THREE.MathUtils.lerp(spring.scale.y, targetScaleY, 20 * dt);
+        } else {
+          // Retract spring inside the vehicle (scale Y back to 0)
+          spring.scale.y = THREE.MathUtils.lerp(spring.scale.y, 0, 20 * dt);
+        }
       }
     }
 
@@ -702,18 +717,34 @@ class GameEngine {
   /**
    * checkCollision - Axis-Aligned coordinates overlap verification checks.
    */
-  checkCollision(playerMesh, itemMesh, toleranceX, toleranceY) {
+  checkCollision(playerMesh, itemMesh, defaultToleranceX, defaultToleranceY) {
+    const type = playerMesh.userData.type;
+    let centerY = 0.3;
+    let toleranceX = defaultToleranceX;
+    let toleranceY = defaultToleranceY;
+    
+    // Adjust collision heights and bounds depending on the chosen vehicle size
+    if (type === 'monster_truck') {
+      centerY = 0.85;
+      toleranceX = defaultToleranceX * 1.2;
+      toleranceY = defaultToleranceY * 1.25;
+    } else if (type === 'truck') {
+      centerY = 0.55;
+      toleranceX = defaultToleranceX * 1.15;
+      toleranceY = defaultToleranceY * 1.15;
+    }
+    
     const px = playerMesh.position.x;
-    const py = playerMesh.position.y + 0.8; // Torso center is Y offset = 0.8
+    const py = playerMesh.position.y + centerY;
     const pz = PLAYER_START_Z;
 
     const ix = itemMesh.position.x;
     const iy = itemMesh.position.y + 0.4;
     const iz = itemMesh.position.z;
 
-    // Check Z coordinate depth difference
+    // Check Z coordinate depth difference (larger offset for vehicles length)
     const distZ = Math.abs(pz - iz);
-    if (distZ < 0.6) {
+    if (distZ < 0.8) {
       // Check X lane and Y height difference
       const distX = Math.abs(px - ix);
       const distY = Math.abs(py - iy);

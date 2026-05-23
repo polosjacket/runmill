@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.1.0] - 2026-05-23
+
+### Added
+- **Vehicle Selection Menu**:
+  - Implemented a horizontal grid selector on the start menu to choose from three vehicles: "CAR", "MONSTER TRUCK", and "TRUCK".
+  - Created corresponding CSS layouts and neon active outlines for the selection buttons.
+- **Procedural Vehicle Voxel Models**:
+  - Added `createVehicleModel()` and `createSpringModel()` inside `src/voxels.js`.
+  - Built custom shapes, colors, spoiler attachments, frame cages, cargo boxes, and multiple wheels for each vehicle.
+- **Wheel Spinning Animation**:
+  - Attached wheel meshes to groups and programmed rotating on their X-axis in the rendering loop, proportional to the game's scrolling speed.
+- **Spring-Jump Physics & Anim**:
+  - Interleaved box geometry layers to construct a spiral spring anchored below the chassis.
+  - Programmed dynamic spring Y-scaling to stretch down to the cyber road ($y = 0$) on jump inputs, and compress to $0$ (retracted inside the body) when resting on ground.
+- **Dynamic Bounding Boxes**:
+  - Calibrated collision offsets, lane width thresholds, and box tolerances in `checkCollision()` depending on vehicle heights and depths.
+
+---
+
 ## [1.0.2] - 2026-05-23
 
 ### Added

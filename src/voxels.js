@@ -206,3 +206,238 @@ export function createObstacleModel(type) {
 
   return group;
 }
+
+/**
+ * createSpringModel - Procedurally creates a metal spiral coil spring mesh.
+ * 
+ * It stacks 5 rectangular loops vertically with offset rotations.
+ * The child parts are shifted downwards relative to the group origin (y = 0).
+ * Thus, scaling the group on Y (e.g. scale.y = 3) causes it to stretch downwards
+ * while remaining anchored at the vehicle chassis at the top.
+ */
+export function createSpringModel() {
+  const springGroup = new THREE.Group();
+  
+  // Grey metallic material
+  const metalMat = new THREE.MeshStandardMaterial({ color: 0x999999, metalness: 0.8, roughness: 0.2, flatShading: true });
+  
+  const coilCount = 5;
+  const coilHeight = 0.15;
+  for (let i = 0; i < coilCount; i++) {
+    const coilPart = new THREE.Mesh(new THREE.BoxGeometry(0.5, coilHeight, 0.5), metalMat);
+    // Rotate each loop slightly to form a spiral pattern
+    coilPart.rotation.y = (i * Math.PI) / 4;
+    coilPart.position.y = i * coilHeight;
+    coilPart.castShadow = true;
+    springGroup.add(coilPart);
+  }
+  
+  // Shift all elements so the top coil sits at y = 0
+  const topOffset = (coilCount - 1) * coilHeight;
+  springGroup.children.forEach(child => {
+    child.position.y -= topOffset;
+  });
+  
+  return springGroup;
+}
+
+/**
+ * createVehicleModel - Procedurally constructs Car, Monster Truck, and Truck voxel models.
+ * 
+ * @param {string} type - 'car', 'monster_truck', or 'truck'
+ * @returns {THREE.Group} - The complete vehicle assembly containing a spring underneath
+ */
+export function createVehicleModel(type) {
+  const group = new THREE.Group();
+  const wheels = [];
+
+  // Shared wheel/windshield materials
+  const tireMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9, flatShading: true }); // Rubber
+  const hubMat = new THREE.MeshStandardMaterial({ color: 0xff007f, flatShading: true }); // Pink hubs
+  const glassMat = new THREE.MeshStandardMaterial({ color: 0x00f0ff, emissive: 0x00f0ff, emissiveIntensity: 0.3, flatShading: true }); // Windshield cyan glow
+
+  if (type === 'car') {
+    // 1. Sleek Retro Sports Car (Yellow/gold body, pink spoiler)
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xfff600, flatShading: true });
+    const spoilerMat = new THREE.MeshStandardMaterial({ color: 0xff007f, flatShading: true });
+
+    // Chassis Base
+    const chassis = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.25, 1.8), bodyMat);
+    chassis.position.y = 0.3;
+    chassis.castShadow = true;
+    chassis.receiveShadow = true;
+    group.add(chassis);
+
+    // Roof/Cabin
+    const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.3, 0.9), bodyMat);
+    cabin.position.set(0, 0.25, -0.15);
+    cabin.castShadow = true;
+    chassis.add(cabin);
+
+    // Windshield glass
+    const windshield = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.22, 0.25), glassMat);
+    windshield.position.set(0, 0.18, 0.4);
+    windshield.rotation.x = -0.5;
+    chassis.add(windshield);
+
+    // Spoiler wings
+    const spoilerStrutL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.2, 0.08), bodyMat);
+    spoilerStrutL.position.set(-0.35, 0.15, -0.8);
+    const spoilerStrutR = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.2, 0.08), bodyMat);
+    spoilerStrutR.position.set(0.35, 0.15, -0.8);
+    const spoilerWing = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.06, 0.3), spoilerMat);
+    spoilerWing.position.set(0, 0.25, -0.8);
+    chassis.add(spoilerStrutL, spoilerStrutR, spoilerWing);
+
+    // 4 Wheels
+    const wheelPositions = [
+      [-0.5, 0.15, 0.5],   // Front Left
+      [0.5, 0.15, 0.5],    // Front Right
+      [-0.5, 0.15, -0.5],  // Rear Left
+      [0.5, 0.15, -0.5]    // Rear Right
+    ];
+
+    wheelPositions.forEach(([x, y, z]) => {
+      const wheelGroup = new THREE.Group();
+      wheelGroup.position.set(x, y, z);
+      
+      const tire = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.35, 0.35), tireMat);
+      const hub = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.15, 0.15), hubMat);
+      
+      wheelGroup.add(tire, hub);
+      group.add(wheelGroup);
+      wheels.push(wheelGroup);
+    });
+
+  } else if (type === 'monster_truck') {
+    // 2. Monster Truck (Purple body, high pink shock struts, giant cyan wheels)
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xbd00ff, flatShading: true });
+    const suspensionMat = new THREE.MeshStandardMaterial({ color: 0xff007f, flatShading: true });
+    const giantHubMat = new THREE.MeshStandardMaterial({ color: 0x00f0ff, flatShading: true });
+
+    // Elevated body cab
+    const chassis = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.6, 1.6), bodyMat);
+    chassis.position.y = 0.95; // highly elevated ground clearance
+    chassis.castShadow = true;
+    chassis.receiveShadow = true;
+    group.add(chassis);
+
+    // Windshield
+    const windshield = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.3, 0.4), glassMat);
+    windshield.position.set(0, 0.4, 0.2);
+    chassis.add(windshield);
+
+    // Truck cargo bed rim walls
+    const bedWallL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.3, 0.8), bodyMat);
+    bedWallL.position.set(-0.46, 0.15, -0.5);
+    const bedWallR = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.3, 0.8), bodyMat);
+    bedWallR.position.set(0.46, 0.15, -0.5);
+    const bedWallBack = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.3, 0.08), bodyMat);
+    bedWallBack.position.set(0, 0.15, -0.9);
+    chassis.add(bedWallL, bedWallR, bedWallBack);
+
+    // 4 High-shock suspension struts
+    const shockPositions = [
+      [-0.45, 0.5, 0.55],
+      [0.45, 0.5, 0.55],
+      [-0.45, 0.5, -0.55],
+      [0.45, 0.5, -0.55]
+    ];
+    shockPositions.forEach(([x, y, z]) => {
+      const strut = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.6, 0.12), suspensionMat);
+      strut.position.set(x, y, z);
+      strut.rotation.z = x > 0 ? -0.15 : 0.15;
+      group.add(strut);
+    });
+
+    // 4 Giant wheels
+    const wheelPositions = [
+      [-0.6, 0.45, 0.55],
+      [0.6, 0.45, 0.55],
+      [-0.6, 0.45, -0.55],
+      [0.6, 0.45, -0.55]
+    ];
+
+    wheelPositions.forEach(([x, y, z]) => {
+      const wheelGroup = new THREE.Group();
+      wheelGroup.position.set(x, y, z);
+      
+      const tire = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.8, 0.8), tireMat);
+      const hub = new THREE.Mesh(new THREE.BoxGeometry(0.47, 0.35, 0.35), giantHubMat);
+      
+      wheelGroup.add(tire, hub);
+      group.add(wheelGroup);
+      wheels.push(wheelGroup);
+    });
+
+  } else {
+    // 3. Cargo Truck (Cyan cabin cab, grey trailer back, 6 wheels)
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x00f0ff, flatShading: true });
+    const cargoMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, flatShading: true });
+
+    // Cab
+    const cab = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.8, 0.7), bodyMat);
+    cab.position.set(0, 0.55, 0.65);
+    cab.castShadow = true;
+    cab.receiveShadow = true;
+    group.add(cab);
+
+    // windshield
+    const windshield = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.3, 0.1), glassMat);
+    windshield.position.set(0, 0.22, 0.36);
+    cab.add(windshield);
+
+    // Large rectangular cargo container
+    const trailer = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.9, 1.4), cargoMat);
+    trailer.position.set(0, 0.6, -0.35);
+    trailer.castShadow = true;
+    trailer.receiveShadow = true;
+    group.add(trailer);
+
+    // 6 wheels
+    const wheelPositions = [
+      [-0.5, 0.15, 0.65],  // Front Left
+      [0.5, 0.15, 0.65],   // Front Right
+      [-0.48, 0.15, -0.2], // Middle Left
+      [0.48, 0.15, -0.2],  // Middle Right
+      [-0.48, 0.15, -0.7], // Rear Left
+      [0.48, 0.15, -0.7]   // Rear Right
+    ];
+
+    wheelPositions.forEach(([x, y, z]) => {
+      const wheelGroup = new THREE.Group();
+      wheelGroup.position.set(x, y, z);
+      
+      const tire = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.35, 0.35), tireMat);
+      const hub = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.15, 0.15), hubMat);
+      
+      wheelGroup.add(tire, hub);
+      group.add(wheelGroup);
+      wheels.push(wheelGroup);
+    });
+  }
+
+  // Generate jumping spring
+  const spring = createSpringModel();
+  
+  // Set default attachment height depending on type
+  let springY = 0.3;
+  if (type === 'monster_truck') springY = 0.9;
+  if (type === 'truck') springY = 0.55;
+  
+  spring.position.set(0, springY, 0);
+  // Initially compressed inside chassis (height scale = 0)
+  spring.scale.set(0.8, 0, 0.8);
+  group.add(spring);
+
+  // Expose variables for gameplay logic animations
+  group.userData = {
+    type: type,
+    wheels: wheels,
+    spring: spring,
+    springY: springY
+  };
+
+  return group;
+}
+

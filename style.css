@@ -128,6 +128,73 @@ body {
   letter-spacing: 1px;
 }
 
+/* Character Selection Grid */
+.character-select-section {
+  margin: 15px 0 25px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 15px;
+}
+
+.character-select-section h3 {
+  font-family: var(--font-pixel);
+  font-size: 0.7rem;
+  color: var(--neon-yellow);
+  margin-bottom: 12px;
+  text-shadow: 0 0 5px rgba(255, 246, 0, 0.3);
+}
+
+.character-grid {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.char-btn {
+  font-family: var(--font-pixel);
+  font-size: 0.65rem;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  padding: 10px 14px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
+
+.char-btn:hover {
+  transform: translateY(-2px);
+}
+
+.char-btn.active {
+  color: #000;
+  transform: scale(1.05);
+}
+
+.char-btn.active.neon-cyan-glow {
+  background: var(--neon-cyan);
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 15px var(--neon-cyan);
+}
+
+.char-btn.active.neon-pink-glow {
+  background: var(--neon-pink);
+  border-color: var(--neon-pink);
+  box-shadow: 0 0 15px var(--neon-pink);
+}
+
+.char-btn.active.neon-yellow-glow {
+  background: var(--neon-yellow);
+  border-color: var(--neon-yellow);
+  box-shadow: 0 0 15px var(--neon-yellow);
+}
+
+.neon-yellow-glow {
+  border-color: var(--neon-yellow);
+  box-shadow: 0 0 10px rgba(255, 246, 0, 0.2);
+}
+
 /* Buttons */
 .retro-btn {
   font-family: var(--font-pixel);

@@ -2,57 +2,61 @@ import * as THREE from 'three';
 import { createPlayerModel, createFloppyDiskModel, createObstacleModel } from './voxels.js';
 import { audio } from './audio.js';
 
-// Game Configuration
+// Game Configuration Constants
 const LANE_WIDTH = 2.0;
-const LANES = [-LANE_WIDTH, 0, LANE_WIDTH];
-const PLAYER_START_Z = 5.0;
-const SPAWN_START_Z = -80.0;
-const DESPAWN_Z = 12.0;
+const LANES = [-LANE_WIDTH, 0, LANE_WIDTH]; // Left, Middle, Right lane X-coordinates
+const PLAYER_START_Z = 5.0;                // Camera-relative Z position of player
+const SPAWN_START_Z = -80.0;               // Z coordinate where obstacles spawn far away
+const DESPAWN_Z = 12.0;                    // Z coordinate where obstacles are deleted (passed player)
 
+/**
+ * GameEngine - Main coordinator class for game loops, visual rendering,
+ * and user interactions.
+ */
 class GameEngine {
   constructor() {
-    // Three.js Core
+    // 1. Three.js Engine Variables
     this.scene = null;
     this.camera = null;
     this.renderer = null;
-    this.clock = new THREE.Clock();
+    this.clock = new THREE.Clock(); // Tracks delta time for frame-independent speed
 
-    // Game State
-    this.state = 'START'; // START, PLAYING, GAMEOVER
+    // 2. Core Game State
+    this.state = 'START';           // Active game state: 'START', 'PLAYING', 'GAMEOVER'
     this.score = 0;
     this.distance = 0;
-    this.speed = 15; // base speed
-    this.maxSpeed = 45;
-    this.lives = 3;
-    this.isInvincible = false;
-    this.invincibilityTimer = 0;
-    this.cameraShakeTimer = 0;
-    this.multiplier = 1;
-    this.multiplierTimer = 0;
+    this.speed = 15;                // Current scroll speed (meters per second)
+    this.maxSpeed = 45;             // Speed cap to keep the game playable
+    this.lives = 3;                 // Player health points
+    this.isInvincible = false;      // Flag tracking if player is in recovery after a hit
+    this.invincibilityTimer = 0;    // Time remaining for recovery flashing
+    this.cameraShakeTimer = 0;      // Time remaining for crash impact camera shake
+    this.multiplier = 1;            // Floyd disk collection score multiplier
+    this.multiplierTimer = 0;       // Expiry countdown for active score multiplier
 
-    // Player Movement
-    this.currentLane = 1; // index in LANES (0: Left, 1: Middle, 2: Right)
-    this.targetX = 0;
-    this.playerY = 0;
-    this.playerVelocityY = 0;
-    this.gravity = -25;
-    this.jumpForce = 10;
-    this.isJumping = false;
+    // 3. Player Movement & Physics
+    this.currentLane = 1;           // Starting lane index (Middle)
+    this.targetX = 0;               // Desired X coordinate target (lane coordinate)
+    this.playerY = 0;               // Current jump height
+    this.playerVelocityY = 0;       // Vertical velocity vector for jumps
+    this.gravity = -25;             // Downward acceleration force
+    this.jumpForce = 10;            // Initial upward impulse force
+    this.isJumping = false;         // Flag tracking if player is in mid-air
 
-    // Scene Objects
-    this.player = null;
-    this.roadGrid1 = null;
-    this.roadGrid2 = null;
-    this.sun = null;
-    this.obstacles = [];
-    this.points = [];
-    this.scenery = [];
+    // 4. Scene Collections
+    this.player = null;             // Reference to player's 3D voxel group
+    this.roadGrid1 = null;          // First segment of looping cyber grid
+    this.roadGrid2 = null;          // Second segment of looping cyber grid
+    this.sun = null;                // far-distance striped sunset sun mesh
+    this.obstacles = [];            // Active hazards array (cassette tapes, TVs, spikes)
+    this.points = [];               // Active floppys array (floppy disk score pickups)
+    this.scenery = [];              // Side decorative elements (wireframe neon mountains)
     
-    // Spawning controls
+    // 5. Spawning Frequency Variables
     this.spawnTimer = 0;
-    this.spawnInterval = 1.8; // seconds
+    this.spawnInterval = 1.8;       // Spawning frequency in seconds
 
-    // DOM Bindings
+    // 6. DOM Element Bindings (Menus and HUD overlays)
     this.domStartScreen = document.getElementById('start-screen');
     this.domGameOverScreen = document.getElementById('game-over-screen');
     this.domHud = document.getElementById('hud');
@@ -68,45 +72,49 @@ class GameEngine {
     this.domPlayerName = document.getElementById('player-name');
     this.domLeaderboardList = document.getElementById('leaderboard-list');
 
-    // UI Buttons
+    // 7. Event Buttons
     this.btnStart = document.getElementById('start-btn');
     this.btnRestart = document.getElementById('restart-btn');
     this.btnSubmitScore = document.getElementById('submit-score-btn');
 
-    // Setup Everything
+    // 8. Core Initialization Steps
     this.initThree();
     this.setupLighting();
     this.createStaticScenery();
     this.setupEventListeners();
     this.fetchLeaderboard();
     
-    // Start Game Loop
+    // Begin main render loop recursion
     this.animate();
   }
 
+  /**
+   * initThree - Sets up the WebGL renderer, perspective camera, and fog blending.
+   */
   initThree() {
     const container = document.getElementById('canvas-container');
     const width = container.clientWidth;
     const height = container.clientHeight;
 
-    // Scene
+    // Initialize Scene
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0b0214);
-    // Fog for retro depth blending
+    this.scene.background = new THREE.Color(0x0b0214); // Deep space purple backdrop
+    
+    // Exponential fog mimics retro screen depth, fading meshes into the background color
     this.scene.fog = new THREE.FogExp2(0x0b0214, 0.015);
 
-    // Camera (Third person perspective)
+    // Set up Perspective Camera (Viewing the player from slightly behind and above)
     this.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
     this.resetCamera();
 
-    // Renderer
+    // Create and configure WebGLRenderer
     this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
     this.renderer.setSize(width, height);
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Soft shadow edges
     container.appendChild(this.renderer.domElement);
 
-    // Window Resize Handler
+    // Responsive Canvas resizing
     window.addEventListener('resize', () => {
       const w = container.clientWidth;
       const h = container.clientHeight;
@@ -116,17 +124,23 @@ class GameEngine {
     });
   }
 
+  /**
+   * resetCamera - Positions the camera at its standard third-person angle.
+   */
   resetCamera() {
     this.camera.position.set(0, 3.2, PLAYER_START_Z + 4.5);
     this.camera.lookAt(0, 1.2, PLAYER_START_Z - 5);
   }
 
+  /**
+   * setupLighting - Configures lighting rig for standard voxel shadows and highlighting.
+   */
   setupLighting() {
-    // Ambient light (neon colored tint)
+    // 1. Neon purple ambient fill light
     const ambientLight = new THREE.AmbientLight(0x3a0066, 1.2);
     this.scene.add(ambientLight);
 
-    // Directional Cyber Sun light (casts shadows)
+    // 2. Directional Cyber Sun light (casts depth shadows towards the front of screen)
     const dirLight = new THREE.DirectionalLight(0xff007f, 1.5);
     dirLight.position.set(0, 15, -60);
     dirLight.castShadow = true;
@@ -140,17 +154,21 @@ class GameEngine {
     dirLight.shadow.camera.bottom = -5;
     this.scene.add(dirLight);
 
-    // Front soft light to highlight player voxel details
+    // 3. Neon cyan point light centered on player to emphasize retro character details
     const frontLight = new THREE.PointLight(0x00f0ff, 2.0, 30);
     frontLight.position.set(0, 5, PLAYER_START_Z + 2);
     this.scene.add(frontLight);
   }
 
+  /**
+   * createStaticScenery - Builds grid roads, distant striped sun, background starfield.
+   */
   createStaticScenery() {
-    // Loopable scrolling roads (using GridHelpers for retro cyber grid line feel)
     const size = 100;
     const divisions = 50;
     
+    // We add two adjacent 100m GridHelpers.
+    // As one moves past the screen, we scroll both backward and reset positions to form an infinite road loop.
     this.roadGrid1 = new THREE.GridHelper(size, divisions, 0x00f0ff, 0xff007f);
     this.roadGrid1.position.set(0, 0, 0);
     this.scene.add(this.roadGrid1);
@@ -159,7 +177,7 @@ class GameEngine {
     this.roadGrid2.position.set(0, 0, -size);
     this.scene.add(this.roadGrid2);
 
-    // Dark asphalt underlay
+    // Dark black underlay plane below the grid to block stars showing under the road
     const roadGeom = new THREE.PlaneGeometry(30, size * 2);
     const roadMat = new THREE.MeshBasicMaterial({ color: 0x05010a });
     const roadPlane = new THREE.Mesh(roadGeom, roadMat);
@@ -168,7 +186,8 @@ class GameEngine {
     roadPlane.receiveShadow = true;
     this.scene.add(roadPlane);
 
-    // Retro Neon Sun (Striped Sunset Sun)
+    // Striped Sunset Sun
+    // Structured out of horizontal boxes stacked with slight gaps to reproduce the classic 80s synthwave sunset sun
     const sunGroup = new THREE.Group();
     const sunRadius = 15;
     const stripeCount = 10;
@@ -177,18 +196,17 @@ class GameEngine {
 
     for (let i = 0; i < stripeCount; i++) {
       const yOffset = (i - stripeCount / 2) * (stripeHeight + gap);
-      // Calculate width of horizontal box representing a segment of a circle
       const angle = Math.asin(yOffset / sunRadius);
       const width = 2 * sunRadius * Math.cos(angle);
       
       const segmentGeom = new THREE.BoxGeometry(width, stripeHeight, 0.5);
       
-      // Bottom segments are thinner / fade out
+      // Bottom segments are yellow, top segments are hot pink. We lerp colors based on height index.
       const mixRatio = i / stripeCount;
       const color = new THREE.Color().lerpColors(new THREE.Color(0xfff600), new THREE.Color(0xff007f), mixRatio);
       const segmentMat = new THREE.MeshBasicMaterial({ 
         color: color,
-        fog: false // The sun shouldn't fade into distance fog
+        fog: false // Disable fog on the sun to maintain sharp sunset colors in far distance
       });
 
       const segment = new THREE.Mesh(segmentGeom, segmentMat);
@@ -199,15 +217,15 @@ class GameEngine {
     this.scene.add(sunGroup);
     this.sun = sunGroup;
 
-    // Stars particle system in background
+    // Stars particle system
     const starsGeom = new THREE.BufferGeometry();
     const starsCount = 300;
     const starPositions = new Float32Array(starsCount * 3);
 
     for (let i = 0; i < starsCount; i++) {
-      starPositions[i * 3] = (Math.random() - 0.5) * 150;
-      starPositions[i * 3 + 1] = Math.random() * 60 + 5;
-      starPositions[i * 3 + 2] = -Math.random() * 120 - 40;
+      starPositions[i * 3] = (Math.random() - 0.5) * 150;     // Wide layout
+      starPositions[i * 3 + 1] = Math.random() * 60 + 5;      // High sky position
+      starPositions[i * 3 + 2] = -Math.random() * 120 - 40;  // Deep depth
     }
 
     starsGeom.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
@@ -221,19 +239,22 @@ class GameEngine {
     const starParticles = new THREE.Points(starsGeom, starsMat);
     this.scene.add(starParticles);
 
-    // Initial Side Mountains (voxel style)
+    // Initial Side Mountains (3D wireframes)
     for (let z = 0; z > -150; z -= 15) {
-      this.spawnMountain(z, -8); // Left mountain
-      this.spawnMountain(z, 8);  // Right mountain
+      this.spawnMountain(z, -8); // Left mountain chain
+      this.spawnMountain(z, 8);  // Right mountain chain
     }
   }
 
+  /**
+   * spawnMountain - Instantiates a low-poly mountain cone at roadside borders.
+   */
   spawnMountain(z, xOffset) {
     const height = Math.random() * 8 + 4;
     const width = Math.random() * 4 + 4;
     const geom = new THREE.ConeGeometry(width, height, 4);
     
-    // Mesh basic outline wireframe look for cyber retro vibe
+    // Wireframe purple mesh for retro 3D computer graphics styling
     const mat = new THREE.MeshStandardMaterial({
       color: 0xbd00ff,
       wireframe: true,
@@ -246,8 +267,11 @@ class GameEngine {
     this.scenery.push(cone);
   }
 
+  /**
+   * setupEventListeners - Handles keyboard arrow key maps and overlay clicks.
+   */
   setupEventListeners() {
-    // Keyboard Controls
+    // Key bindings
     window.addEventListener('keydown', (e) => {
       if (this.state !== 'PLAYING') return;
 
@@ -260,7 +284,7 @@ class GameEngine {
       }
     });
 
-    // Touch controls for Mobile
+    // Touch controls for mobile pointer events
     const touchLeft = document.getElementById('touch-left');
     const touchRight = document.getElementById('touch-right');
     const touchJump = document.getElementById('touch-jump');
@@ -269,17 +293,23 @@ class GameEngine {
     touchRight.addEventListener('pointerdown', () => this.moveLane(1));
     touchJump.addEventListener('pointerdown', () => this.jump());
 
-    // Game Overlay Buttons
+    // Menu overlays
     this.btnStart.addEventListener('click', () => this.startGame());
     this.btnRestart.addEventListener('click', () => this.startGame());
     this.btnSubmitScore.addEventListener('click', () => this.submitHighScore());
   }
 
+  /**
+   * moveLane - Shakes the target lane index left/right.
+   */
   moveLane(dir) {
     this.currentLane = THREE.MathUtils.clamp(this.currentLane + dir, 0, 2);
     this.targetX = LANES[this.currentLane];
   }
 
+  /**
+   * jump - Handles jump triggers if player is on ground.
+   */
   jump() {
     if (this.isJumping) return;
     this.isJumping = true;
@@ -287,11 +317,14 @@ class GameEngine {
     audio.playJump();
   }
 
+  /**
+   * startGame - Resets variables and turns on active running states.
+   */
   startGame() {
-    // Initialize Audio context on first click
+    // Activates Web Audio Context (mandatory on click event)
     audio.init();
 
-    // Reset game state
+    // Reset game counters
     this.score = 0;
     this.distance = 0;
     this.speed = 18;
@@ -305,34 +338,35 @@ class GameEngine {
     this.multiplier = 1;
     this.multiplierTimer = 0;
 
-    // Clear existing objects from scene
+    // Flush hazards from scene
     this.clearObstaclesAndPoints();
 
-    // Recreate Player voxel model
+    // Spawn player mesh
     if (this.player) this.scene.remove(this.player);
     this.player = createPlayerModel();
     this.player.position.set(0, 0, PLAYER_START_Z);
     this.scene.add(this.player);
 
-    // Update DOM UI
+    // Sync HUD DOM elements
     this.updateHudLives();
     this.domScore.textContent = '00000';
     this.domDistance.textContent = '0';
     this.domSpeed.textContent = '0';
     this.domMultiplierContainer.classList.add('hidden');
 
+    // Toggle screen classes
     this.domStartScreen.classList.add('hidden');
     this.domGameOverScreen.classList.add('hidden');
     this.domHud.classList.remove('hidden');
     this.domHighScoreForm.classList.add('hidden');
 
-    // Show mobile touch buttons if device has touch
+    // Show mobile controls panel if screen has touch capabilities
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
       document.getElementById('touch-controls').classList.remove('hidden');
     }
 
     this.state = 'PLAYING';
-    audio.startMusic();
+    audio.startMusic(); // Starts procedural synth soundtrack
   }
 
   clearObstaclesAndPoints() {
@@ -342,25 +376,29 @@ class GameEngine {
     this.points = [];
   }
 
+  /**
+   * gameOver - Stops music and opens ending overlays.
+   */
   gameOver() {
     this.state = 'GAMEOVER';
     audio.playGameOver();
 
-    // Hide HUD & Mobile buttons
     this.domHud.classList.add('hidden');
     document.getElementById('touch-controls').classList.add('hidden');
 
-    // Populate GameOver stats
     this.domFinalScore.textContent = Math.floor(this.score);
     this.domFinalDistance.textContent = Math.floor(this.distance);
 
-    // Show high score upload form if they qualify
+    // Open score posting fields
     this.domHighScoreForm.classList.remove('hidden');
     this.domPlayerName.value = '';
     
     this.domGameOverScreen.classList.remove('hidden');
   }
 
+  /**
+   * updateHudLives - Updates active heart indicators in the top HUD corner.
+   */
   updateHudLives() {
     const hearts = this.domLives.querySelectorAll('.heart');
     hearts.forEach((heart, idx) => {
@@ -372,7 +410,9 @@ class GameEngine {
     });
   }
 
-  // API Interactivity
+  /**
+   * fetchLeaderboard - Obtains high scores list from the local Express server.
+   */
   async fetchLeaderboard() {
     try {
       const response = await fetch('/api/scores');
@@ -393,10 +433,14 @@ class GameEngine {
         this.domLeaderboardList.appendChild(li);
       });
     } catch (e) {
+      // Offline fallback
       this.domLeaderboardList.innerHTML = '<li class="loading">OFFLINE MODE</li>';
     }
   }
 
+  /**
+   * submitHighScore - Posts user initials and score to high scores API.
+   */
   async submitHighScore() {
     const nameInput = this.domPlayerName.value.trim().toUpperCase();
     if (!nameInput) return;
@@ -405,17 +449,14 @@ class GameEngine {
       this.btnSubmitScore.disabled = true;
       this.btnSubmitScore.textContent = 'SAVING...';
       
-      const response = await fetch('/api/scores', {
+      await fetch('/api/scores', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: nameInput, score: Math.floor(this.score) })
       });
       
-      const updatedScores = await response.json();
       this.domHighScoreForm.classList.add('hidden');
-      
-      // Update local scores list directly
-      this.fetchLeaderboard();
+      this.fetchLeaderboard(); // Refresh scores list
     } catch (e) {
       console.error(e);
     } finally {
@@ -424,21 +465,22 @@ class GameEngine {
     }
   }
 
-  // Spawning Logic
+  /**
+   * spawnObstacleOrPoint - Randomly chooses and spawns floppy disk items or voxel hazards.
+   */
   spawnObstacleOrPoint() {
     const rand = Math.random();
     const lane = Math.floor(Math.random() * 3);
     const laneX = LANES[lane];
 
     if (rand < 0.35) {
-      // Spawn point (Floppy Disk)
+      // Spawn floppy disk point pickup
       const floppy = createFloppyDiskModel();
-      // Floppys float slightly above ground
       floppy.position.set(laneX, 0.4, SPAWN_START_Z);
       this.scene.add(floppy);
       this.points.push(floppy);
     } else {
-      // Spawn obstacle (cassette, TV, or spike)
+      // Spawn standard obstacle block
       const types = ['cassette', 'tv', 'spike'];
       const chosenType = types[Math.floor(Math.random() * types.length)];
       const obs = createObstacleModel(chosenType);
@@ -448,44 +490,48 @@ class GameEngine {
     }
   }
 
-  // Core Game Loop
+  /**
+   * animate - Infinite WebGL rendering recursion cycle loop.
+   */
   animate() {
     requestAnimationFrame(() => this.animate());
 
-    const dt = this.clock.getDelta();
+    const dt = this.clock.getDelta(); // delta time since last frame
 
+    // Route updates depending on playing states
     if (this.state === 'PLAYING') {
       this.updatePlaying(dt);
     } else {
       this.updateMenu(dt);
     }
 
-    // Camera shakes on impact
+    // Camera hit impact screen-shake controller
     if (this.cameraShakeTimer > 0) {
       this.cameraShakeTimer -= dt;
       const shakeAmt = 0.15;
       this.camera.position.x = (Math.random() - 0.5) * shakeAmt;
       this.camera.position.y = 3.2 + (Math.random() - 0.5) * shakeAmt;
       if (this.cameraShakeTimer <= 0) {
-        this.resetCamera();
+        this.resetCamera(); // Reset camera positions to standard offset
       }
     }
 
     this.renderer.render(this.scene, this.camera);
   }
 
+  /**
+   * updateMenu - Animate backdrop grid meshes slowly on start menus.
+   */
   updateMenu(dt) {
     const time = this.clock.getElapsedTime();
-    
-    // Parallax background items move slowly in menu
     const slowSpeed = 2;
+
     this.roadGrid1.position.z += slowSpeed * dt;
     this.roadGrid2.position.z += slowSpeed * dt;
 
     if (this.roadGrid1.position.z >= 100) this.roadGrid1.position.z -= 200;
     if (this.roadGrid2.position.z >= 100) this.roadGrid2.position.z -= 200;
 
-    // Shift mountains in menu
     this.scenery.forEach(m => {
       m.position.z += slowSpeed * dt;
       if (m.position.z > DESPAWN_Z) {
@@ -493,37 +539,38 @@ class GameEngine {
       }
     });
 
-    // Make Sun slide slightly
     if (this.sun) {
       this.sun.rotation.z = time * 0.05;
     }
   }
 
+  /**
+   * updatePlaying - Active playing logic loop (physics, animations, and collisions).
+   */
   updatePlaying(dt) {
     const time = this.clock.getElapsedTime();
 
-    // 1. Progress Stats
+    // 1. Advance score counters and acceleration curves
     this.distance += this.speed * dt;
     this.score += this.speed * dt * 0.1 * this.multiplier;
     
-    // Slowly accelerate
     if (this.speed < this.maxSpeed) {
-      this.speed += dt * 0.25;
+      this.speed += dt * 0.25; // acceleration curve
     }
 
-    // Update UI text
+    // Sync HUD numbers
     this.domScore.textContent = Math.floor(this.score).toString().padStart(5, '0');
     this.domDistance.textContent = Math.floor(this.distance);
-    this.domSpeed.textContent = Math.floor(this.speed * 4); // virtual km/h
+    this.domSpeed.textContent = Math.floor(this.speed * 4); // Virtual MPH
 
-    // 2. Loop & scroll highway grids
+    // 2. Loop & scroll grid lines
     this.roadGrid1.position.z += this.speed * dt;
     this.roadGrid2.position.z += this.speed * dt;
 
     if (this.roadGrid1.position.z >= 100) this.roadGrid1.position.z -= 200;
     if (this.roadGrid2.position.z >= 100) this.roadGrid2.position.z -= 200;
 
-    // 3. Move mountains along the roadside
+    // 3. Move roadside mountains
     this.scenery.forEach(m => {
       m.position.z += this.speed * dt;
       if (m.position.z > DESPAWN_Z) {
@@ -531,28 +578,29 @@ class GameEngine {
       }
     });
 
-    // 4. Oscillate Sun scale/glow or rotate
+    // 4. Sunset sun rotation
     if (this.sun) {
       this.sun.rotation.z = time * 0.1;
     }
 
-    // 5. Spawning items
+    // 5. Procedural Spawner
     this.spawnTimer += dt;
     if (this.spawnTimer >= this.spawnInterval) {
       this.spawnTimer = 0;
       this.spawnObstacleOrPoint();
-      // Increase difficulty slightly over time
+      // Acceleration increases obstacle spawn rates
       this.spawnInterval = Math.max(0.8, 1.8 - (this.speed / 50));
     }
 
-    // 6. Handle Player lane transition (lerping X coordinate)
+    // 6. Lerp player X coordinate toward target lane coordinate (smooth lane changes)
     this.player.position.x = THREE.MathUtils.lerp(this.player.position.x, this.targetX, 15 * dt);
 
-    // 7. Handle Player Jumping physics
+    // 7. Gravity physics calculation
     if (this.isJumping) {
       this.playerVelocityY += this.gravity * dt;
       this.playerY += this.playerVelocityY * dt;
 
+      // Ground hit check
       if (this.playerY <= 0) {
         this.playerY = 0;
         this.playerVelocityY = 0;
@@ -561,34 +609,34 @@ class GameEngine {
     }
     this.player.position.y = this.playerY;
 
-    // 8. Player Voxel Running Animation
-    const legs = this.player.userData;
-    if (legs) {
+    // 8. Dynamic Voxel Running Animation
+    // We oscillate the rotation angles of arms and legs pivots to animate character motion
+    const limbs = this.player.userData;
+    if (limbs) {
       if (this.isJumping) {
-        // Jumping pose (arms/legs stretched)
-        legs.leftLeg.rotation.x = -0.5;
-        legs.rightLeg.rotation.x = 0.5;
-        legs.leftArm.rotation.x = 0.8;
-        legs.rightArm.rotation.x = -0.8;
+        // Stretched mid-air jumping pose
+        limbs.leftLeg.rotation.x = -0.5;
+        limbs.rightLeg.rotation.x = 0.5;
+        limbs.leftArm.rotation.x = 0.8;
+        limbs.rightArm.rotation.x = -0.8;
       } else {
-        // Running cycle
+        // Alternating swing cycle rotation
         const swingSpeed = 16 + (this.speed * 0.1);
         const swingAngle = Math.sin(time * swingSpeed) * 0.6;
-        legs.leftLeg.rotation.x = swingAngle;
-        legs.rightLeg.rotation.x = -swingAngle;
-        legs.leftArm.rotation.x = -swingAngle * 0.8;
-        legs.rightArm.rotation.x = swingAngle * 0.8;
+        limbs.leftLeg.rotation.x = swingAngle;
+        limbs.rightLeg.rotation.x = -swingAngle;
+        limbs.leftArm.rotation.x = -swingAngle * 0.8;
+        limbs.rightArm.rotation.x = swingAngle * 0.8;
         
-        // Torso bounces slightly while running
-        legs.torso.position.y = 1.0 + Math.abs(Math.sin(time * swingSpeed * 2)) * 0.08;
+        // bounce torso height slightly while running
+        limbs.torso.position.y = 1.0 + Math.abs(Math.sin(time * swingSpeed * 2)) * 0.08;
       }
     }
 
-    // 9. Invincibility flash effect
+    // 9. Invincibility flash visibility loop
     if (this.isInvincible) {
       this.invincibilityTimer -= dt;
-      // Oscillate visibility for standard retro flashing
-      this.player.visible = Math.floor(time * 20) % 2 === 0;
+      this.player.visible = Math.floor(time * 20) % 2 === 0; // toggles visibility fast
       
       if (this.invincibilityTimer <= 0) {
         this.isInvincible = false;
@@ -596,7 +644,7 @@ class GameEngine {
       }
     }
 
-    // 10. Multiplier depletion
+    // 10. Multiplier duration depletion timer
     if (this.multiplier > 1) {
       this.multiplierTimer -= dt;
       if (this.multiplierTimer <= 0) {
@@ -609,11 +657,9 @@ class GameEngine {
     for (let i = this.obstacles.length - 1; i >= 0; i--) {
       const obs = this.obstacles[i];
       obs.position.z += this.speed * dt;
+      obs.rotation.y += dt; // Rotate object slightly
 
-      // Obstacle rotation just for fun
-      obs.rotation.y += dt;
-
-      // Check collision
+      // Collide Check
       if (!this.isInvincible && this.checkCollision(this.player, obs, 0.7, 0.8)) {
         this.handleHit();
         this.scene.remove(obs);
@@ -621,23 +667,23 @@ class GameEngine {
         continue;
       }
 
-      // Despawn check
+      // Despawn checks
       if (obs.position.z > DESPAWN_Z) {
         this.scene.remove(obs);
         this.obstacles.splice(i, 1);
       }
     }
 
-    // 12. Move and Collide Floppy Disks
+    // 12. Move and Collide Floppy Disk items
     for (let i = this.points.length - 1; i >= 0; i--) {
       const point = this.points[i];
       point.position.z += this.speed * dt;
       
-      // Floppy Disk spinning
+      // Floating hover animations
       point.rotation.y += 3 * dt;
-      point.position.y = 0.4 + Math.sin(time * 5 + i) * 0.15; // Hovering wave
+      point.position.y = 0.4 + Math.sin(time * 5 + i) * 0.15;
 
-      // Check collision
+      // Collide Check
       if (this.checkCollision(this.player, point, 0.6, 0.8)) {
         this.handleCollect();
         this.scene.remove(point);
@@ -653,16 +699,19 @@ class GameEngine {
     }
   }
 
+  /**
+   * checkCollision - Axis-Aligned coordinates overlap verification checks.
+   */
   checkCollision(playerMesh, itemMesh, toleranceX, toleranceY) {
     const px = playerMesh.position.x;
-    const py = playerMesh.position.y + 0.8; // player center is y=0.8
+    const py = playerMesh.position.y + 0.8; // Torso center is Y offset = 0.8
     const pz = PLAYER_START_Z;
 
     const ix = itemMesh.position.x;
-    const iy = itemMesh.position.y + 0.4; // item center height
+    const iy = itemMesh.position.y + 0.4;
     const iz = itemMesh.position.z;
 
-    // Check depth Z closeness first (very fast check)
+    // Check Z coordinate depth difference
     const distZ = Math.abs(pz - iz);
     if (distZ < 0.6) {
       // Check X lane and Y height difference
@@ -675,13 +724,15 @@ class GameEngine {
     return false;
   }
 
+  /**
+   * handleHit - Manages crash impact consequences.
+   */
   handleHit() {
     this.lives--;
     this.updateHudLives();
-    this.cameraShakeTimer = 0.25;
+    this.cameraShakeTimer = 0.25; // shake for 250ms
     audio.playHit();
 
-    // Reset multiplier on hit
     this.multiplier = 1;
     this.domMultiplierContainer.classList.add('hidden');
 
@@ -689,24 +740,27 @@ class GameEngine {
       this.gameOver();
     } else {
       this.isInvincible = true;
-      this.invincibilityTimer = 1.5; // 1.5s of invincibility
+      this.invincibilityTimer = 1.5; // Invincible flash duration (1.5 seconds)
     }
   }
 
+  /**
+   * handleCollect - Handles floppy disk coin accumulation.
+   */
   handleCollect() {
     audio.playCollect();
     
-    // Add score and boost multiplier
+    // Increment active score multiplier
     this.multiplier = Math.min(4, this.multiplier + 1);
     this.score += 500 * this.multiplier;
-    this.multiplierTimer = 4.0; // 4 seconds before multiplier expires
+    this.multiplierTimer = 4.0; // Multiplier lasts 4s before resetting
 
     this.domMultiplier.textContent = `x${this.multiplier}`;
     this.domMultiplierContainer.classList.remove('hidden');
   }
 }
 
-// Start Engine
+// Start GameEngine instance when page completes loading
 window.addEventListener('DOMContentLoaded', () => {
   new GameEngine();
 });

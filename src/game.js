@@ -54,6 +54,7 @@ class GameEngine {
     this.obstacles = [];            // Active hazards array (cassette tapes, TVs, spikes)
     this.points = [];               // Active floppys array (floppy disk score pickups)
     this.scenery = [];              // Side decorative elements (wireframe neon mountains)
+    this.particles = [];            // Active visual explosion particles
     
     // 5. Spawning Frequency Variables
     this.spawnTimer = 0;
@@ -282,12 +283,16 @@ class GameEngine {
       if (this.state !== 'PLAYING') return;
 
       if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        e.preventDefault();
         this.moveLane(-1);
       } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        e.preventDefault();
         this.moveLane(1);
       } else if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+        e.preventDefault();
         this.jump();
       } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+        e.preventDefault();
         this.bash();
       }
     });
@@ -342,16 +347,21 @@ class GameEngine {
   }
 
   /**
-   * bash - Triggers the Monster Truck forward bash attack.
+   * bash - Triggers the character special ability (Monster Truck Bash or Car Spin).
    */
   bash() {
     if (this.state !== 'PLAYING') return;
-    if (this.selectedCharacter !== 'monster_truck') return;
     if (this.bashCooldownTimer > 0) return;
 
-    this.bashTimer = 0.4;          // 0.4s active rush duration
-    this.bashCooldownTimer = 3.4;   // 3.4s total cooldown (3s after active rush ends)
-    audio.playBash();
+    if (this.selectedCharacter === 'monster_truck') {
+      this.bashTimer = 0.4;          // 0.4s active rush duration
+      this.bashCooldownTimer = 3.4;   // 3.4s total cooldown (3s after active rush ends)
+      audio.playBash();
+    } else if (this.selectedCharacter === 'car') {
+      this.bashTimer = 0.5;          // 0.5s active spin duration
+      this.bashCooldownTimer = 3.5;   // 3.5s total cooldown (3s after active spin ends)
+      audio.playSpin();
+    }
   }
 
   /**
@@ -360,6 +370,9 @@ class GameEngine {
   startGame() {
     // Activates Web Audio Context (mandatory on click event)
     audio.init();
+    
+    // Acquire focus on window for immediate keyboard controls responsiveness
+    window.focus();
 
     // Reset game counters
     this.score = 0;
@@ -395,13 +408,24 @@ class GameEngine {
     this.bashTimer = 0;
     this.bashCooldownTimer = 0;
 
-    // Toggle BASH UI indicators based on character selection
+    // Toggle BASH/SPIN UI indicators based on character selection
+    const hudLabel = document.querySelector('#hud-bash-container .label');
     if (this.selectedCharacter === 'monster_truck') {
       this.domBashContainer.classList.remove('hidden');
       this.domBashContainer.classList.remove('cooldown');
+      if (hudLabel) hudLabel.textContent = 'BASH';
       this.domBash.textContent = 'READY';
       this.btnTouchBash.classList.remove('hidden');
       this.btnTouchBash.classList.remove('cooldown');
+      this.btnTouchBash.textContent = 'BASH';
+    } else if (this.selectedCharacter === 'car') {
+      this.domBashContainer.classList.remove('hidden');
+      this.domBashContainer.classList.remove('cooldown');
+      if (hudLabel) hudLabel.textContent = 'SPIN';
+      this.domBash.textContent = 'READY';
+      this.btnTouchBash.classList.remove('hidden');
+      this.btnTouchBash.classList.remove('cooldown');
+      this.btnTouchBash.textContent = 'SPIN';
     } else {
       this.domBashContainer.classList.add('hidden');
       this.btnTouchBash.classList.add('hidden');
@@ -425,8 +449,12 @@ class GameEngine {
   clearObstaclesAndPoints() {
     this.obstacles.forEach(o => this.scene.remove(o));
     this.points.forEach(p => this.scene.remove(p));
+    if (this.particles) {
+      this.particles.forEach(p => this.scene.remove(p.mesh));
+    }
     this.obstacles = [];
     this.points = [];
+    this.particles = [];
   }
 
   /**
@@ -619,8 +647,8 @@ class GameEngine {
     this.domDistance.textContent = Math.floor(this.distance);
     this.domSpeed.textContent = Math.floor(this.speed * 4); // Virtual MPH
 
-    // Update BASH cooldowns and HUD if playing as monster truck
-    if (this.selectedCharacter === 'monster_truck') {
+    // Update BASH/SPIN cooldowns and HUD if playing as monster truck or sports car
+    if (this.selectedCharacter === 'monster_truck' || this.selectedCharacter === 'car') {
       if (this.bashCooldownTimer > 0) {
         this.bashCooldownTimer -= dt;
         if (this.bashCooldownTimer < 0) this.bashCooldownTimer = 0;
@@ -631,17 +659,18 @@ class GameEngine {
         if (this.bashTimer < 0) this.bashTimer = 0;
       }
 
-      // Sync BASH UI
+      const activeDuration = this.selectedCharacter === 'car' ? 0.5 : 0.4;
+      const activeText = this.selectedCharacter === 'car' ? 'SPINNING' : 'BASHING';
+
+      // Sync BASH/SPIN UI
       if (this.bashCooldownTimer > 0) {
-        // Show remaining cooldown (offset by bash duration so it says 3.0s, 2.9s... instead of starting at 3.4s)
-        const displayCooldown = Math.max(0, this.bashCooldownTimer - 0.4);
+        const displayCooldown = Math.max(0, this.bashCooldownTimer - activeDuration);
         if (displayCooldown > 0) {
           this.domBash.textContent = displayCooldown.toFixed(1) + 's';
           this.domBashContainer.classList.add('cooldown');
           this.btnTouchBash.classList.add('cooldown');
         } else {
-          // Inside the active bash duration, but cooldown is technically ticking down
-          this.domBash.textContent = 'BASHING';
+          this.domBash.textContent = activeText;
           this.domBashContainer.classList.add('cooldown');
           this.btnTouchBash.classList.add('cooldown');
         }
@@ -690,8 +719,20 @@ class GameEngine {
       // Parabolic surge forward
       const zOffset = -Math.sin(bashProgress * Math.PI) * 1.5;
       this.player.position.z = PLAYER_START_Z + zOffset;
+
+      // Nose-dive tilt down during surge (peaks at center of bash)
+      const tiltAngle = -Math.sin(bashProgress * Math.PI) * 0.18;
+      this.player.rotation.x = tiltAngle;
+    } else if (this.selectedCharacter === 'car' && this.bashTimer > 0) {
+      const spinProgress = this.bashTimer / 0.5; // goes from 1.0 down to 0.0
+      // Rotate 720 degrees (2 full spins) during the spin duration
+      this.player.rotation.y = spinProgress * Math.PI * 4;
+      this.player.position.z = PLAYER_START_Z;
+      this.player.rotation.x = 0;
     } else {
       this.player.position.z = PLAYER_START_Z;
+      this.player.rotation.x = 0;
+      this.player.rotation.y = 0;
     }
 
     // 7. Gravity physics calculation
@@ -757,6 +798,26 @@ class GameEngine {
       }
     }
 
+    // Update Voxel Explosion Particles
+    if (this.particles) {
+      for (let i = this.particles.length - 1; i >= 0; i--) {
+        const p = this.particles[i];
+        p.mesh.position.x += p.vx * dt;
+        p.mesh.position.y += p.vy * dt;
+        p.mesh.position.z += p.vz * dt;
+        p.vy += this.gravity * dt;
+        
+        p.life -= dt;
+        const scale = Math.max(0, p.life / p.maxLife);
+        p.mesh.scale.set(scale, scale, scale);
+        
+        if (p.life <= 0) {
+          this.scene.remove(p.mesh);
+          this.particles.splice(i, 1);
+        }
+      }
+    }
+
     // 11. Move and Collide Obstacles
     for (let i = this.obstacles.length - 1; i >= 0; i--) {
       const obs = this.obstacles[i];
@@ -773,6 +834,14 @@ class GameEngine {
         obs.rotation.y += obs.userData.rotY * dt;
         obs.rotation.z += obs.userData.rotZ * dt;
 
+        // Explode on ground impact (falling and Y <= 0)
+        if (obs.userData.velocityY < 0 && obs.position.y <= 0) {
+          this.explodeObstacle(obs);
+          this.scene.remove(obs);
+          this.obstacles.splice(i, 1);
+          continue;
+        }
+
         // Despawn if it falls far below screen or goes too far away
         if (obs.position.y < -15 || obs.position.z < -160 || obs.position.z > 30 || Math.abs(obs.position.x) > 40) {
           this.scene.remove(obs);
@@ -784,15 +853,52 @@ class GameEngine {
       obs.position.z += this.speed * dt;
       obs.rotation.y += dt; // Rotate object slightly
 
+      // Check Car Spin Proximity Fling
+      const isCarSpinning = (this.selectedCharacter === 'car' && this.bashTimer > 0);
+      if (isCarSpinning && !obs.userData.isKnockedOut) {
+        const dx = obs.position.x - this.player.position.x;
+        const dz = obs.position.z - PLAYER_START_Z;
+        const dist = Math.sqrt(dx * dx + dz * dz);
+        
+        if (dist < 2.8) {
+          obs.userData.isKnockedOut = true;
+          
+          // Target random highway lane
+          const targetLaneX = LANES[Math.floor(Math.random() * 3)];
+          const vy0 = Math.random() * 6 + 14;
+          obs.userData.velocityY = vy0;
+          
+          // Exact velocityX to land on targetLane
+          const tAir = vy0 / 12.5;
+          obs.userData.velocityX = (targetLaneX - obs.position.x) / tAir;
+          obs.userData.velocityZ = -(Math.random() * 12 + 18); // Fling forward
+          
+          obs.userData.rotX = (Math.random() - 0.5) * 15;
+          obs.userData.rotY = (Math.random() - 0.5) * 15;
+          obs.userData.rotZ = (Math.random() - 0.5) * 15;
+
+          audio.playHit();
+          this.cameraShakeTimer = 0.15;
+          this.score += 250 * this.multiplier;
+          continue;
+        }
+      }
+
       // Collide Check
       if (!this.isInvincible && this.checkCollision(this.player, obs, 0.7, 0.8)) {
         if (this.selectedCharacter === 'monster_truck' && this.bashTimer > 0) {
           // Knock out the obstacle!
           obs.userData.isKnockedOut = true;
-          // Fly off left or right randomly
-          obs.userData.velocityX = (Math.random() - 0.5) * 12;
-          // Fly up high
-          obs.userData.velocityY = Math.random() * 6 + 14;
+          
+          // Target one of the three highway lanes randomly
+          const targetLaneX = LANES[Math.floor(Math.random() * 3)];
+          const vy0 = Math.random() * 6 + 14;
+          obs.userData.velocityY = vy0;
+          
+          // Calculate exact velocityX to land on targetLaneX
+          const tAir = vy0 / 12.5; // (since gravity is -25, half gravity is 12.5)
+          obs.userData.velocityX = (targetLaneX - obs.position.x) / tAir;
+          
           // Fly forward (negative Z direction)
           obs.userData.velocityZ = -(Math.random() * 10 + 15);
           
@@ -826,11 +932,56 @@ class GameEngine {
     // 12. Move and Collide Floppy Disk items
     for (let i = this.points.length - 1; i >= 0; i--) {
       const point = this.points[i];
+
+      // If the point has been knocked out by explosion, update flight physics
+      if (point.userData.isKnockedOut) {
+        point.userData.velocityY += this.gravity * dt;
+        
+        point.position.x += point.userData.velocityX * dt;
+        point.position.y += point.userData.velocityY * dt;
+        point.position.z += point.userData.velocityZ * dt;
+        
+        point.rotation.x += point.userData.rotX * dt;
+        point.rotation.y += 5 * dt;
+
+        // Despawn check
+        if (point.position.y < -15 || point.position.z < -160 || point.position.z > 30 || Math.abs(point.position.x) > 40) {
+          this.scene.remove(point);
+          this.points.splice(i, 1);
+        }
+        continue;
+      }
+
       point.position.z += this.speed * dt;
       
       // Floating hover animations
       point.rotation.y += 3 * dt;
       point.position.y = 0.4 + Math.sin(time * 5 + i) * 0.15;
+
+      // Check Car Spin Proximity Fling for Floppy disks
+      const isCarSpinningProximity = (this.selectedCharacter === 'car' && this.bashTimer > 0);
+      if (isCarSpinningProximity && !point.userData.isKnockedOut) {
+        const dx = point.position.x - this.player.position.x;
+        const dz = point.position.z - PLAYER_START_Z;
+        const dist = Math.sqrt(dx * dx + dz * dz);
+        
+        if (dist < 2.8) {
+          point.userData.isKnockedOut = true;
+          
+          const targetLaneX = LANES[Math.floor(Math.random() * 3)];
+          const vy0 = Math.random() * 6 + 14;
+          point.userData.velocityY = vy0;
+          
+          const tAir = vy0 / 12.5;
+          point.userData.velocityX = (targetLaneX - point.position.x) / tAir;
+          point.userData.velocityZ = -(Math.random() * 12 + 18);
+          
+          point.userData.rotX = (Math.random() - 0.5) * 15;
+          point.userData.rotY = (Math.random() - 0.5) * 15;
+          point.userData.rotZ = (Math.random() - 0.5) * 15;
+          continue;
+        }
+      }
 
       // Collide Check
       if (this.checkCollision(this.player, point, 0.6, 0.8)) {
@@ -922,6 +1073,112 @@ class GameEngine {
 
     this.domMultiplier.textContent = `x${this.multiplier}`;
     this.domMultiplierContainer.classList.remove('hidden');
+  }
+
+  /**
+   * explodeObstacle - Triggers a visual voxel explosion and flings nearby obstacles/points.
+   * @param {THREE.Object3D} obs - The exploding obstacle
+   */
+  explodeObstacle(obs) {
+    const explX = obs.position.x;
+    const explY = 0;
+    const explZ = obs.position.z;
+
+    // Trigger visual/audio feedback
+    audio.playHit();
+    this.cameraShakeTimer = 0.2;
+
+    // Spawn voxel explosion particles
+    const particleCount = 16;
+    const colors = [0xff003c, 0xff5500, 0xffff00, 0xff007f];
+    for (let k = 0; k < particleCount; k++) {
+      const size = Math.random() * 0.15 + 0.1;
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      const geom = new THREE.BoxGeometry(size, size, size);
+      const mat = new THREE.MeshBasicMaterial({ color: color, fog: true });
+      const mesh = new THREE.Mesh(geom, mat);
+      
+      mesh.position.set(
+        explX + (Math.random() - 0.5) * 0.4,
+        explY + 0.1,
+        explZ + (Math.random() - 0.5) * 0.4
+      );
+      mesh.castShadow = true;
+      this.scene.add(mesh);
+
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 6 + 4;
+      this.particles.push({
+        mesh: mesh,
+        vx: Math.cos(angle) * speed,
+        vy: Math.random() * 9 + 7,
+        vz: Math.sin(angle) * speed,
+        life: 0.6,
+        maxLife: 0.6
+      });
+    }
+
+    // Fling nearby obstacles (chain reaction) - Expanded area to 6.0 units
+    const radius = 6.0;
+    for (let j = 0; j < this.obstacles.length; j++) {
+      const other = this.obstacles[j];
+      if (other === obs || other.userData.isKnockedOut) continue;
+
+      const dx = other.position.x - explX;
+      const dz = other.position.z - explZ;
+      const dist = Math.sqrt(dx * dx + dz * dz);
+      
+      if (dist < radius) {
+        other.userData.isKnockedOut = true;
+        const force = 12 + (radius - dist) * 3;
+        
+        // Target one of the three highway lanes randomly
+        const targetLaneX = LANES[Math.floor(Math.random() * 3)];
+        const vy0 = Math.random() * 5 + 12;
+        other.userData.velocityY = vy0;
+        
+        // Calculate exact velocityX to land on targetLaneX
+        const tAir = vy0 / 12.5;
+        other.userData.velocityX = (targetLaneX - other.position.x) / tAir;
+        other.userData.velocityZ = -(force + 8); // fling forward along the Z line (away from player)
+        
+        other.userData.rotX = (Math.random() - 0.5) * 15;
+        other.userData.rotY = (Math.random() - 0.5) * 15;
+        other.userData.rotZ = (Math.random() - 0.5) * 15;
+
+        // Reward extra points for chain reaction
+        this.score += 150 * this.multiplier;
+      }
+    }
+
+    // Fling nearby floppy points - Expanded area to 6.0 units
+    for (let j = 0; j < this.points.length; j++) {
+      const point = this.points[j];
+      if (point.userData.isKnockedOut) continue;
+
+      const dx = point.position.x - explX;
+      const dz = point.position.z - explZ;
+      const dist = Math.sqrt(dx * dx + dz * dz);
+      
+      if (dist < radius) {
+        point.userData.isKnockedOut = true;
+        const force = 12 + (radius - dist) * 3;
+        
+        // Target one of the three highway lanes randomly
+        const targetLaneX = LANES[Math.floor(Math.random() * 3)];
+        const vy0 = Math.random() * 5 + 14;
+        point.userData.velocityY = vy0;
+        
+        // Calculate exact velocityX to land on targetLaneX
+        const tAir = vy0 / 12.5;
+        point.userData.velocityX = (targetLaneX - point.position.x) / tAir;
+        point.userData.velocityZ = -(force + 8); // fling forward along the Z line (away from player)
+        
+        point.userData.rotX = (Math.random() - 0.5) * 15;
+        point.userData.rotY = (Math.random() - 0.5) * 15;
+        point.userData.rotZ = (Math.random() - 0.5) * 15;
+      }
+    }
   }
 }
 

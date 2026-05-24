@@ -6,16 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.3.0] - 2026-05-24
+
+### Added
+- **Sports Car Spin Proximity Fling Ability**:
+  - Added ability to spin-screech when playing as the Sports Car by pressing **Down Arrow** or **S** (or clicking the new mobile **SPIN** button).
+  - Programmed active spin state lasting 0.5 seconds that rotates the vehicle 720 degrees around its Y-axis, keeping the Z-coordinate constant.
+  - Programmed proximity-based fling mechanics: detecting obstacles and floppy disk points within a `2.8` units radius.
+  - Flung items are propelled in parabolic arcs and land exactly on one of the three drivable highway lanes ($X \in [-2.0, 0.0, 2.0]$) using exact air-time landing trajectories.
+  - Synthesized high-pitched, squealing tire screech procedural sweep sound effect `playSpin()`.
+
 ## [1.2.0] - 2026-05-24
 
 ### Added
 - **Monster Truck Forward Bash Attack**:
   - Added ability to bash forward when playing as the Monster Truck by pressing **Down Arrow** or **S** (or clicking the new mobile **BASH** button).
-  - Programmed active bash state lasting 0.4 seconds that accelerates the vehicle forward in space and spins tires at triple speed.
+  - Programmed active bash state lasting 0.4 seconds that accelerates the vehicle forward in space, spins tires at triple speed, and nose-dives the vehicle cabin downward by 0.18 rad for visual impact.
   - Added a 3-second recharge cooldown, displaying numerical timers or "READY" in a dedicated neon-green HUD module.
   - Synthesized a low-pitched, growling engine revving sawtooth procedural sound effect `playBash()`.
-- **Obstacle Launch Physics**:
-  - Engineered physics-based parabolic knock-out arcs for slammed obstacles. Obstacles are assigned random lateral, vertical, and forward launch velocities, tumbling off-screen under gravity deceleration instead of dealing damage.
+  - Added `e.preventDefault()` to key handlers (Arrow keys and Space) and automatic window focus upon starting the run to ensure smooth, uninterrupted keyboard input.
+- **Obstacle Launch & Explode Physics**:
+  - Engineered physics-based parabolic knock-out arcs for slammed obstacles. Trajectories are mathematically calculated to land exactly on one of the three drivable highway lanes ($X = -2.0, 0, 2.0$) by solving the exact air-time equation ($t_{\text{air}} = V_{y0} / 12.5$) and scaling horizontal velocity ($V_{x0} = \Delta X / t_{\text{air}}$). This ensures thrown obstacles and points remain within bounds where the player can reach/interact with them.
+  - Programmed ground impact explosions: when a flung obstacle lands back on the ground, it explodes into colorful voxel shrapnel particles (increased particle count to 16).
+  - Implemented chain reaction blastwaves: expanded the blast radius to **6.0 units**, flinging any active obstacles or floppy disk points within range.
+  - Constrained blast propagation: flung items are propelled forward along their target highway lanes, propagating linear cascading chain reactions down the lanes.
 - **High-Visibility Hazard Obstacles**:
   - Redesigned obstacle voxel materials in `src/voxels.js` with glowing emissive characteristics: spikes are fluorescent crimson red, CRT TVs feature a safety neon orange casing and bright yellow static screen, and cassettes have vibrant neon yellow casing with hot pink spools.
 

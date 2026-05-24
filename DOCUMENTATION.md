@@ -71,13 +71,26 @@ graph TD
   - Triggered via keyboard `ArrowDown` / `S` or the mobile `#touch-bash` button.
   - Active rush duration is 0.4 seconds, with a 3.0 seconds cooldown (total cooldown 3.4 seconds).
   - During active bash, the vehicle surges forward by 1.5 units using a parabolic equation: $Z_{offset} = -1.5 \sin(\text{bashProgress} \cdot \pi)$, and wheels spin at triple speed.
+  - The front cabin of the truck tilts/nose-dives downward during the active surge (rotation on X axis: $X_{rot} = -0.18 \sin(\text{bashProgress} \cdot \pi)$) for visual weight.
   - Colliding with an obstacle during a bash marks it as knocked out (`obs.userData.isKnockedOut = true`), awards 250 points multiplied by the current score multiplier, shakes the camera slightly (150ms), and applies 3D parabolic physics flight.
-- **Obstacle Launch Physics**:
+- **Sports Car Spin Attack**:
+  - Triggered via keyboard `ArrowDown` / `S` or the mobile `#touch-bash` button (dynamic text labels switch to "SPIN" when the Sports Car is active).
+  - Active spin duration is 0.5 seconds, with a 3.0 seconds cooldown (total cooldown 3.5 seconds).
+  - During active spin, the sports car spins rapidly 720 degrees around its Y-axis (`rotation.y` sweeps from $4\pi$ to $0$), while remaining in place on the Z-axis.
+  - Proximity check is applied inside the game loop to detect obstacles and floppy disk points within a radius of **2.8 units** of the car.
+  - Any nearby items within this radius are automatically marked as knocked out (`isKnockedOut = true`), play a hit sound, shake the camera (150ms), award score (250 points * multiplier), and get launched back exactly on one of the three highway lanes using parabolic physics.
+- **Obstacle Launch & Explode Physics**:
   - Knocked-out obstacles are updated with gravity ($a_y = -25$ m/s$^2$) and high speed velocities:
-    - $V_x = \text{random}(-6, 6)$ m/s
+    - **Target Lane Landing**: To ensure flung items land strictly in one of the three drivable highway lanes, we choose a target lane coordinate $X_{\text{target}} \in [-2.0, 0, 2.0]$ and calculate the horizontal velocity $V_{x0}$ dynamically.
+    - **Air Time Formula**: Solving $Y(t) = 0$ for gravity $g = -25$ yields the total air time: $t_{\text{air}} = V_{y0} / 12.5$ seconds.
+    - **Horizontal Speed**: Horizontal speed is scaled exactly: $V_{x0} = (X_{\text{target}} - X_{\text{start}}) / t_{\text{air}}$, guaranteeing the object lands on the lane centerline.
     - $V_y = \text{random}(14, 20)$ m/s
     - $V_z = \text{random}(-15, -25)$ m/s (propelled forward away from the player)
     - Rotational angular velocities about all 3 axes are randomized to simulate realistic tumble.
+  - **Ground Impact Explosion**: When a flying obstacle descends ($V_y < 0$) and touches the ground level ($Y \le 0$), it is removed from the scene and triggers an explosion.
+  - **Voxel Particles**: Ground impact spawns 16 small retro-colored voxel cubes that fly outwards with random velocities and shrink over a 0.6s lifetime.
+  - **Chain Reaction Blastwave**: The ground impact flings any other active obstacles or floppy disk points within an expanded radius of **6.0 units**.
+  - **Linear Propagation**: Flipped items are propelled forward along their target highway lanes ($X_{\text{target}} \in [-2.0, 0, 2.0]$ using the same air-time formulas) to maintain lane alignment and propagate linear cascading chain reactions down the lanes ("in the line").
 - **Infinite Grid Scrolling**: Two adjacent 100m road grid meshes scroll back relative to speed. When a grid passes the viewport, its offset loops forward by 200m.
 - **Collisions**: Calculated via bounding distances inside `checkCollision()`. Calibrates center height offset and tolerance thresholds dynamically based on chosen vehicle size.
 

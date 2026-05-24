@@ -330,6 +330,33 @@ class WebAudioSynth {
   }
 
   /**
+   * SFX: playSpin - A high-pitched squealing oscillator sweep to simulate a car spinning tires/screeching.
+   */
+  playSpin() {
+    this.init();
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    const now = this.ctx.currentTime;
+
+    const osc = this.ctx.createOscillator();
+    const gainNode = this.ctx.createGain();
+
+    osc.type = 'triangle';
+    // Screeching sweep from 400Hz up to 1200Hz and back to 300Hz in 0.35s
+    osc.frequency.setValueAtTime(400, now);
+    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.15);
+    osc.frequency.exponentialRampToValueAtTime(300, now + 0.35);
+
+    gainNode.gain.setValueAtTime(0.12, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+    osc.connect(gainNode);
+    gainNode.connect(this.ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.35);
+  }
+
+  /**
    * SFX: playGameOver - Loops off music and schedules a sad minor chord arpeggio descent.
    */
   playGameOver() {

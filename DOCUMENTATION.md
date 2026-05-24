@@ -60,6 +60,7 @@ graph TD
   - **Points**: Floppy disk.
 
 ### `src/game.js` (Core Game Controller)
+- **Vehicle Orientation**: All player vehicle meshes are rotated $180^\circ$ on their Y-axis by default to face away from the camera (towards the sunset). Spin animations and bash nose-dive tilt offsets are mathematically calibrated to respect this reversed heading.
 - **Lane Interpolation**: Player lateral lane swaps are calculated using linear interpolation (`THREE.MathUtils.lerp`) toward targeted coordinates.
 - **Jump Physics**: Simple vector calculus updates player coordinates:
   - Jump trigger sets upward velocity: $V_y = 10$ m/s.

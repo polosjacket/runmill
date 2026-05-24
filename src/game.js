@@ -731,19 +731,20 @@ class GameEngine {
       const zOffset = -Math.sin(bashProgress * Math.PI) * 1.5;
       this.player.position.z = PLAYER_START_Z + zOffset;
 
-      // Nose-dive tilt down during surge (peaks at center of bash)
-      const tiltAngle = -Math.sin(bashProgress * Math.PI) * 0.18;
+      // Nose-dive tilt down during surge (peaks at center of bash, positive tilt when facing -Z)
+      const tiltAngle = Math.sin(bashProgress * Math.PI) * 0.18;
       this.player.rotation.x = tiltAngle;
+      this.player.rotation.y = Math.PI; // Maintain facing away
     } else if (this.selectedCharacter === 'car' && this.bashTimer > 0) {
       const spinProgress = this.bashTimer / 0.5; // goes from 1.0 down to 0.0
-      // Rotate 720 degrees (2 full spins) during the spin duration
-      this.player.rotation.y = spinProgress * Math.PI * 4;
+      // Rotate 720 degrees (2 full spins) during the spin duration, starting and ending facing away (Math.PI)
+      this.player.rotation.y = Math.PI + spinProgress * Math.PI * 4;
       this.player.position.z = PLAYER_START_Z;
       this.player.rotation.x = 0;
     } else {
       this.player.position.z = PLAYER_START_Z;
       this.player.rotation.x = 0;
-      this.player.rotation.y = 0;
+      this.player.rotation.y = Math.PI; // Default to facing away from camera (towards the sunset)
     }
 
     // 7. Gravity physics calculation

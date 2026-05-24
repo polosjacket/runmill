@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.4.1] - 2026-05-24
+
+### Changed
+- **Vehicle Orientation**:
+  - Reoriented all player vehicle models to face away from the camera ($180^\circ$ Y-rotation) by default, showing the back of the car (spoiler), monster truck (cargo bed), and cargo trailer to the player.
+  - Adjusted sports car spin animation offsets to maintain the default away-facing state upon completing the spin sequence.
+  - Inverted monster truck forward bash nose-dive tilt calculations to align with the new facing orientation.
+
 ## [1.4.0] - 2026-05-24
 
 ### Added

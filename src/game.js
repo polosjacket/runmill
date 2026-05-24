@@ -467,6 +467,9 @@ class GameEngine {
       });
       
       this.domHighScoreForm.classList.add('hidden');
+      this.domGameOverScreen.classList.add('hidden');
+      this.domStartScreen.classList.remove('hidden');
+      this.state = 'START';
       this.fetchLeaderboard(); // Refresh scores list
     } catch (e) {
       console.error(e);

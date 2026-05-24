@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.1.1] - 2026-05-24
+
+### Changed
+- **UI UX Improvement**:
+  - Configured the game to automatically transition back to the Start Menu (main screen) upon uploading a high score, allowing the user to select vehicles and see the refreshed leaderboard immediately.
+
+---
+
 ## [1.1.0] - 2026-05-23
 
 ### Added

@@ -306,7 +306,12 @@ class GameEngine {
 
     // Menu overlays
     this.btnStart.addEventListener('click', () => this.startGame());
-    this.btnRestart.addEventListener('click', () => this.startGame());
+    this.btnRestart.addEventListener('click', () => {
+      this.domGameOverScreen.classList.add('hidden');
+      this.domStartScreen.classList.remove('hidden');
+      this.state = 'START';
+      this.fetchLeaderboard();
+    });
     this.btnSubmitScore.addEventListener('click', () => this.submitHighScore());
   }
 

@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.1.2] - 2026-05-24
+
+### Fixed
+- **Menu Navigation**:
+  - Changed the "REBOOT RUN" button behavior (and renamed it to "REBOOT MENU") on the Game Over screen to transition back to the main Start Menu, rather than forcing an immediate run restart. This allows users to change character vehicles or view scores between runs.
+
+---
+
 ## [1.1.1] - 2026-05-24
 
 ### Changed

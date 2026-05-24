@@ -197,6 +197,47 @@ body {
   box-shadow: 0 0 10px rgba(255, 246, 0, 0.2);
 }
 
+.color-select-section {
+  margin-top: 20px;
+}
+
+.color-select-section h3 {
+  font-family: var(--font-pixel);
+  font-size: 0.75rem;
+  color: var(--text-color);
+  margin-bottom: 8px;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+}
+
+.color-grid {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+}
+
+.color-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+  padding: 0;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.color-btn:hover {
+  transform: translateY(-2px) scale(1.1);
+}
+
+.color-btn.active {
+  border-color: #ffffff;
+  transform: scale(1.25);
+  box-shadow: 0 0 16px currentColor, inset 0 0 0 2px rgba(255, 255, 255, 0.6);
+}
+
 /* Buttons */
 .retro-btn {
   font-family: var(--font-pixel);

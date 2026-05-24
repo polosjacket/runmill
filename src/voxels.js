@@ -248,7 +248,24 @@ export function createSpringModel() {
  * @param {string} type - 'car', 'monster_truck', or 'truck'
  * @returns {THREE.Group} - The complete vehicle assembly containing a spring underneath
  */
-export function createVehicleModel(type) {
+const colorMap = {
+  pink: 0xff007f,
+  cyan: 0x00f0ff,
+  green: 0x39ff14,
+  yellow: 0xfff600,
+  purple: 0xbd00ff
+};
+
+export function createVehicleModel(type, colorNameOrHex) {
+  let bodyColor = null;
+  if (colorNameOrHex !== undefined) {
+    if (typeof colorNameOrHex === 'string' && colorMap[colorNameOrHex] !== undefined) {
+      bodyColor = colorMap[colorNameOrHex];
+    } else if (typeof colorNameOrHex === 'number') {
+      bodyColor = colorNameOrHex;
+    }
+  }
+
   const group = new THREE.Group();
   const wheels = [];
 
@@ -259,7 +276,7 @@ export function createVehicleModel(type) {
 
   if (type === 'car') {
     // 1. Sleek Retro Sports Car (Yellow/gold body, pink spoiler)
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xfff600, flatShading: true });
+    const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor !== null ? bodyColor : 0xfff600, flatShading: true });
     const spoilerMat = new THREE.MeshStandardMaterial({ color: 0xff007f, flatShading: true });
 
     // Chassis Base
@@ -312,7 +329,7 @@ export function createVehicleModel(type) {
 
   } else if (type === 'monster_truck') {
     // 2. Monster Truck (Purple body, high pink shock struts, giant cyan wheels)
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xbd00ff, flatShading: true });
+    const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor !== null ? bodyColor : 0xbd00ff, flatShading: true });
     const suspensionMat = new THREE.MeshStandardMaterial({ color: 0xff007f, flatShading: true });
     const giantHubMat = new THREE.MeshStandardMaterial({ color: 0x00f0ff, flatShading: true });
 
@@ -373,7 +390,7 @@ export function createVehicleModel(type) {
 
   } else {
     // 3. Cargo Truck (Cyan cabin cab, grey trailer back, 6 wheels)
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x00f0ff, flatShading: true });
+    const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor !== null ? bodyColor : 0x00f0ff, flatShading: true });
     const cargoMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, flatShading: true });
 
     // Cab

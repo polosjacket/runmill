@@ -34,6 +34,7 @@ class GameEngine {
     this.multiplier = 1;            // Floyd disk collection score multiplier
     this.multiplierTimer = 0;       // Expiry countdown for active score multiplier
     this.selectedCharacter = 'car';  // Selected vehicle ('car', 'monster_truck', 'truck')
+    this.selectedColor = 'pink';     // Selected vehicle color
     this.bashTimer = 0;
     this.bashCooldownTimer = 0;
 
@@ -317,6 +318,16 @@ class GameEngine {
       });
     });
 
+    // Color selection buttons
+    this.domColorButtons = document.querySelectorAll('.color-btn');
+    this.domColorButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.domColorButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.selectedColor = btn.getAttribute('data-color');
+      });
+    });
+
     // Menu overlays
     this.btnStart.addEventListener('click', () => this.startGame());
     this.btnRestart.addEventListener('click', () => {
@@ -393,7 +404,7 @@ class GameEngine {
 
     // Spawn player mesh
     if (this.player) this.scene.remove(this.player);
-    this.player = createVehicleModel(this.selectedCharacter);
+    this.player = createVehicleModel(this.selectedCharacter, this.selectedColor);
     this.player.position.set(0, 0, PLAYER_START_Z);
     this.scene.add(this.player);
 

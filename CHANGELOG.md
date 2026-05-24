@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.4.0] - 2026-05-24
+
+### Added
+- **Vehicle Color Customization**:
+  - Added a retro color selection panel to the Start Menu containing five neon color options: Pink (`#ff007f`), Cyan (`#00f0ff`), Green (`#39ff14`), Yellow (`#fff600`), and Purple (`#bd00ff`).
+  - Added styling rules and subtle glowing hover states for circular color swatches in `style.css`.
+  - Upgraded vehicle model generator in `src/voxels.js` to accept a custom color parameter and dynamically assign it to the vehicle chassis (sports car, monster truck, and cargo truck).
+  - Wired event handlers in `src/game.js` to set the active color and pass it to the spawning logic.
+
 ## [1.3.0] - 2026-05-24
 
 ### Added

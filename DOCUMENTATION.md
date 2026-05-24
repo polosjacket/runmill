@@ -48,6 +48,7 @@ graph TD
 - Builds low-poly meshes out of combined `THREE.BoxGeometry` pieces.
 - **Rigged pivots**: Exposes wheels arrays and spring submeshes (via `userData`) to animators.
 - **Models**:
+  - **Color Customization**: The vehicle model instantiator (`createVehicleModel(type, colorNameOrHex)`) accepts a custom color string (`'pink'`, `'cyan'`, `'green'`, `'yellow'`, `'purple'`) or numeric hex, applying it dynamically to the primary chassis materials.
   - **Car**: Sleek sports vehicle with active spoilers and compact tires.
   - **Monster Truck**: Elevated chassis with shock absorber struts and giant wheels.
   - **Truck**: Semi-cab delivery vehicle with a large cargo trailer and 6 wheels.

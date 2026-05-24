@@ -14,7 +14,7 @@
 
 ## 🎮 How to Play
 
-1. **Launch Program**: Select your vehicle from the Start Menu and click **RUN PROGRAM** (or press Space/Enter).
+1. **Launch Program**: Select your vehicle and customization color from the Start Menu, then click **RUN PROGRAM** (or press Space/Enter).
 2. **Move Lanes**: Press `←` / `A` to move left, and `→` / `D` to move right.
 3. **Jump**: Press `SPACE` / `W` / `↑` to jump over low-lying obstacles.
 4. **Special Ability**: Press `↓` / `S` to trigger your vehicle's custom weapon/attack (when ready).
@@ -22,9 +22,14 @@
 
 ---
 
-## 🚗 Choose Your Vehicle
+## 🚗 Choose Your Vehicle & Color
 
-Each vehicle features its own procedural voxel geometry, custom dimensions, rigid physics bounding box, and special characteristics:
+Each vehicle features its own procedural voxel geometry, custom dimensions, rigid physics bounding box, and special characteristics. You can also customize your vehicle's primary chassis color using the retro color selector on the Start Menu:
+- **Neon Pink** (`#ff007f`)
+- **Neon Cyan** (`#00f0ff`)
+- **Neon Green** (`#39ff14`)
+- **Neon Yellow** (`#fff600`)
+- **Neon Purple** (`#bd00ff`)
 
 | Vehicle | Speed | HP | Special Ability | Description |
 | :--- | :---: | :---: | :--- | :--- |

@@ -34,6 +34,8 @@ class GameEngine {
     this.multiplier = 1;            // Floyd disk collection score multiplier
     this.multiplierTimer = 0;       // Expiry countdown for active score multiplier
     this.selectedCharacter = 'car';  // Selected vehicle ('car', 'monster_truck', 'truck')
+    this.bashTimer = 0;
+    this.bashCooldownTimer = 0;
 
     // 3. Player Movement & Physics
     this.currentLane = 1;           // Starting lane index (Middle)
@@ -67,6 +69,8 @@ class GameEngine {
     this.domLives = document.getElementById('hud-lives');
     this.domMultiplierContainer = document.getElementById('hud-multiplier-container');
     this.domMultiplier = document.getElementById('hud-multiplier');
+    this.domBashContainer = document.getElementById('hud-bash-container');
+    this.domBash = document.getElementById('hud-bash');
     this.domFinalScore = document.getElementById('final-score');
     this.domFinalDistance = document.getElementById('final-distance');
     this.domHighScoreForm = document.getElementById('high-score-form');
@@ -77,6 +81,7 @@ class GameEngine {
     this.btnStart = document.getElementById('start-btn');
     this.btnRestart = document.getElementById('restart-btn');
     this.btnSubmitScore = document.getElementById('submit-score-btn');
+    this.btnTouchBash = document.getElementById('touch-bash');
 
     // 8. Core Initialization Steps
     this.initThree();
@@ -282,6 +287,8 @@ class GameEngine {
         this.moveLane(1);
       } else if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
         this.jump();
+      } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+        this.bash();
       }
     });
 
@@ -293,6 +300,7 @@ class GameEngine {
     touchLeft.addEventListener('pointerdown', () => this.moveLane(-1));
     touchRight.addEventListener('pointerdown', () => this.moveLane(1));
     touchJump.addEventListener('pointerdown', () => this.jump());
+    this.btnTouchBash.addEventListener('pointerdown', () => this.bash());
 
     // Character selection buttons
     this.domCharButtons = document.querySelectorAll('.char-btn');
@@ -334,6 +342,19 @@ class GameEngine {
   }
 
   /**
+   * bash - Triggers the Monster Truck forward bash attack.
+   */
+  bash() {
+    if (this.state !== 'PLAYING') return;
+    if (this.selectedCharacter !== 'monster_truck') return;
+    if (this.bashCooldownTimer > 0) return;
+
+    this.bashTimer = 0.4;          // 0.4s active rush duration
+    this.bashCooldownTimer = 3.4;   // 3.4s total cooldown (3s after active rush ends)
+    audio.playBash();
+  }
+
+  /**
    * startGame - Resets variables and turns on active running states.
    */
   startGame() {
@@ -369,6 +390,22 @@ class GameEngine {
     this.domDistance.textContent = '0';
     this.domSpeed.textContent = '0';
     this.domMultiplierContainer.classList.add('hidden');
+
+    // Reset BASH state
+    this.bashTimer = 0;
+    this.bashCooldownTimer = 0;
+
+    // Toggle BASH UI indicators based on character selection
+    if (this.selectedCharacter === 'monster_truck') {
+      this.domBashContainer.classList.remove('hidden');
+      this.domBashContainer.classList.remove('cooldown');
+      this.domBash.textContent = 'READY';
+      this.btnTouchBash.classList.remove('hidden');
+      this.btnTouchBash.classList.remove('cooldown');
+    } else {
+      this.domBashContainer.classList.add('hidden');
+      this.btnTouchBash.classList.add('hidden');
+    }
 
     // Toggle screen classes
     this.domStartScreen.classList.add('hidden');
@@ -582,6 +619,39 @@ class GameEngine {
     this.domDistance.textContent = Math.floor(this.distance);
     this.domSpeed.textContent = Math.floor(this.speed * 4); // Virtual MPH
 
+    // Update BASH cooldowns and HUD if playing as monster truck
+    if (this.selectedCharacter === 'monster_truck') {
+      if (this.bashCooldownTimer > 0) {
+        this.bashCooldownTimer -= dt;
+        if (this.bashCooldownTimer < 0) this.bashCooldownTimer = 0;
+      }
+      
+      if (this.bashTimer > 0) {
+        this.bashTimer -= dt;
+        if (this.bashTimer < 0) this.bashTimer = 0;
+      }
+
+      // Sync BASH UI
+      if (this.bashCooldownTimer > 0) {
+        // Show remaining cooldown (offset by bash duration so it says 3.0s, 2.9s... instead of starting at 3.4s)
+        const displayCooldown = Math.max(0, this.bashCooldownTimer - 0.4);
+        if (displayCooldown > 0) {
+          this.domBash.textContent = displayCooldown.toFixed(1) + 's';
+          this.domBashContainer.classList.add('cooldown');
+          this.btnTouchBash.classList.add('cooldown');
+        } else {
+          // Inside the active bash duration, but cooldown is technically ticking down
+          this.domBash.textContent = 'BASHING';
+          this.domBashContainer.classList.add('cooldown');
+          this.btnTouchBash.classList.add('cooldown');
+        }
+      } else {
+        this.domBash.textContent = 'READY';
+        this.domBashContainer.classList.remove('cooldown');
+        this.btnTouchBash.classList.remove('cooldown');
+      }
+    }
+
     // 2. Loop & scroll grid lines
     this.roadGrid1.position.z += this.speed * dt;
     this.roadGrid2.position.z += this.speed * dt;
@@ -614,6 +684,16 @@ class GameEngine {
     // 6. Lerp player X coordinate toward target lane coordinate (smooth lane changes)
     this.player.position.x = THREE.MathUtils.lerp(this.player.position.x, this.targetX, 15 * dt);
 
+    // Surge player Z position forward if bashing
+    if (this.selectedCharacter === 'monster_truck' && this.bashTimer > 0) {
+      const bashProgress = this.bashTimer / 0.4; // goes from 1.0 down to 0.0
+      // Parabolic surge forward
+      const zOffset = -Math.sin(bashProgress * Math.PI) * 1.5;
+      this.player.position.z = PLAYER_START_Z + zOffset;
+    } else {
+      this.player.position.z = PLAYER_START_Z;
+    }
+
     // 7. Gravity physics calculation
     if (this.isJumping) {
       this.playerVelocityY += this.gravity * dt;
@@ -634,7 +714,8 @@ class GameEngine {
       // A. Wheels Spin
       const wheels = vehicleData.wheels;
       if (wheels && wheels.length > 0) {
-        const spinSpeed = this.speed * 1.5;
+        const isBashing = (this.selectedCharacter === 'monster_truck' && this.bashTimer > 0);
+        const spinSpeed = this.speed * 1.5 * (isBashing ? 3 : 1);
         wheels.forEach(wheel => {
           wheel.rotation.x += spinSpeed * dt;
         });
@@ -679,14 +760,59 @@ class GameEngine {
     // 11. Move and Collide Obstacles
     for (let i = this.obstacles.length - 1; i >= 0; i--) {
       const obs = this.obstacles[i];
+
+      // If the obstacle has been knocked out, update its flight physics
+      if (obs.userData.isKnockedOut) {
+        obs.userData.velocityY += this.gravity * dt;
+        
+        obs.position.x += obs.userData.velocityX * dt;
+        obs.position.y += obs.userData.velocityY * dt;
+        obs.position.z += obs.userData.velocityZ * dt;
+        
+        obs.rotation.x += obs.userData.rotX * dt;
+        obs.rotation.y += obs.userData.rotY * dt;
+        obs.rotation.z += obs.userData.rotZ * dt;
+
+        // Despawn if it falls far below screen or goes too far away
+        if (obs.position.y < -15 || obs.position.z < -160 || obs.position.z > 30 || Math.abs(obs.position.x) > 40) {
+          this.scene.remove(obs);
+          this.obstacles.splice(i, 1);
+        }
+        continue;
+      }
+
       obs.position.z += this.speed * dt;
       obs.rotation.y += dt; // Rotate object slightly
 
       // Collide Check
       if (!this.isInvincible && this.checkCollision(this.player, obs, 0.7, 0.8)) {
-        this.handleHit();
-        this.scene.remove(obs);
-        this.obstacles.splice(i, 1);
+        if (this.selectedCharacter === 'monster_truck' && this.bashTimer > 0) {
+          // Knock out the obstacle!
+          obs.userData.isKnockedOut = true;
+          // Fly off left or right randomly
+          obs.userData.velocityX = (Math.random() - 0.5) * 12;
+          // Fly up high
+          obs.userData.velocityY = Math.random() * 6 + 14;
+          // Fly forward (negative Z direction)
+          obs.userData.velocityZ = -(Math.random() * 10 + 15);
+          
+          obs.userData.rotX = (Math.random() - 0.5) * 15;
+          obs.userData.rotY = (Math.random() - 0.5) * 15;
+          obs.userData.rotZ = (Math.random() - 0.5) * 15;
+
+          // Sound effect
+          audio.playHit();
+          
+          // Tiny camera shake
+          this.cameraShakeTimer = 0.15;
+          
+          // Add extra score for bashing!
+          this.score += 250 * this.multiplier;
+        } else {
+          this.handleHit();
+          this.scene.remove(obs);
+          this.obstacles.splice(i, 1);
+        }
         continue;
       }
 

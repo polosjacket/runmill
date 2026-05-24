@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.2.0] - 2026-05-24
+
+### Added
+- **Monster Truck Forward Bash Attack**:
+  - Added ability to bash forward when playing as the Monster Truck by pressing **Down Arrow** or **S** (or clicking the new mobile **BASH** button).
+  - Programmed active bash state lasting 0.4 seconds that accelerates the vehicle forward in space and spins tires at triple speed.
+  - Added a 3-second recharge cooldown, displaying numerical timers or "READY" in a dedicated neon-green HUD module.
+  - Synthesized a low-pitched, growling engine revving sawtooth procedural sound effect `playBash()`.
+- **Obstacle Launch Physics**:
+  - Engineered physics-based parabolic knock-out arcs for slammed obstacles. Obstacles are assigned random lateral, vertical, and forward launch velocities, tumbling off-screen under gravity deceleration instead of dealing damage.
+- **High-Visibility Hazard Obstacles**:
+  - Redesigned obstacle voxel materials in `src/voxels.js` with glowing emissive characteristics: spikes are fluorescent crimson red, CRT TVs feature a safety neon orange casing and bright yellow static screen, and cassettes have vibrant neon yellow casing with hot pink spools.
+
+---
+
 ## [1.1.2] - 2026-05-24
 
 ### Fixed

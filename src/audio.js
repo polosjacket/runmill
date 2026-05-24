@@ -295,6 +295,41 @@ class WebAudioSynth {
   }
 
   /**
+   * SFX: playBash - A low-pitched rising-and-falling growling sawtooth sweep to simulate a powerful truck engine revving/bashing forward.
+   */
+  playBash() {
+    this.init();
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    const now = this.ctx.currentTime;
+    
+    const osc = this.ctx.createOscillator();
+    const gainNode = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+
+    osc.type = 'sawtooth';
+    // Start at a low rumble (65Hz), rev up to 260Hz, then slide down to 45Hz
+    osc.frequency.setValueAtTime(65, now);
+    osc.frequency.exponentialRampToValueAtTime(260, now + 0.15);
+    osc.frequency.exponentialRampToValueAtTime(45, now + 0.4);
+
+    gainNode.gain.setValueAtTime(0.2, now);
+    gainNode.gain.linearRampToValueAtTime(0.3, now + 0.1);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(300, now);
+    filter.frequency.exponentialRampToValueAtTime(1000, now + 0.15);
+    filter.frequency.exponentialRampToValueAtTime(150, now + 0.4);
+
+    osc.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(this.ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.4);
+  }
+
+  /**
    * SFX: playGameOver - Loops off music and schedules a sad minor chord arpeggio descent.
    */
   playGameOver() {

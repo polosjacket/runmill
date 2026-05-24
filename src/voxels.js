@@ -131,8 +131,9 @@ export function createObstacleModel(type) {
 
   if (type === 'tv') {
     // CRT TV set built of casing, glowing screen, knobs, and antenna wireframes
-    const boxMat = new THREE.MeshStandardMaterial({ color: 0x3a3a3a, flatShading: true });
-    const screenMat = new THREE.MeshStandardMaterial({ color: 0xff007f, emissive: 0xff007f, emissiveIntensity: 0.5, flatShading: true }); // Pink screen glow
+    // Upgraded to safety neon orange and glowing yellow for maximum visibility
+    const boxMat = new THREE.MeshStandardMaterial({ color: 0xff5500, emissive: 0x772200, flatShading: true });
+    const screenMat = new THREE.MeshStandardMaterial({ color: 0xffff00, emissive: 0xffff00, emissiveIntensity: 0.9, flatShading: true }); // Bright yellow screen glow
     const knobMat = new THREE.MeshStandardMaterial({ color: 0x111111, flatShading: true });
     const antennaMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9, flatShading: true });
 
@@ -167,10 +168,10 @@ export function createObstacleModel(type) {
     tvBody.add(ant2);
 
   } else if (type === 'cassette') {
-    // Retro music cassette tape built of main tape body, paper label, and rotating spool holes
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x1e1e1e, flatShading: true });
+    // Retro music cassette tape upgraded to glowing neon yellow and hot pink hubs
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xfff600, emissive: 0x555500, flatShading: true });
     const labelMat = new THREE.MeshStandardMaterial({ color: 0xfffff0, flatShading: true });
-    const spoolMat = new THREE.MeshStandardMaterial({ color: 0xfff600, flatShading: true }); // Yellow center hubs
+    const spoolMat = new THREE.MeshStandardMaterial({ color: 0xff007f, emissive: 0xff007f, emissiveIntensity: 0.5, flatShading: true }); // Pink hubs
 
     // Cassette shell casing
     const body = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.8, 0.18), bodyMat);
@@ -192,8 +193,8 @@ export function createObstacleModel(type) {
     body.add(spoolL, spoolR);
 
   } else {
-    // Spikes (Default hazard): A glowing purple 4-sided pyramid cone
-    const spikeMat = new THREE.MeshStandardMaterial({ color: 0xbd00ff, emissive: 0xbd00ff, emissiveIntensity: 0.2, flatShading: true });
+    // Spikes: Upgraded from purple to a highly visible glowing red pyramid
+    const spikeMat = new THREE.MeshStandardMaterial({ color: 0xff003c, emissive: 0xff003c, emissiveIntensity: 0.9, flatShading: true });
     
     // Cone geometry with 4 radial segments generates a perfectly pixelated pyramid
     const spike = new THREE.Mesh(new THREE.ConeGeometry(0.6, 1.0, 4), spikeMat);

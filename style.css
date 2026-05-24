@@ -6,6 +6,8 @@
   --neon-cyan-dim: #009099;
   --neon-yellow: #fff600;
   --neon-purple: #bd00ff;
+  --neon-green: #39ff14;
+  --neon-green-dim: #1db200;
   --text-color: #f1e4ff;
   --font-pixel: 'Press Start 2P', monospace;
   --font-mono: 'Share Tech Mono', monospace;
@@ -399,6 +401,24 @@ body {
   text-shadow: 0 0 3px var(--neon-purple);
 }
 
+.hud-item.neon-green {
+  border-color: var(--neon-green);
+  box-shadow: 0 0 5px rgba(57, 255, 20, 0.3);
+}
+.hud-item.neon-green .value {
+  color: var(--neon-green);
+  text-shadow: 0 0 3px var(--neon-green);
+}
+
+.hud-item.neon-green.cooldown {
+  border-color: var(--neon-pink);
+  box-shadow: 0 0 5px rgba(255, 0, 127, 0.3);
+}
+.hud-item.neon-green.cooldown .value {
+  color: var(--neon-pink);
+  text-shadow: 0 0 3px var(--neon-pink);
+}
+
 /* HP Hearts */
 .lives-container {
   display: flex;
@@ -526,6 +546,27 @@ body {
   background: var(--neon-pink);
   color: #000;
   box-shadow: 0 0 20px var(--neon-pink);
+}
+
+#touch-bash {
+  font-size: 0.9rem;
+  border-color: var(--neon-green);
+  color: var(--neon-green);
+  box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+}
+
+#touch-bash:active {
+  background: var(--neon-green);
+  color: #000;
+  box-shadow: 0 0 20px var(--neon-green);
+}
+
+#touch-bash.cooldown {
+  border-color: #555;
+  color: #555;
+  box-shadow: none;
+  background: rgba(0, 0, 0, 0.4);
+  pointer-events: none;
 }
 
 /* Animations */

@@ -41,6 +41,7 @@ graph TD
   - **Jump**: Quick sweep up (150Hz -> 600Hz triangle).
   - **Collect**: Arpeggiated square chords (C5 -> E5 -> G5 -> C6).
   - **Hit**: Pitch slide down (180Hz -> 30Hz sawtooth) combined with a temporary white noise buffer burst.
+  - **Bash**: Low-pitched rising-and-falling growling sawtooth sweep (65Hz -> 260Hz -> 45Hz) with a sweeping low-pass filter (300Hz -> 1000Hz -> 150Hz) and exponential decay.
   - **Game Over**: Decrescendo minor sweep (G5 -> Eb5 -> C5 -> G4).
 
 ### `src/voxels.js` (Asset Factory)
@@ -51,7 +52,10 @@ graph TD
   - **Monster Truck**: Elevated chassis with shock absorber struts and giant wheels.
   - **Truck**: Semi-cab delivery vehicle with a large cargo trailer and 6 wheels.
   - **Spring**: Interleaved stacked coil segments designed to scale on jumps.
-  - **Obstacles**: CRT TVs, cassette tapes, spikes.
+  - **Obstacles**: High-visibility safety hazard styling:
+    - **Spikes**: Fluorescent glowing red (`0xff003c`) with emissive intensity `0.9` to stand out against the horizon.
+    - **CRT TVs**: Safety neon orange casing (`0xff5500`) with glowing yellow screen (`0xffff00`, emissive intensity `0.9`).
+    - **Cassette Tapes**: Vibrant neon yellow casing (`0xfff600`) with hot pink spools (`0xff007f`, emissive intensity `0.5`).
   - **Points**: Floppy disk.
 
 ### `src/game.js` (Core Game Controller)
@@ -61,8 +65,19 @@ graph TD
   - Gravity exerts a constant downward force: $a_y = -25$ m/s$^2$.
 - **Dynamic Wheels Spin**: Rotates tires around the X-axis based on current speed.
 - **Spring-Jump Mechanics**: Scales spring length dynamically:
-  - During jump: stretches spring down to $y = 0$ by setting scale $S = (playerY + springY) / 0.6$.
-  - On landing: compresses scale back to $0$ inside the chassis.
+    - During jump: stretches spring down to $y = 0$ by setting scale $S = (playerY + springY) / 0.6$.
+    - On landing: compresses scale back to $0$ inside the chassis.
+- **Monster Truck Forward Bash Attack**:
+  - Triggered via keyboard `ArrowDown` / `S` or the mobile `#touch-bash` button.
+  - Active rush duration is 0.4 seconds, with a 3.0 seconds cooldown (total cooldown 3.4 seconds).
+  - During active bash, the vehicle surges forward by 1.5 units using a parabolic equation: $Z_{offset} = -1.5 \sin(\text{bashProgress} \cdot \pi)$, and wheels spin at triple speed.
+  - Colliding with an obstacle during a bash marks it as knocked out (`obs.userData.isKnockedOut = true`), awards 250 points multiplied by the current score multiplier, shakes the camera slightly (150ms), and applies 3D parabolic physics flight.
+- **Obstacle Launch Physics**:
+  - Knocked-out obstacles are updated with gravity ($a_y = -25$ m/s$^2$) and high speed velocities:
+    - $V_x = \text{random}(-6, 6)$ m/s
+    - $V_y = \text{random}(14, 20)$ m/s
+    - $V_z = \text{random}(-15, -25)$ m/s (propelled forward away from the player)
+    - Rotational angular velocities about all 3 axes are randomized to simulate realistic tumble.
 - **Infinite Grid Scrolling**: Two adjacent 100m road grid meshes scroll back relative to speed. When a grid passes the viewport, its offset loops forward by 200m.
 - **Collisions**: Calculated via bounding distances inside `checkCollision()`. Calibrates center height offset and tolerance thresholds dynamically based on chosen vehicle size.
 

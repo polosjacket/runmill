@@ -122,6 +122,41 @@ export function createFloppyDiskModel() {
 }
 
 /**
+ * createHeartItemModel - Constructs a 3D pixelated heart item for health recovery.
+ */
+export function createHeartItemModel() {
+  const group = new THREE.Group();
+  
+  // Vibrant neon pink/red material with emissive glow
+  const heartMat = new THREE.MeshStandardMaterial({ 
+    color: 0xff0055, 
+    emissive: 0xff0055, 
+    emissiveIntensity: 0.8, 
+    flatShading: true 
+  });
+  
+  const vSize = 0.12;
+  // 5x5 retro heart coordinates layout
+  const voxels = [
+    [-1, 2], [1, 2],
+    [-2, 1], [-1, 1], [0, 1], [1, 1], [2, 1],
+    [-2, 0], [-1, 0], [0, 0], [1, 0], [2, 0],
+    [-1, -1], [0, -1], [1, -1],
+    [0, -2]
+  ];
+  
+  voxels.forEach(([vx, vy]) => {
+    const box = new THREE.Mesh(new THREE.BoxGeometry(vSize, vSize, vSize * 1.5), heartMat);
+    box.position.set(vx * vSize, vy * vSize, 0);
+    box.castShadow = true;
+    group.add(box);
+  });
+  
+  return group;
+}
+
+
+/**
  * createObstacleModel - Procedurally structures obstacle objects based on type.
  * 
  * @param {string} type - 'tv' (CRT TV set), 'cassette' (Cassette Tape), or 'spike' (default pyramid)

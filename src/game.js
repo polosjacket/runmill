@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createVehicleModel, createFloppyDiskModel, createObstacleModel } from './voxels.js';
+import { createVehicleModel, createFloppyDiskModel, createHeartItemModel, createObstacleModel } from './voxels.js';
 import { audio } from './audio.js';
 
 // Game Configuration Constants

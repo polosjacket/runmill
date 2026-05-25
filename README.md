@@ -50,6 +50,7 @@ Each vehicle features its own procedural voxel geometry, custom dimensions, rigi
   - **pyramid Spikes** (neon fluorescent crimson red)
   - **CRT TVs** (neon orange frame with yellow static screen)
   - **Cassette Tapes** (neon yellow case with hot pink spools)
+  - **Shield Barriers** (neon cyan plate with hot pink cross-bars; immune to spins, bashes, and explosions, requiring you to jump or steer around them)
 - Hitting an obstacle reduces your HP hearts and triggers temporary invincibility frames. Reaching 0 HP terminates the run.
 
 ### 3. Lane Landing Physics Trajectories

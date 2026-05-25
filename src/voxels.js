@@ -192,6 +192,55 @@ export function createObstacleModel(type) {
     spoolR.position.set(0.28, 0.05, 0);
     body.add(spoolL, spoolR);
 
+  } else if (type === 'shield') {
+    // Cyber blue energy shield barrier (un-bashable, un-spinnable)
+    const metalMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.8, roughness: 0.2, flatShading: true });
+    const shieldMat = new THREE.MeshStandardMaterial({
+      color: 0x00f0ff,
+      emissive: 0x00f0ff,
+      emissiveIntensity: 0.9,
+      transparent: true,
+      opacity: 0.7,
+      flatShading: true
+    });
+    const gridMat = new THREE.MeshStandardMaterial({
+      color: 0xff00ff,
+      emissive: 0xff00ff,
+      emissiveIntensity: 0.6,
+      flatShading: true
+    });
+
+    // Base feet
+    const base = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.15, 0.4), metalMat);
+    base.position.y = 0.075;
+    base.castShadow = true;
+    base.receiveShadow = true;
+    group.add(base);
+
+    // Energy Shield Screen
+    const screen = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.1, 0.08), shieldMat);
+    screen.position.y = 0.7;
+    screen.castShadow = true;
+    group.add(screen);
+
+    // Outer framing struts
+    const frameL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.25, 0.1), metalMat);
+    frameL.position.set(-0.65, 0.625, 0);
+    const frameR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.25, 0.1), metalMat);
+    frameR.position.set(0.65, 0.625, 0);
+    const frameTop = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.1, 0.1), metalMat);
+    frameTop.position.set(0, 1.2, 0);
+    group.add(frameL, frameR, frameTop);
+
+    // Glowing neon cross bars representing grid
+    const barH = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.06, 0.12), gridMat);
+    barH.position.set(0, 0.7, 0);
+    const barV1 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.0, 0.12), gridMat);
+    barV1.position.set(-0.3, 0.7, 0);
+    const barV2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.0, 0.12), gridMat);
+    barV2.position.set(0.3, 0.7, 0);
+    group.add(barH, barV1, barV2);
+
   } else {
     // Spikes: Upgraded from purple to a highly visible glowing red pyramid
     const spikeMat = new THREE.MeshStandardMaterial({ color: 0xff003c, emissive: 0xff003c, emissiveIntensity: 0.9, flatShading: true });

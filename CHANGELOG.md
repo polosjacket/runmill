@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.5.1] - 2026-05-25
+
+### Changed
+- **Vehicle Starting Health Adjustments**:
+  - Modified player starting health points based on the selected vehicle: Sports Car retains 3 HP, Monster Truck starts with 4 HP (up from 3), and Delivery Truck starts with 6 HP (up from 3).
+  - Dynamically generate heart elements in the top HUD corner to support varying player health pools.
+
+## [1.5.0] - 2026-05-24
+
+### Added
+- **Shield Energy Barrier Obstacle**:
+  - Implemented a new `'shield'` obstacle type that represents an energy barrier (glowing cyan shield plate, metallic base framing, and hot pink grid bars).
+  - Shields must be avoided by changing lanes or jumped over using spring jump physics.
+  - Made shields completely immune to player special abilities: they cannot be flung by Sports Car Spins or knocked out by Monster Truck Bashes. Colliding with them under any state deals damage normally.
+  - Excluded shields from explosion blastwaves: they remain standing on the highway grid and cannot be chain-flung by neighboring obstacle detonations.
+
 ## [1.4.1] - 2026-05-24
 
 ### Changed

@@ -49,14 +49,15 @@ graph TD
 - **Rigged pivots**: Exposes wheels arrays and spring submeshes (via `userData`) to animators.
 - **Models**:
   - **Color Customization**: The vehicle model instantiator (`createVehicleModel(type, colorNameOrHex)`) accepts a custom color string (`'pink'`, `'cyan'`, `'green'`, `'yellow'`, `'purple'`) or numeric hex, applying it dynamically to the primary chassis materials.
-  - **Car**: Sleek sports vehicle with active spoilers and compact tires.
-  - **Monster Truck**: Elevated chassis with shock absorber struts and giant wheels.
-  - **Truck**: Semi-cab delivery vehicle with a large cargo trailer and 6 wheels.
+  - **Car**: Sleek sports vehicle with active spoilers and compact tires (3 HP).
+  - **Monster Truck**: Elevated chassis with shock absorber struts and giant wheels (4 HP).
+  - **Truck**: Semi-cab delivery vehicle with a large cargo trailer and 6 wheels (6 HP).
   - **Spring**: Interleaved stacked coil segments designed to scale on jumps.
   - **Obstacles**: High-visibility safety hazard styling:
     - **Spikes**: Fluorescent glowing red (`0xff003c`) with emissive intensity `0.9` to stand out against the horizon.
     - **CRT TVs**: Safety neon orange casing (`0xff5500`) with glowing yellow screen (`0xffff00`, emissive intensity `0.9`).
     - **Cassette Tapes**: Vibrant neon yellow casing (`0xfff600`) with hot pink spools (`0xff007f`, emissive intensity `0.5`).
+    - **Shield**: Neon cyan energy barrier grid (`0x00f0ff` with `0xff00ff` cross-bars and `0x333333` feet). Completely indestructible (immune to Bashes, Spins, and neighboring explosions), requiring players to jump or dodge.
   - **Points**: Floppy disk.
 
 ### `src/game.js` (Core Game Controller)

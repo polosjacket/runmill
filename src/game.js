@@ -28,6 +28,7 @@ class GameEngine {
     this.speed = 15;                // Current scroll speed (meters per second)
     this.maxSpeed = 45;             // Speed cap to keep the game playable
     this.lives = 3;                 // Player health points
+    this.maxLives = 3;              // Maximum health points
     this.isInvincible = false;      // Flag tracking if player is in recovery after a hit
     this.invincibilityTimer = 0;    // Time remaining for recovery flashing
     this.cameraShakeTimer = 0;      // Time remaining for crash impact camera shake
@@ -389,7 +390,14 @@ class GameEngine {
     this.score = 0;
     this.distance = 0;
     this.speed = 18;
-    this.lives = 3;
+    let startLives = 3;
+    if (this.selectedCharacter === 'monster_truck') {
+      startLives = 4;
+    } else if (this.selectedCharacter === 'truck') {
+      startLives = 6;
+    }
+    this.lives = startLives;
+    this.maxLives = startLives;
     this.isInvincible = false;
     this.currentLane = 1;
     this.targetX = 0;
@@ -492,14 +500,15 @@ class GameEngine {
    * updateHudLives - Updates active heart indicators in the top HUD corner.
    */
   updateHudLives() {
-    const hearts = this.domLives.querySelectorAll('.heart');
-    hearts.forEach((heart, idx) => {
-      if (idx < this.lives) {
+    this.domLives.innerHTML = '';
+    for (let i = 0; i < this.maxLives; i++) {
+      const heart = document.createElement('div');
+      heart.className = 'heart';
+      if (i < this.lives) {
         heart.classList.add('active');
-      } else {
-        heart.classList.remove('active');
       }
-    });
+      this.domLives.appendChild(heart);
+    }
   }
 
   /**
@@ -575,10 +584,14 @@ class GameEngine {
       this.scene.add(floppy);
       this.points.push(floppy);
     } else {
-      // Spawn standard obstacle block
-      const types = ['cassette', 'tv', 'spike'];
+      // Spawn standard obstacle block (include shield)
+      const types = ['cassette', 'tv', 'spike', 'shield'];
       const chosenType = types[Math.floor(Math.random() * types.length)];
       const obs = createObstacleModel(chosenType);
+      obs.userData = { 
+        type: chosenType, 
+        isKnockedOut: false 
+      };
       obs.position.set(laneX, 0, SPAWN_START_Z);
       this.scene.add(obs);
       this.obstacles.push(obs);
@@ -863,11 +876,14 @@ class GameEngine {
       }
 
       obs.position.z += this.speed * dt;
-      obs.rotation.y += dt; // Rotate object slightly
+      // Do not rotate shields (they should stay flat-aligned to the highway)
+      if (obs.userData && obs.userData.type !== 'shield') {
+        obs.rotation.y += dt;
+      }
 
-      // Check Car Spin Proximity Fling
+      // Check Car Spin Proximity Fling (shield is immune and cannot be flung)
       const isCarSpinning = (this.selectedCharacter === 'car' && this.bashTimer > 0);
-      if (isCarSpinning && !obs.userData.isKnockedOut) {
+      if (isCarSpinning && !obs.userData.isKnockedOut && obs.userData.type !== 'shield') {
         const dx = obs.position.x - this.player.position.x;
         const dz = obs.position.z - PLAYER_START_Z;
         const dist = Math.sqrt(dx * dx + dz * dz);
@@ -898,7 +914,8 @@ class GameEngine {
 
       // Collide Check
       if (!this.isInvincible && this.checkCollision(this.player, obs, 0.7, 0.8)) {
-        if (this.selectedCharacter === 'monster_truck' && this.bashTimer > 0) {
+        // Monster Truck Bash can knock out items except shields (you must jump or avoid shields)
+        if (this.selectedCharacter === 'monster_truck' && this.bashTimer > 0 && obs.userData.type !== 'shield') {
           // Knock out the obstacle!
           obs.userData.isKnockedOut = true;
           
@@ -1134,7 +1151,8 @@ class GameEngine {
     const radius = 6.0;
     for (let j = 0; j < this.obstacles.length; j++) {
       const other = this.obstacles[j];
-      if (other === obs || other.userData.isKnockedOut) continue;
+      // Shields are immune to blastwave flinging
+      if (other === obs || other.userData.isKnockedOut || other.userData.type === 'shield') continue;
 
       const dx = other.position.x - explX;
       const dz = other.position.z - explZ;

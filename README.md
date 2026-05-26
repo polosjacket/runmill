@@ -43,6 +43,7 @@ Each vehicle features its own procedural voxel geometry, custom dimensions, rigi
 
 ### 1. Collect Points & Build Multipliers
 - Collect **Floppy Disks** (glowing retro disks) to gain score points and increase your **score multiplier**.
+- Collect **Hearts** (glowing retro 3D hearts) to restore lost health (HP) up to your vehicle's maximum health pool.
 - Multipliers decay over time, so keep collecting to maintain high scoring rates.
 
 ### 2. Avoid Hazards

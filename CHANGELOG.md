@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.6.1] - 2026-05-25
+
+### Changed
+- **Lighter and Shinier Color Aesthetics**:
+  - Calibrated all voxel models (player runner, custom vehicle selections, points, heart items, and hazards) to use lighter, glowing pastel-neon color palettes.
+  - Added self-illuminating emissive channels and reflective metallic properties to all standard meshes to make models shine from within.
+  - Shifted the sky background and depth fog to a lighter, glowing cyber-indigo hue (`0x19082b`).
+  - Lighter electric cyan (`0x80f7ff`) applied to scrolling grid helpers and side mountains, with wireframe mountains' emissive intensity raised to `1.2` for laser-like brightness.
+  - Boosted light intensities further: Ambient Light to `2.6` (color `0x8833ff`), Directional Sun to `3.2` (color `0xff4da6`), and front player spotlight to `4.5` (color `0x80f7ff`).
+
+## [1.6.0] - 2026-05-25
+
+### Added
+- **Health-Restoring Item (Hearts)**:
+  - Spawns retro pixelated heart items with a 15% probability in place of floppy disks.
+  - Hearts can be flung by abilities (Sports Car Spin, Monster Truck Bash, shockwaves) just like floppy disks.
+  - Collecting a heart plays a rising chime synth effect and restores 1 HP up to the vehicle's maximum health pool.
+- **Neon Cyan Grid and Scenery Lines**:
+  - Modified infinite highway road grid center and side lines to neon cyan (`0x00f0ff`).
+  - Modified wireframe mountains to neon cyan (`0x00f0ff`) with a glowing emissive intensity of `0.5` to make them pop.
+- **Enhanced Scene Brightness**:
+  - Upgraded the 3D scene lighting parameters to brighten the view.
+  - Increased `AmbientLight` intensity from 1.2 to 2.2 with a brighter purple color (`0x6a00b8`).
+  - Increased directional sun light intensity from 1.5 to 2.8.
+  - Increased front cyan spotlight intensity from 2.0 to 4.0 and range to 40.
+
 ## [1.5.1] - 2026-05-25
 
 ### Changed

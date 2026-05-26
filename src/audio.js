@@ -357,6 +357,20 @@ class WebAudioSynth {
   }
 
   /**
+   * SFX: playHeartCollect - Triggers a high-pitched healing chime sweep (E5 -> A5 -> E6).
+   */
+  playHeartCollect() {
+    this.init();
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    const now = this.ctx.currentTime;
+    
+    // Healing chime sweep (E5 -> A5 -> E6) using a triangle wave (for a warm bell-like chime)
+    this.playSynth(this.mtof(76), now, 0.15, 'triangle', 0.08);       // E5
+    this.playSynth(this.mtof(81), now + 0.1, 0.15, 'triangle', 0.08);  // A5
+    this.playSynth(this.mtof(88), now + 0.2, 0.3, 'triangle', 0.08);   // E6
+  }
+
+  /**
    * SFX: playGameOver - Loops off music and schedules a sad minor chord arpeggio descent.
    */
   playGameOver() {

@@ -107,10 +107,10 @@ class GameEngine {
 
     // Initialize Scene
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0b0214); // Deep space purple backdrop
+    this.scene.background = new THREE.Color(0x19082b); // Lighter glowing cyber-indigo sky backdrop
     
     // Exponential fog mimics retro screen depth, fading meshes into the background color
-    this.scene.fog = new THREE.FogExp2(0x0b0214, 0.015);
+    this.scene.fog = new THREE.FogExp2(0x19082b, 0.015);
 
     // Set up Perspective Camera (Viewing the player from slightly behind and above)
     this.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
@@ -145,12 +145,12 @@ class GameEngine {
    * setupLighting - Configures lighting rig for standard voxel shadows and highlighting.
    */
   setupLighting() {
-    // 1. Neon purple ambient fill light
-    const ambientLight = new THREE.AmbientLight(0x3a0066, 1.2);
+    // 1. Neon purple ambient fill light (lighter and more vibrant base color to shine)
+    const ambientLight = new THREE.AmbientLight(0x8833ff, 2.6);
     this.scene.add(ambientLight);
 
-    // 2. Directional Cyber Sun light (casts depth shadows towards the front of screen)
-    const dirLight = new THREE.DirectionalLight(0xff007f, 1.5);
+    // 2. Directional Cyber Sun light (lighter neon pink)
+    const dirLight = new THREE.DirectionalLight(0xff4da6, 3.2);
     dirLight.position.set(0, 15, -60);
     dirLight.castShadow = true;
     dirLight.shadow.mapSize.width = 1024;
@@ -163,8 +163,8 @@ class GameEngine {
     dirLight.shadow.camera.bottom = -5;
     this.scene.add(dirLight);
 
-    // 3. Neon cyan point light centered on player to emphasize retro character details
-    const frontLight = new THREE.PointLight(0x00f0ff, 2.0, 30);
+    // 3. Neon cyan point light centered on player (lighter neon cyan spotlight to shine like light)
+    const frontLight = new THREE.PointLight(0x80f7ff, 4.5, 45);
     frontLight.position.set(0, 5, PLAYER_START_Z + 2);
     this.scene.add(frontLight);
   }
@@ -178,11 +178,12 @@ class GameEngine {
     
     // We add two adjacent 100m GridHelpers.
     // As one moves past the screen, we scroll both backward and reset positions to form an infinite road loop.
-    this.roadGrid1 = new THREE.GridHelper(size, divisions, 0x00f0ff, 0xff007f);
+    // Both center and grid lines are set to a lighter, glowing electric cyan.
+    this.roadGrid1 = new THREE.GridHelper(size, divisions, 0x80f7ff, 0x80f7ff);
     this.roadGrid1.position.set(0, 0, 0);
     this.scene.add(this.roadGrid1);
 
-    this.roadGrid2 = new THREE.GridHelper(size, divisions, 0x00f0ff, 0xff007f);
+    this.roadGrid2 = new THREE.GridHelper(size, divisions, 0x80f7ff, 0x80f7ff);
     this.roadGrid2.position.set(0, 0, -size);
     this.scene.add(this.roadGrid2);
 
@@ -263,9 +264,11 @@ class GameEngine {
     const width = Math.random() * 4 + 4;
     const geom = new THREE.ConeGeometry(width, height, 4);
     
-    // Wireframe purple mesh for retro 3D computer graphics styling
+    // Wireframe lighter cyan mesh with double emissive intensity to shine like bright laser light beams
     const mat = new THREE.MeshStandardMaterial({
-      color: 0xbd00ff,
+      color: 0x80f7ff,
+      emissive: 0x80f7ff,
+      emissiveIntensity: 1.2,
       wireframe: true,
       flatShading: true
     });
@@ -578,11 +581,27 @@ class GameEngine {
     const laneX = LANES[lane];
 
     if (rand < 0.35) {
-      // Spawn floppy disk point pickup
-      const floppy = createFloppyDiskModel();
-      floppy.position.set(laneX, 0.4, SPAWN_START_Z);
-      this.scene.add(floppy);
-      this.points.push(floppy);
+      // Spawn floppy disk point pickup or health recovery heart
+      const isHeart = Math.random() < 0.15; // 15% chance to spawn a heart instead of a floppy disk
+      if (isHeart) {
+        const heart = createHeartItemModel();
+        heart.position.set(laneX, 0.45, SPAWN_START_Z);
+        heart.userData = {
+          type: 'heart',
+          isKnockedOut: false
+        };
+        this.scene.add(heart);
+        this.points.push(heart);
+      } else {
+        const floppy = createFloppyDiskModel();
+        floppy.position.set(laneX, 0.4, SPAWN_START_Z);
+        floppy.userData = {
+          type: 'floppy',
+          isKnockedOut: false
+        };
+        this.scene.add(floppy);
+        this.points.push(floppy);
+      }
     } else {
       // Spawn standard obstacle block (include shield)
       const types = ['cassette', 'tv', 'spike', 'shield'];
@@ -1014,7 +1033,11 @@ class GameEngine {
 
       // Collide Check
       if (this.checkCollision(this.player, point, 0.6, 0.8)) {
-        this.handleCollect();
+        if (point.userData && point.userData.type === 'heart') {
+          this.handleHeartCollect();
+        } else {
+          this.handleCollect();
+        }
         this.scene.remove(point);
         this.points.splice(i, 1);
         continue;
@@ -1102,6 +1125,22 @@ class GameEngine {
 
     this.domMultiplier.textContent = `x${this.multiplier}`;
     this.domMultiplierContainer.classList.remove('hidden');
+  }
+
+  /**
+   * handleHeartCollect - Handles heart recovery item accumulation.
+   */
+  handleHeartCollect() {
+    audio.playHeartCollect();
+    
+    // Restore health if not already full
+    if (this.lives < this.maxLives) {
+      this.lives = Math.min(this.maxLives, this.lives + 1);
+      this.updateHudLives();
+    }
+    
+    // Give a flat score reward for collecting it
+    this.score += 200 * this.multiplier;
   }
 
   /**

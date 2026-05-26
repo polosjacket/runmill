@@ -40,6 +40,7 @@ graph TD
 - **SFX sweeps**:
   - **Jump**: Quick sweep up (150Hz -> 600Hz triangle).
   - **Collect**: Arpeggiated square chords (C5 -> E5 -> G5 -> C6).
+  - **Heart Collect**: Ascending chime sweep (E5 -> A5 -> E6 triangle) representing health restoration.
   - **Hit**: Pitch slide down (180Hz -> 30Hz sawtooth) combined with a temporary white noise buffer burst.
   - **Bash**: Low-pitched rising-and-falling growling sawtooth sweep (65Hz -> 260Hz -> 45Hz) with a sweeping low-pass filter (300Hz -> 1000Hz -> 150Hz) and exponential decay.
   - **Game Over**: Decrescendo minor sweep (G5 -> Eb5 -> C5 -> G4).
@@ -58,6 +59,7 @@ graph TD
     - **CRT TVs**: Safety neon orange casing (`0xff5500`) with glowing yellow screen (`0xffff00`, emissive intensity `0.9`).
     - **Cassette Tapes**: Vibrant neon yellow casing (`0xfff600`) with hot pink spools (`0xff007f`, emissive intensity `0.5`).
     - **Shield**: Neon cyan energy barrier grid (`0x00f0ff` with `0xff00ff` cross-bars and `0x333333` feet). Completely indestructible (immune to Bashes, Spins, and neighboring explosions), requiring players to jump or dodge.
+    - **Hearts (Health Recovery)**: Pixelated 3D heart items built using a 5x5 heart voxel pattern in pink/red (`0xff0055`) with high emissive glow (`emissiveIntensity: 0.8`).
   - **Points**: Floppy disk.
 
 ### `src/game.js` (Core Game Controller)
@@ -94,7 +96,9 @@ graph TD
   - **Voxel Particles**: Ground impact spawns 16 small retro-colored voxel cubes that fly outwards with random velocities and shrink over a 0.6s lifetime.
   - **Chain Reaction Blastwave**: The ground impact flings any other active obstacles or floppy disk points within an expanded radius of **6.0 units**.
   - **Linear Propagation**: Flipped items are propelled forward along their target highway lanes ($X_{\text{target}} \in [-2.0, 0, 2.0]$ using the same air-time formulas) to maintain lane alignment and propagate linear cascading chain reactions down the lanes ("in the line").
-- **Infinite Grid Scrolling**: Two adjacent 100m road grid meshes scroll back relative to speed. When a grid passes the viewport, its offset loops forward by 200m.
+- **Infinite Grid Scrolling**: Two adjacent 100m road grid meshes scroll back relative to speed. When a grid passes the viewport, its offset loops forward by 200m. Center and grid lines are colored neon cyan (`0x00f0ff`).
+- **Wireframe Mountains**: Roadside low-poly mountain cones are rendered as neon cyan (`0x00f0ff`) wireframes with glowing emissive intensity of `0.5` to blend into the horizon.
+- **Scene Brightness**: Ambient light (`0x6a00b8` at 2.2 intensity), directional cyber sun (`0xff007f` at 2.8 intensity), and player cyan spotlight (`0x00f0ff` at 4.0 intensity, 40 range) are boosted to create a highly vibrant, bright neon world.
 - **Collisions**: Calculated via bounding distances inside `checkCollision()`. Calibrates center height offset and tolerance thresholds dynamically based on chosen vehicle size.
 
 ---

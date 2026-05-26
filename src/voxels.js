@@ -16,10 +16,38 @@ export function createPlayerModel() {
   const group = new THREE.Group();
   
   // Materials configured with flatShading: true to force solid retro flat voxel faces
-  const bodyMat = new THREE.MeshStandardMaterial({ color: 0xff007f, flatShading: true }); // Neon Pink Torso
-  const limbMat = new THREE.MeshStandardMaterial({ color: 0x00f0ff, flatShading: true }); // Neon Cyan limbs
-  const headMat = new THREE.MeshStandardMaterial({ color: 0x111111, flatShading: true }); // Dark Helmet casing
-  const visorMat = new THREE.MeshStandardMaterial({ color: 0xfff600, emissive: 0xfff600, flatShading: true }); // Yellow visor
+  // Materials configured with flatShading: true to force solid retro flat voxel faces
+  // Added emissive properties and reduced roughness to make them shine like light
+  const bodyMat = new THREE.MeshStandardMaterial({ 
+    color: 0xff66cc, // Lighter neon pink
+    emissive: 0xff66cc, 
+    emissiveIntensity: 0.35, 
+    roughness: 0.15, 
+    metalness: 0.3,
+    flatShading: true 
+  }); 
+  const limbMat = new THREE.MeshStandardMaterial({ 
+    color: 0x80f7ff, // Lighter neon cyan
+    emissive: 0x80f7ff, 
+    emissiveIntensity: 0.35, 
+    roughness: 0.15, 
+    metalness: 0.3,
+    flatShading: true 
+  }); 
+  const headMat = new THREE.MeshStandardMaterial({ 
+    color: 0x1a1a2e, // Lighter helmet casing
+    emissive: 0x1a1a2e, 
+    emissiveIntensity: 0.15, 
+    roughness: 0.1, 
+    metalness: 0.8, 
+    flatShading: true 
+  }); 
+  const visorMat = new THREE.MeshStandardMaterial({ 
+    color: 0xfffa66, // Lighter neon yellow
+    emissive: 0xfffa66, 
+    emissiveIntensity: 1.3, 
+    flatShading: true 
+  });
 
   // Torso (Main container for child body parts)
   const torso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.0, 0.5), bodyMat);
@@ -98,10 +126,29 @@ export function createPlayerModel() {
 export function createFloppyDiskModel() {
   const group = new THREE.Group();
   
-  // Materials
-  const casingMat = new THREE.MeshStandardMaterial({ color: 0x00f0ff, flatShading: true }); // Cyan shell
-  const labelMat = new THREE.MeshStandardMaterial({ color: 0xffffff, flatShading: true }); // White sticker
-  const sliderMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.8, roughness: 0.2, flatShading: true }); // Metallic shutter
+  // Materials with lighter shades and emissive glow to shine like light
+  const casingMat = new THREE.MeshStandardMaterial({ 
+    color: 0x80f7ff, // Lighter cyan
+    emissive: 0x80f7ff, 
+    emissiveIntensity: 0.4, 
+    roughness: 0.15, 
+    flatShading: true 
+  }); 
+  const labelMat = new THREE.MeshStandardMaterial({ 
+    color: 0xffffff, 
+    emissive: 0xffffff, 
+    emissiveIntensity: 0.25, 
+    roughness: 0.15, 
+    flatShading: true 
+  }); 
+  const sliderMat = new THREE.MeshStandardMaterial({ 
+    color: 0xaaaaaa, // Lighter metallic shutter
+    emissive: 0x333333,
+    emissiveIntensity: 0.2,
+    metalness: 0.95, 
+    roughness: 0.05, 
+    flatShading: true 
+  });
   
   // Floppy main body
   const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.08), casingMat);
@@ -127,11 +174,12 @@ export function createFloppyDiskModel() {
 export function createHeartItemModel() {
   const group = new THREE.Group();
   
-  // Vibrant neon pink/red material with emissive glow
+  // Vibrant neon pink/red material with lighter colors and higher emissive glow to shine like light
   const heartMat = new THREE.MeshStandardMaterial({ 
-    color: 0xff0055, 
-    emissive: 0xff0055, 
-    emissiveIntensity: 0.8, 
+    color: 0xff4da6, // Lighter pink
+    emissive: 0xff4da6, 
+    emissiveIntensity: 1.3, 
+    roughness: 0.1, 
     flatShading: true 
   });
   
@@ -167,10 +215,21 @@ export function createObstacleModel(type) {
   if (type === 'tv') {
     // CRT TV set built of casing, glowing screen, knobs, and antenna wireframes
     // Upgraded to safety neon orange and glowing yellow for maximum visibility
-    const boxMat = new THREE.MeshStandardMaterial({ color: 0xff5500, emissive: 0x772200, flatShading: true });
-    const screenMat = new THREE.MeshStandardMaterial({ color: 0xffff00, emissive: 0xffff00, emissiveIntensity: 0.9, flatShading: true }); // Bright yellow screen glow
-    const knobMat = new THREE.MeshStandardMaterial({ color: 0x111111, flatShading: true });
-    const antennaMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9, flatShading: true });
+    const boxMat = new THREE.MeshStandardMaterial({ 
+      color: 0xff7733, // Lighter orange
+      emissive: 0xff7733, 
+      emissiveIntensity: 0.45, 
+      roughness: 0.15,
+      flatShading: true 
+    });
+    const screenMat = new THREE.MeshStandardMaterial({ 
+      color: 0xfffa66, // Lighter yellow
+      emissive: 0xfffa66, 
+      emissiveIntensity: 1.3, 
+      flatShading: true 
+    }); // Bright yellow screen glow
+    const knobMat = new THREE.MeshStandardMaterial({ color: 0x222222, flatShading: true });
+    const antennaMat = new THREE.MeshStandardMaterial({ color: 0xeeeeee, metalness: 0.95, roughness: 0.05, flatShading: true });
 
     // TV Box Casing
     const tvBody = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.9, 0.9), boxMat);
@@ -204,9 +263,20 @@ export function createObstacleModel(type) {
 
   } else if (type === 'cassette') {
     // Retro music cassette tape upgraded to glowing neon yellow and hot pink hubs
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xfff600, emissive: 0x555500, flatShading: true });
-    const labelMat = new THREE.MeshStandardMaterial({ color: 0xfffff0, flatShading: true });
-    const spoolMat = new THREE.MeshStandardMaterial({ color: 0xff007f, emissive: 0xff007f, emissiveIntensity: 0.5, flatShading: true }); // Pink hubs
+    const bodyMat = new THREE.MeshStandardMaterial({ 
+      color: 0xfffa66, // Lighter yellow
+      emissive: 0xfffa66, 
+      emissiveIntensity: 0.4, 
+      roughness: 0.15,
+      flatShading: true 
+    });
+    const labelMat = new THREE.MeshStandardMaterial({ color: 0xffffff, flatShading: true });
+    const spoolMat = new THREE.MeshStandardMaterial({ 
+      color: 0xff66cc, // Lighter pink
+      emissive: 0xff66cc, 
+      emissiveIntensity: 0.9, 
+      flatShading: true 
+    }); // Pink hubs
 
     // Cassette shell casing
     const body = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.8, 0.18), bodyMat);
@@ -229,19 +299,19 @@ export function createObstacleModel(type) {
 
   } else if (type === 'shield') {
     // Cyber blue energy shield barrier (un-bashable, un-spinnable)
-    const metalMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.8, roughness: 0.2, flatShading: true });
+    const metalMat = new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.85, roughness: 0.15, flatShading: true });
     const shieldMat = new THREE.MeshStandardMaterial({
-      color: 0x00f0ff,
-      emissive: 0x00f0ff,
-      emissiveIntensity: 0.9,
+      color: 0x80f7ff, // Lighter cyan
+      emissive: 0x80f7ff,
+      emissiveIntensity: 1.3,
       transparent: true,
-      opacity: 0.7,
+      opacity: 0.75,
       flatShading: true
     });
     const gridMat = new THREE.MeshStandardMaterial({
-      color: 0xff00ff,
-      emissive: 0xff00ff,
-      emissiveIntensity: 0.6,
+      color: 0xff66cc, // Lighter pink
+      emissive: 0xff66cc,
+      emissiveIntensity: 0.9,
       flatShading: true
     });
 
@@ -277,8 +347,14 @@ export function createObstacleModel(type) {
     group.add(barH, barV1, barV2);
 
   } else {
-    // Spikes: Upgraded from purple to a highly visible glowing red pyramid
-    const spikeMat = new THREE.MeshStandardMaterial({ color: 0xff003c, emissive: 0xff003c, emissiveIntensity: 0.9, flatShading: true });
+    // Spikes: Lighter glowing red-pink pyramid that shines like light
+    const spikeMat = new THREE.MeshStandardMaterial({ 
+      color: 0xff4d6d, // Lighter glowing pinkish red
+      emissive: 0xff4d6d, 
+      emissiveIntensity: 1.3, 
+      roughness: 0.1,
+      flatShading: true 
+    });
     
     // Cone geometry with 4 radial segments generates a perfectly pixelated pyramid
     const spike = new THREE.Mesh(new THREE.ConeGeometry(0.6, 1.0, 4), spikeMat);
@@ -303,8 +379,8 @@ export function createObstacleModel(type) {
 export function createSpringModel() {
   const springGroup = new THREE.Group();
   
-  // Grey metallic material
-  const metalMat = new THREE.MeshStandardMaterial({ color: 0x999999, metalness: 0.8, roughness: 0.2, flatShading: true });
+  // Lighter grey metallic material with lower roughness to shine like light
+  const metalMat = new THREE.MeshStandardMaterial({ color: 0xbbbbbb, metalness: 0.9, roughness: 0.1, flatShading: true });
   
   const coilCount = 5;
   const coilHeight = 0.15;
@@ -333,11 +409,11 @@ export function createSpringModel() {
  * @returns {THREE.Group} - The complete vehicle assembly containing a spring underneath
  */
 const colorMap = {
-  pink: 0xff007f,
-  cyan: 0x00f0ff,
-  green: 0x39ff14,
-  yellow: 0xfff600,
-  purple: 0xbd00ff
+  pink: 0xff66cc,     // Lighter pink
+  cyan: 0x80f7ff,     // Lighter cyan
+  green: 0x73ff66,    // Lighter green
+  yellow: 0xfffa66,   // Lighter yellow
+  purple: 0xd666ff    // Lighter purple
 };
 
 export function createVehicleModel(type, colorNameOrHex) {
@@ -353,15 +429,27 @@ export function createVehicleModel(type, colorNameOrHex) {
   const group = new THREE.Group();
   const wheels = [];
 
-  // Shared wheel/windshield materials
-  const tireMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9, flatShading: true }); // Rubber
-  const hubMat = new THREE.MeshStandardMaterial({ color: 0xff007f, flatShading: true }); // Pink hubs
-  const glassMat = new THREE.MeshStandardMaterial({ color: 0x00f0ff, emissive: 0x00f0ff, emissiveIntensity: 0.3, flatShading: true }); // Windshield cyan glow
+  // Shared wheel/windshield materials - lightened and shinier
+  const tireMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.7, flatShading: true }); // Rubber
+  const hubMat = new THREE.MeshStandardMaterial({ color: 0xff66cc, emissive: 0xff66cc, emissiveIntensity: 0.4, flatShading: true }); // Pink hubs
+  const glassMat = new THREE.MeshStandardMaterial({ color: 0x80f7ff, emissive: 0x80f7ff, emissiveIntensity: 0.6, flatShading: true }); // Windshield cyan glow
 
   if (type === 'car') {
-    // 1. Sleek Retro Sports Car (Yellow/gold body, pink spoiler)
-    const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor !== null ? bodyColor : 0xfff600, flatShading: true });
-    const spoilerMat = new THREE.MeshStandardMaterial({ color: 0xff007f, flatShading: true });
+    // 1. Sleek Retro Sports Car (Lighter body, pink spoiler) with emissive shine
+    const bodyMat = new THREE.MeshStandardMaterial({ 
+      color: bodyColor !== null ? bodyColor : 0xfffa66, 
+      emissive: bodyColor !== null ? bodyColor : 0xfffa66,
+      emissiveIntensity: 0.25,
+      roughness: 0.15,
+      metalness: 0.4,
+      flatShading: true 
+    });
+    const spoilerMat = new THREE.MeshStandardMaterial({ 
+      color: 0xff66cc, 
+      emissive: 0xff66cc,
+      emissiveIntensity: 0.3,
+      flatShading: true 
+    });
 
     // Chassis Base
     const chassis = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.25, 1.8), bodyMat);
@@ -412,10 +500,27 @@ export function createVehicleModel(type, colorNameOrHex) {
     });
 
   } else if (type === 'monster_truck') {
-    // 2. Monster Truck (Purple body, high pink shock struts, giant cyan wheels)
-    const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor !== null ? bodyColor : 0xbd00ff, flatShading: true });
-    const suspensionMat = new THREE.MeshStandardMaterial({ color: 0xff007f, flatShading: true });
-    const giantHubMat = new THREE.MeshStandardMaterial({ color: 0x00f0ff, flatShading: true });
+    // 2. Monster Truck (Lighter purple body, high pink shock struts, giant cyan wheels)
+    const bodyMat = new THREE.MeshStandardMaterial({ 
+      color: bodyColor !== null ? bodyColor : 0xd666ff, 
+      emissive: bodyColor !== null ? bodyColor : 0xd666ff,
+      emissiveIntensity: 0.25,
+      roughness: 0.15,
+      metalness: 0.4,
+      flatShading: true 
+    });
+    const suspensionMat = new THREE.MeshStandardMaterial({ 
+      color: 0xff66cc, 
+      emissive: 0xff66cc,
+      emissiveIntensity: 0.3,
+      flatShading: true 
+    });
+    const giantHubMat = new THREE.MeshStandardMaterial({ 
+      color: 0x80f7ff, 
+      emissive: 0x80f7ff,
+      emissiveIntensity: 0.4,
+      flatShading: true 
+    });
 
     // Elevated body cab
     const chassis = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.6, 1.6), bodyMat);
@@ -473,9 +578,22 @@ export function createVehicleModel(type, colorNameOrHex) {
     });
 
   } else {
-    // 3. Cargo Truck (Cyan cabin cab, grey trailer back, 6 wheels)
-    const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor !== null ? bodyColor : 0x00f0ff, flatShading: true });
-    const cargoMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, flatShading: true });
+    // 3. Cargo Truck (Lighter Cyan cabin cab, light grey trailer back, 6 wheels)
+    const bodyMat = new THREE.MeshStandardMaterial({ 
+      color: bodyColor !== null ? bodyColor : 0x80f7ff, 
+      emissive: bodyColor !== null ? bodyColor : 0x80f7ff,
+      emissiveIntensity: 0.25,
+      roughness: 0.15,
+      metalness: 0.4,
+      flatShading: true 
+    });
+    const cargoMat = new THREE.MeshStandardMaterial({ 
+      color: 0xeeeeee, 
+      emissive: 0x333333,
+      emissiveIntensity: 0.15,
+      roughness: 0.2,
+      flatShading: true 
+    });
 
     // Cab
     const cab = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.8, 0.7), bodyMat);

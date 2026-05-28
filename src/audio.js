@@ -371,6 +371,55 @@ class WebAudioSynth {
   }
 
   /**
+   * SFX: playWorldTransition - Plays a rising futuristic sci-fi laser sound effect.
+   */
+  playWorldTransition() {
+    this.init();
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    const now = this.ctx.currentTime;
+    
+    const osc = this.ctx.createOscillator();
+    const gainNode = this.ctx.createGain();
+    
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(200, now);
+    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.5);
+    
+    gainNode.gain.setValueAtTime(0.12, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+    
+    osc.connect(gainNode);
+    gainNode.connect(this.ctx.destination);
+    
+    osc.start(now);
+    osc.stop(now + 0.5);
+  }
+
+  /**
+   * SFX: playVictory - Loops off music and plays a bright, celebratory major arpeggio upward sweep (C5 -> E5 -> G5 -> C6 -> E6 -> G6 -> C7) ending with a powerful chord plink.
+   */
+  playVictory() {
+    this.init();
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    this.stopMusic();
+    const now = this.ctx.currentTime;
+    
+    // Celebratory ascending major arpeggio
+    this.playSynth(this.mtof(60), now, 0.12, 'triangle', 0.1);        // C5
+    this.playSynth(this.mtof(64), now + 0.1, 0.12, 'triangle', 0.1);  // E5
+    this.playSynth(this.mtof(67), now + 0.2, 0.12, 'triangle', 0.1);  // G5
+    this.playSynth(this.mtof(72), now + 0.3, 0.12, 'triangle', 0.1);  // C6
+    this.playSynth(this.mtof(76), now + 0.4, 0.12, 'triangle', 0.1);  // E6
+    this.playSynth(this.mtof(79), now + 0.5, 0.12, 'triangle', 0.1);  // G6
+    this.playSynth(this.mtof(84), now + 0.6, 0.4, 'triangle', 0.1);   // C7
+    
+    // Play a dual-oscillator backing chord at the end
+    this.playSynth(this.mtof(60), now + 0.6, 0.4, 'sawtooth', 0.06);
+    this.playSynth(this.mtof(64), now + 0.6, 0.4, 'sawtooth', 0.06);
+    this.playSynth(this.mtof(67), now + 0.6, 0.4, 'sawtooth', 0.06);
+  }
+
+  /**
    * SFX: playGameOver - Loops off music and schedules a sad minor chord arpeggio descent.
    */
   playGameOver() {

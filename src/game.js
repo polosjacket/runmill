@@ -9,6 +9,74 @@ const PLAYER_START_Z = 5.0;                // Camera-relative Z position of play
 const SPAWN_START_Z = -80.0;               // Z coordinate where obstacles spawn far away
 const DESPAWN_Z = 12.0;                    // Z coordinate where obstacles are deleted (passed player)
 
+const WORLD_THEMES = {
+  1: {
+    name: "CYBER CITY",
+    gridColor: 0x80f7ff,      // Electric Cyan
+    mountainColor: 0x80f7ff,  // Electric Cyan
+    sunColors: [0xfffa66, 0xff66cc], // Yellow to Pink
+    ambientColor: 0x8833ff,   // Bright Purple
+    ambientIntensity: 2.6,
+    dirColor: 0xff4da6,       // Pink
+    dirIntensity: 3.2,
+    frontColor: 0x80f7ff,     // Lighter Cyan
+    frontIntensity: 4.5,
+    bgColor: 0x19082b
+  },
+  2: {
+    name: "ACID GRID",
+    gridColor: 0x73ff66,      // Electric Green
+    mountainColor: 0x73ff66,  // Electric Green
+    sunColors: [0xfffa66, 0x1db200], // Yellow to Green
+    ambientColor: 0x1db200,   // Green
+    ambientIntensity: 2.8,
+    dirColor: 0x73ff66,       // Bright Green
+    dirIntensity: 3.5,
+    frontColor: 0xfffa66,     // Yellow
+    frontIntensity: 4.5,
+    bgColor: 0x051a05
+  },
+  3: {
+    name: "TOKYO DRIFT",
+    gridColor: 0xfffa66,      // Glowing Yellow
+    mountainColor: 0xfffa66,  // Yellow
+    sunColors: [0xff7733, 0xff003c], // Orange to Red
+    ambientColor: 0xff5500,   // Orange
+    ambientIntensity: 3.0,
+    dirColor: 0xffaa00,       // Golden
+    dirIntensity: 3.8,
+    frontColor: 0xfffa66,     // Yellow
+    frontIntensity: 5.0,
+    bgColor: 0x220a00
+  },
+  4: {
+    name: "SYNTH WAVE",
+    gridColor: 0xff66cc,      // Glowing Pink
+    mountainColor: 0xff66cc,  // Pink
+    sunColors: [0xd666ff, 0x80f7ff], // Purple to Cyan
+    ambientColor: 0xcc33ff,   // Purple
+    ambientIntensity: 3.2,
+    dirColor: 0xff66cc,       // Hot Pink
+    dirIntensity: 4.0,
+    frontColor: 0x80f7ff,     // Cyan
+    frontIntensity: 5.0,
+    bgColor: 0x1e002a
+  },
+  5: {
+    name: "MATRIX CODES",
+    gridColor: 0xffffff,      // Pure LED White
+    mountainColor: 0x80f7ff,  // Glowing Ice Blue
+    sunColors: [0xffffff, 0x80f7ff], // White to Cyan
+    ambientColor: 0x1f3f5f,   // Ice Blue
+    ambientIntensity: 3.4,
+    dirColor: 0xffffff,       // White
+    dirIntensity: 4.5,
+    frontColor: 0x80f7ff,     // Ice Blue
+    frontIntensity: 5.5,
+    bgColor: 0x081018
+  }
+};
+
 /**
  * GameEngine - Main coordinator class for game loops, visual rendering,
  * and user interactions.
@@ -79,12 +147,22 @@ class GameEngine {
     this.domHighScoreForm = document.getElementById('high-score-form');
     this.domPlayerName = document.getElementById('player-name');
     this.domLeaderboardList = document.getElementById('leaderboard-list');
+    this.domWorld = document.getElementById('hud-world');
+
+    // Victory Screen DOM Bindings
+    this.domVictoryScreen = document.getElementById('victory-screen');
+    this.domVicFinalScore = document.getElementById('vic-final-score');
+    this.domVicFinalDistance = document.getElementById('vic-final-distance');
+    this.domVicHighScoreForm = document.getElementById('vic-high-score-form');
+    this.domVicPlayerName = document.getElementById('vic-player-name');
 
     // 7. Event Buttons
     this.btnStart = document.getElementById('start-btn');
     this.btnRestart = document.getElementById('restart-btn');
     this.btnSubmitScore = document.getElementById('submit-score-btn');
     this.btnTouchBash = document.getElementById('touch-bash');
+    this.btnVicSubmitScore = document.getElementById('vic-submit-score-btn');
+    this.btnVicRestart = document.getElementById('vic-restart-btn');
 
     // 8. Core Initialization Steps
     this.initThree();
@@ -146,27 +224,27 @@ class GameEngine {
    */
   setupLighting() {
     // 1. Neon purple ambient fill light (lighter and more vibrant base color to shine)
-    const ambientLight = new THREE.AmbientLight(0x8833ff, 2.6);
-    this.scene.add(ambientLight);
+    this.ambientLight = new THREE.AmbientLight(0x8833ff, 2.6);
+    this.scene.add(this.ambientLight);
 
     // 2. Directional Cyber Sun light (lighter neon pink)
-    const dirLight = new THREE.DirectionalLight(0xff4da6, 3.2);
-    dirLight.position.set(0, 15, -60);
-    dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 1024;
-    dirLight.shadow.mapSize.height = 1024;
-    dirLight.shadow.camera.near = 0.5;
-    dirLight.shadow.camera.far = 150;
-    dirLight.shadow.camera.left = -10;
-    dirLight.shadow.camera.right = 10;
-    dirLight.shadow.camera.top = 15;
-    dirLight.shadow.camera.bottom = -5;
-    this.scene.add(dirLight);
+    this.dirLight = new THREE.DirectionalLight(0xff4da6, 3.2);
+    this.dirLight.position.set(0, 15, -60);
+    this.dirLight.castShadow = true;
+    this.dirLight.shadow.mapSize.width = 1024;
+    this.dirLight.shadow.mapSize.height = 1024;
+    this.dirLight.shadow.camera.near = 0.5;
+    this.dirLight.shadow.camera.far = 150;
+    this.dirLight.shadow.camera.left = -10;
+    this.dirLight.shadow.camera.right = 10;
+    this.dirLight.shadow.camera.top = 15;
+    this.dirLight.shadow.camera.bottom = -5;
+    this.scene.add(this.dirLight);
 
     // 3. Neon cyan point light centered on player (lighter neon cyan spotlight to shine like light)
-    const frontLight = new THREE.PointLight(0x80f7ff, 4.5, 45);
-    frontLight.position.set(0, 5, PLAYER_START_Z + 2);
-    this.scene.add(frontLight);
+    this.frontLight = new THREE.PointLight(0x80f7ff, 4.5, 45);
+    this.frontLight.position.set(0, 5, PLAYER_START_Z + 2);
+    this.scene.add(this.frontLight);
   }
 
   /**
@@ -264,10 +342,13 @@ class GameEngine {
     const width = Math.random() * 4 + 4;
     const geom = new THREE.ConeGeometry(width, height, 4);
     
+    const theme = WORLD_THEMES[this.world || 1];
+    const mColor = theme ? theme.mountainColor : 0x80f7ff;
+
     // Wireframe lighter cyan mesh with double emissive intensity to shine like bright laser light beams
     const mat = new THREE.MeshStandardMaterial({
-      color: 0x80f7ff,
-      emissive: 0x80f7ff,
+      color: mColor,
+      emissive: mColor,
       emissiveIntensity: 1.2,
       wireframe: true,
       flatShading: true
@@ -341,6 +422,15 @@ class GameEngine {
       this.fetchLeaderboard();
     });
     this.btnSubmitScore.addEventListener('click', () => this.submitHighScore());
+
+    // Victory Screen event listeners
+    this.btnVicRestart.addEventListener('click', () => {
+      this.domVictoryScreen.classList.add('hidden');
+      this.domStartScreen.classList.remove('hidden');
+      this.state = 'START';
+      this.fetchLeaderboard();
+    });
+    this.btnVicSubmitScore.addEventListener('click', () => this.submitVicHighScore());
   }
 
   /**
@@ -393,6 +483,9 @@ class GameEngine {
     this.score = 0;
     this.distance = 0;
     this.speed = 18;
+    this.world = 1;
+    this.applyWorldTheme(1);
+    if (this.domWorld) this.domWorld.textContent = '1';
     let startLives = 3;
     if (this.selectedCharacter === 'monster_truck') {
       startLives = 4;
@@ -573,6 +666,158 @@ class GameEngine {
   }
 
   /**
+   * triggerWorldTransitionUI - Displays the transition banner overlay and sets dynamic values.
+   */
+  triggerWorldTransitionUI() {
+    const theme = WORLD_THEMES[this.world];
+    if (!theme) return;
+
+    const transitionEl = document.getElementById('world-transition');
+    const titleEl = transitionEl.querySelector('.transition-title');
+    const subtitleEl = transitionEl.querySelector('.transition-subtitle');
+    
+    titleEl.textContent = `WORLD ${this.world}`;
+    const colorHexStr = `#${theme.gridColor.toString(16).padStart(6, '0')}`;
+    const subColorHexStr = `#${theme.dirColor.toString(16).padStart(6, '0')}`;
+
+    titleEl.style.color = colorHexStr;
+    titleEl.style.textShadow = `0 0 10px ${colorHexStr}, 0 0 30px ${colorHexStr}`;
+    
+    subtitleEl.textContent = theme.name;
+    subtitleEl.style.color = subColorHexStr;
+    subtitleEl.style.textShadow = `0 0 10px ${subColorHexStr}`;
+    
+    transitionEl.classList.remove('hidden');
+    
+    setTimeout(() => {
+      if (this.state === 'PLAYING') {
+        transitionEl.classList.add('hidden');
+      }
+    }, 2500);
+  }
+
+  /**
+   * applyWorldTheme - Changes scene lighting, grids, mountains, and sun colors dynamically.
+   */
+  applyWorldTheme(worldNum) {
+    const theme = WORLD_THEMES[worldNum];
+    if (!theme) return;
+
+    if (this.domWorld) {
+      this.domWorld.textContent = worldNum.toString();
+    }
+
+    this.scene.background.setHex(theme.bgColor);
+    if (this.scene.fog) {
+      this.scene.fog.color.setHex(theme.bgColor);
+    }
+
+    if (this.ambientLight) {
+      this.ambientLight.color.setHex(theme.ambientColor);
+      this.ambientLight.intensity = theme.ambientIntensity;
+    }
+    if (this.dirLight) {
+      this.dirLight.color.setHex(theme.dirColor);
+      this.dirLight.intensity = theme.dirIntensity;
+    }
+    if (this.frontLight) {
+      this.frontLight.color.setHex(theme.frontColor);
+      this.frontLight.intensity = theme.frontIntensity;
+    }
+
+    if (this.roadGrid1 && this.roadGrid2) {
+      const z1 = this.roadGrid1.position.z;
+      const z2 = this.roadGrid2.position.z;
+      this.scene.remove(this.roadGrid1);
+      this.scene.remove(this.roadGrid2);
+
+      const size = 100;
+      const divisions = 50;
+      const col = theme.gridColor;
+
+      this.roadGrid1 = new THREE.GridHelper(size, divisions, col, col);
+      this.roadGrid1.position.set(0, 0, z1);
+      this.scene.add(this.roadGrid1);
+
+      this.roadGrid2 = new THREE.GridHelper(size, divisions, col, col);
+      this.roadGrid2.position.set(0, 0, z2);
+      this.scene.add(this.roadGrid2);
+    }
+
+    this.scenery.forEach(cone => {
+      if (cone && cone.material) {
+        cone.material.color.setHex(theme.mountainColor);
+        cone.material.emissive.setHex(theme.mountainColor);
+      }
+    });
+
+    if (this.sun) {
+      const stripeCount = this.sun.children.length;
+      this.sun.children.forEach((segment, i) => {
+        if (segment && segment.material) {
+          const mixRatio = i / stripeCount;
+          const color = new THREE.Color().lerpColors(
+            new THREE.Color(theme.sunColors[0]),
+            new THREE.Color(theme.sunColors[1]),
+            mixRatio
+          );
+          segment.material.color.copy(color);
+        }
+      });
+    }
+  }
+
+  /**
+   * victory - Celebrates 5-world completion victory ending.
+   */
+  victory() {
+    this.state = 'VICTORY';
+    audio.playVictory();
+
+    this.domHud.classList.add('hidden');
+    document.getElementById('touch-controls').classList.add('hidden');
+    document.getElementById('world-transition').classList.add('hidden');
+
+    this.domVicFinalScore.textContent = Math.floor(this.score);
+    this.domVicFinalDistance.textContent = Math.floor(this.distance);
+
+    this.domVicHighScoreForm.classList.remove('hidden');
+    this.domVicPlayerName.value = '';
+
+    this.domVictoryScreen.classList.remove('hidden');
+  }
+
+  /**
+   * submitVicHighScore - Posts initials and score to scores API from Victory screen.
+   */
+  async submitVicHighScore() {
+    const nameInput = this.domVicPlayerName.value.trim().toUpperCase();
+    if (!nameInput) return;
+
+    try {
+      this.btnVicSubmitScore.disabled = true;
+      this.btnVicSubmitScore.textContent = 'SAVING...';
+      
+      await fetch('/api/scores', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: nameInput, score: Math.floor(this.score) })
+      });
+      
+      this.domVicHighScoreForm.classList.add('hidden');
+      this.domVictoryScreen.classList.add('hidden');
+      this.domStartScreen.classList.remove('hidden');
+      this.state = 'START';
+      this.fetchLeaderboard(); // Refresh scores list
+    } catch (e) {
+      console.error(e);
+    } finally {
+      this.btnVicSubmitScore.disabled = false;
+      this.btnVicSubmitScore.textContent = 'UPLOAD';
+    }
+  }
+
+  /**
    * spawnObstacleOrPoint - Randomly chooses and spawns floppy disk items or voxel hazards.
    */
   spawnObstacleOrPoint() {
@@ -683,6 +928,20 @@ class GameEngine {
     
     if (this.speed < this.maxSpeed) {
       this.speed += dt * 0.25; // acceleration curve
+    }
+
+    // World boundary progression checking (500m per world)
+    const targetDist = this.world * 500;
+    if (this.distance >= targetDist) {
+      if (this.world < 5) {
+        this.world++;
+        audio.playWorldTransition();
+        this.triggerWorldTransitionUI();
+        this.applyWorldTheme(this.world);
+      } else {
+        // Win game when finishing World 5 (reaches 2500m)
+        this.victory();
+      }
     }
 
     // Sync HUD numbers

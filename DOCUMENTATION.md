@@ -43,6 +43,8 @@ graph TD
   - **Heart Collect**: Ascending chime sweep (E5 -> A5 -> E6 triangle) representing health restoration.
   - **Hit**: Pitch slide down (180Hz -> 30Hz sawtooth) combined with a temporary white noise buffer burst.
   - **Bash**: Low-pitched rising-and-falling growling sawtooth sweep (65Hz -> 260Hz -> 45Hz) with a sweeping low-pass filter (300Hz -> 1000Hz -> 150Hz) and exponential decay.
+  - **World Transition**: Futuristic rising sci-fi laser sound effect (200Hz -> 1200Hz sawtooth exponential sweep).
+  - **Victory Fanfare**: Grand ascending major arpeggio fanfare (C5 -> E5 -> G5 -> C6 -> E6 -> G6 -> C7 triangle waves) backed by a sawtooth major chord when the victory screen loads.
   - **Game Over**: Decrescendo minor sweep (G5 -> Eb5 -> C5 -> G4).
 
 ### `src/voxels.js` (Asset Factory)
@@ -96,9 +98,12 @@ graph TD
   - **Voxel Particles**: Ground impact spawns 16 small retro-colored voxel cubes that fly outwards with random velocities and shrink over a 0.6s lifetime.
   - **Chain Reaction Blastwave**: The ground impact flings any other active obstacles or floppy disk points within an expanded radius of **6.0 units**.
   - **Linear Propagation**: Flipped items are propelled forward along their target highway lanes ($X_{\text{target}} \in [-2.0, 0, 2.0]$ using the same air-time formulas) to maintain lane alignment and propagate linear cascading chain reactions down the lanes ("in the line").
-- **Infinite Grid Scrolling**: Two adjacent 100m road grid meshes scroll back relative to speed. When a grid passes the viewport, its offset loops forward by 200m. Center and grid lines are colored neon cyan (`0x00f0ff`).
-- **Wireframe Mountains**: Roadside low-poly mountain cones are rendered as neon cyan (`0x00f0ff`) wireframes with glowing emissive intensity of `0.5` to blend into the horizon.
-- **Scene Brightness**: Ambient light (`0x6a00b8` at 2.2 intensity), directional cyber sun (`0xff007f` at 2.8 intensity), and player cyan spotlight (`0x00f0ff` at 4.0 intensity, 40 range) are boosted to create a highly vibrant, bright neon world.
+- **Infinite Grid Scrolling**: Two adjacent 100m road grid meshes scroll back relative to speed. When a grid passes the viewport, its offset loops forward by 200m. Color changes dynamically based on active World Theme.
+- **5-World Progression**: Game transitions to the next World every 500 meters. The current world number is shown in the HUD.
+- **Dynamic World Themes**: A unified configuration matrix (`WORLD_THEMES`) handles lighting intensities, ambient/directional colors, sun gradient blends, and grid/wireframe mountain colors to differentiate environments.
+- **Victory Conditions**: Reaching the end of World 5 (2500m total distance) completes the program run, playing a celebratory synth fanfare and loading the `#victory-screen` high score submission dashboard.
+- **Wireframe Mountains**: Roadside low-poly mountain cones are rendered in the active theme's mountainColor with glowing emissive intensity of `1.2` to blend into the horizon.
+- **LED-Bright Glow Aesthetics**: Ambient light, directional sun, and player spotlights are boosted for high illumination. The HTML HUD value panels utilize high-intensity `box-shadow` glows (up to `15px` blur with `0.8` opacity) and text-shadow glow effects to emulate glowing retro LED dashboard units.
 - **Collisions**: Calculated via bounding distances inside `checkCollision()`. Calibrates center height offset and tolerance thresholds dynamically based on chosen vehicle size.
 
 ---

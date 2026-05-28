@@ -62,8 +62,12 @@ Each vehicle features its own procedural voxel geometry, custom dimensions, rigi
 - When a flung obstacle lands, it is removed from the scene and triggers a retro voxel shrapnel explosion (16 glowing cubes).
 - The ground impact creates a **6.0-unit blastwave** that flings nearby obstacles and floppy disks forward along their respective lanes, enabling chain-reaction cascade events.
 
-### 5. High Scores Upload
-- If you beat the current runners, you'll unlock the **High Score Upload** form. Enter your 3-character initials to submit your score directly to the online leaderboard database.
+### 5. 5-World Progression & Victory Ending
+- Travel 500 meters to complete a world and advance to the next, transitioning to a custom grid, mountain, sky, and lighting color theme.
+- Complete World 5 (attaining 2500m total distance) to win the game and trigger the victory ending screen.
+
+### 6. High Scores Upload
+- If you beat the current runners or complete the game, you'll unlock the **High Score Upload** form. Enter your 3-character initials to submit your score directly to the online leaderboard database.
 
 ---
 

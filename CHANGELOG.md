@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.7.0] - 2026-05-28
+
+### Added
+- **5-World Progression**:
+  - Implemented World 1 to World 5 gameplay progression. Players advance to the next world every 500 meters of total distance traveled.
+  - Added a dynamic visual theme for each world with unique grid line colors, wireframe mountain colors, sunset sun gradients, background sky/fog tones, and light colors/intensities:
+    - **World 1: Cyber City** (Electric Cyan grid, Purple sky/ambient)
+    - **World 2: Acid Grid** (Acid Neon Green grid, Toxic Green-Black sky/ambient)
+    - **World 3: Tokyo Drift** (Gold-Yellow grid, Ember Orange-Black sky/ambient)
+    - **World 4: Synth Wave** (Hot Pink grid, Laser Purple-Black sky/ambient)
+    - **World 5: Matrix Codes** (Pure LED White grid, Glacial Blue-Black sky/ambient)
+  - Designed an animated `#world-transition` banner overlay that pops, pulses, and slides out on screen to announce the entry to a new world.
+- **Victory Ending Screen**:
+  - Completing World 5 (attaining 2500 meters total distance) successfully completes the program run, triggering a custom Victory Ending screen (`#victory-screen`).
+  - Added score and distance tallies, initials score submission forms, and menu reboot buttons for the Victory screen.
+- **Victory and Transition Sound Synthesizers**:
+  - Synthesized `playWorldTransition()`: A rising sci-fi laser sweep (200Hz -> 1200Hz sawtooth) triggered on crossing world boundaries.
+  - Synthesized `playVictory()`: A major chord ascending arpeggio fanfare (C5 -> E5 -> G5 -> C6 -> E6 -> G6 -> C7 triangle waves) backed by a sawtooth major chord when the victory screen loads.
+- **LED-Bright Glow Aesthetics**:
+  - Enhanced all HUD value fields with intense glowing box-shadows (up to `15px` blur with `0.8` opacity) and text-shadow glow effects to emulate actual retro LED sign lights.
+
 ## [1.6.1] - 2026-05-25
 
 ### Changed

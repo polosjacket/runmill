@@ -577,7 +577,7 @@ export function createVehicleModel(type, colorNameOrHex) {
       wheels.push(wheelGroup);
     });
 
-  } else {
+  } else if (type === 'truck') {
     // 3. Cargo Truck (Lighter Cyan cabin cab, light grey trailer back, 6 wheels)
     const bodyMat = new THREE.MeshStandardMaterial({ 
       color: bodyColor !== null ? bodyColor : 0x80f7ff, 
@@ -635,6 +635,187 @@ export function createVehicleModel(type, colorNameOrHex) {
       group.add(wheelGroup);
       wheels.push(wheelGroup);
     });
+
+  } else if (type === 'cybertruck') {
+    // 4. Cyber Truck (Angular wedge shape, metallic silver, green highlights, magnet ability)
+    const bodyMat = new THREE.MeshStandardMaterial({ 
+      color: bodyColor !== null ? bodyColor : 0xcccccc, 
+      emissive: bodyColor !== null ? bodyColor : 0xcccccc,
+      emissiveIntensity: 0.15,
+      roughness: 0.1,
+      metalness: 0.8,
+      flatShading: true 
+    });
+    const neonGreenMat = new THREE.MeshStandardMaterial({
+      color: 0x73ff66,
+      emissive: 0x73ff66,
+      emissiveIntensity: 1.2,
+      flatShading: true
+    });
+
+    const base = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.3, 1.8), bodyMat);
+    base.position.y = 0.35;
+    base.castShadow = true;
+    base.receiveShadow = true;
+    group.add(base);
+
+    const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.35, 1.3), bodyMat);
+    cabin.position.set(0, 0.3, -0.1);
+    cabin.castShadow = true;
+    base.add(cabin);
+
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.2, 0.7), bodyMat);
+    roof.position.set(0, 0.5, -0.2);
+    roof.castShadow = true;
+    base.add(roof);
+
+    const windshield = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.2, 0.3), glassMat);
+    windshield.position.set(0, 0.42, 0.35);
+    windshield.rotation.x = -0.7;
+    base.add(windshield);
+
+    const sideLightL = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.04, 1.3), neonGreenMat);
+    sideLightL.position.set(-0.485, 0.05, -0.15);
+    const sideLightR = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.04, 1.3), neonGreenMat);
+    sideLightR.position.set(0.485, 0.05, -0.15);
+    base.add(sideLightL, sideLightR);
+
+    const wheelPositions = [
+      [-0.52, 0.2, 0.5],
+      [0.52, 0.2, 0.5],
+      [-0.52, 0.2, -0.5],
+      [0.52, 0.2, -0.5]
+    ];
+
+    wheelPositions.forEach(([x, y, z]) => {
+      const wheelGroup = new THREE.Group();
+      wheelGroup.position.set(x, y, z);
+      
+      const tire = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.42, 0.42), tireMat);
+      const hub = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.2, 0.2), neonGreenMat);
+      
+      wheelGroup.add(tire, hub);
+      group.add(wheelGroup);
+      wheels.push(wheelGroup);
+    });
+
+  } else if (type === 'hovercraft') {
+    // 5. Hovercraft (No wheels, dual fans, floats/glides, spike immune)
+    const bodyMat = new THREE.MeshStandardMaterial({ 
+      color: bodyColor !== null ? bodyColor : 0x80f7ff,
+      emissive: bodyColor !== null ? bodyColor : 0x80f7ff,
+      emissiveIntensity: 0.3,
+      roughness: 0.2,
+      flatShading: true 
+    });
+    const metalMat = new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.8, roughness: 0.2, flatShading: true });
+    
+    const hull = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.28, 1.7), bodyMat);
+    hull.position.y = 0.4;
+    hull.castShadow = true;
+    hull.receiveShadow = true;
+    group.add(hull);
+
+    const wingL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.6), bodyMat);
+    wingL.position.set(-0.55, 0.05, -0.4);
+    wingL.rotation.y = 0.25;
+    const wingR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.6), bodyMat);
+    wingR.position.set(0.55, 0.05, -0.4);
+    wingR.rotation.y = -0.25;
+    hull.add(wingL, wingR);
+
+    const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.3, 0.8), bodyMat);
+    cabin.position.set(0, 0.28, 0.1);
+    cabin.castShadow = true;
+    hull.add(cabin);
+
+    const windshield = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.22, 0.3), glassMat);
+    windshield.position.set(0, 0.22, 0.4);
+    windshield.rotation.x = -0.6;
+    hull.add(windshield);
+
+    const thrusterL = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.4), metalMat);
+    thrusterL.position.set(-0.3, 0.18, -0.85);
+    const thrusterR = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.4), metalMat);
+    thrusterR.position.set(0.3, 0.18, -0.85);
+    hull.add(thrusterL, thrusterR);
+
+    const portL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.04), glassMat);
+    portL.position.set(0, 0, -0.21);
+    thrusterL.add(portL);
+    const portR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.04), glassMat);
+    portR.position.set(0, 0, -0.21);
+    thrusterR.add(portR);
+
+    const hoverSkirt = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.12, 1.5), glassMat);
+    hoverSkirt.position.set(0, -0.2, 0);
+    hull.add(hoverSkirt);
+
+  } else if (type === 'tank') {
+    // 6. Tank (Heavy treads, turret, 8 HP, shooting ability)
+    const bodyMat = new THREE.MeshStandardMaterial({ 
+      color: bodyColor !== null ? bodyColor : 0x224422,
+      emissive: bodyColor !== null ? bodyColor : 0x224422,
+      emissiveIntensity: 0.1,
+      roughness: 0.4,
+      metalness: 0.6,
+      flatShading: true 
+    });
+    const metalMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.8, roughness: 0.2, flatShading: true });
+    const gunMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9, roughness: 0.1, flatShading: true });
+    
+    const chassis = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.35, 1.8), bodyMat);
+    chassis.position.y = 0.35;
+    chassis.castShadow = true;
+    chassis.receiveShadow = true;
+    group.add(chassis);
+
+    const trackL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.42, 1.85), metalMat);
+    trackL.position.set(-0.55, 0.02, 0);
+    trackL.castShadow = true;
+    chassis.add(trackL);
+
+    const trackR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.42, 1.85), metalMat);
+    trackR.position.set(0.55, 0.02, 0);
+    trackR.castShadow = true;
+    chassis.add(trackR);
+
+    const turret = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.32, 0.85), bodyMat);
+    turret.position.set(0, 0.32, -0.05);
+    turret.castShadow = true;
+    chassis.add(turret);
+
+    const barrel = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.85), gunMat);
+    barrel.position.set(0, 0.05, 0.7);
+    barrel.castShadow = true;
+    turret.add(barrel);
+
+    const visorL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.04), hubMat);
+    visorL.position.set(-0.35, 0.1, 0.91);
+    const visorR = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.04), hubMat);
+    visorR.position.set(0.35, 0.1, 0.91);
+    chassis.add(visorL, visorR);
+
+    const wheelPositions = [
+      [-0.55, 0.18, 0.6],
+      [-0.55, 0.18, 0],
+      [-0.55, 0.18, -0.6],
+      [0.55, 0.18, 0.6],
+      [0.55, 0.18, 0],
+      [0.55, 0.18, -0.6]
+    ];
+
+    wheelPositions.forEach(([x, y, z]) => {
+      const wheelGroup = new THREE.Group();
+      wheelGroup.position.set(x, y, z);
+      
+      const tire = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.32, 0.32), tireMat);
+      const hub = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.12, 0.12), gunMat);
+      
+      wheelGroup.add(tire, hub);
+      group.add(wheelGroup);
+      wheels.push(wheelGroup);
+    });
   }
 
   // Generate jumping spring
@@ -644,13 +825,14 @@ export function createVehicleModel(type, colorNameOrHex) {
   let springY = 0.3;
   if (type === 'monster_truck') springY = 0.9;
   if (type === 'truck') springY = 0.55;
+  if (type === 'cybertruck') springY = 0.35;
+  if (type === 'hovercraft') springY = 0.4;
+  if (type === 'tank') springY = 0.35;
   
   spring.position.set(0, springY, 0);
-  // Initially compressed inside chassis (height scale = 0)
   spring.scale.set(0.8, 0, 0.8);
   group.add(spring);
 
-  // Expose variables for gameplay logic animations
   group.userData = {
     type: type,
     wheels: wheels,
@@ -658,6 +840,94 @@ export function createVehicleModel(type, colorNameOrHex) {
     springY: springY
   };
 
+  return group;
+}
+
+/**
+ * createCoinModel - Constructs a spinning 3D pixelated Coin.
+ * @param {string} colorType - 'green' (value=1), 'yellow' (value=4), or 'black' (value=20)
+ */
+export function createCoinModel(colorType) {
+  const group = new THREE.Group();
+  
+  let coreColor, glowColor, glowIntensity;
+  if (colorType === 'green') {
+    coreColor = 0x73ff66;
+    glowColor = 0x73ff66;
+    glowIntensity = 1.2;
+  } else if (colorType === 'yellow') {
+    coreColor = 0xfffa66;
+    glowColor = 0xfffa66;
+    glowIntensity = 1.2;
+  } else {
+    coreColor = 0x1a1a1a;
+    glowColor = 0xff00ff; // bright neon magenta/pink glow for black coin
+    glowIntensity = 1.5;
+  }
+
+  const coreMat = new THREE.MeshStandardMaterial({
+    color: coreColor,
+    emissive: coreColor,
+    emissiveIntensity: colorType === 'black' ? 0.05 : glowIntensity,
+    roughness: 0.15,
+    flatShading: true
+  });
+
+  const rimMat = new THREE.MeshStandardMaterial({
+    color: glowColor,
+    emissive: glowColor,
+    emissiveIntensity: glowIntensity,
+    roughness: 0.15,
+    flatShading: true
+  });
+
+  if (colorType === 'black') {
+    // Outer glow rim
+    const outerCyl = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.06, 8), rimMat);
+    outerCyl.rotation.x = Math.PI / 2;
+    outerCyl.castShadow = true;
+    group.add(outerCyl);
+
+    // Inner dark core
+    const innerCyl = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.08, 8), coreMat);
+    innerCyl.rotation.x = Math.PI / 2;
+    group.add(innerCyl);
+  } else {
+    // Standard solid coin
+    const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.08, 8), coreMat);
+    cyl.rotation.x = Math.PI / 2;
+    cyl.castShadow = true;
+    group.add(cyl);
+  }
+
+  return group;
+}
+
+/**
+ * createTankShellModel - Constructs a 3D neon laser projectile fired by the Tank.
+ */
+export function createTankShellModel() {
+  const group = new THREE.Group();
+  
+  const shellMat = new THREE.MeshStandardMaterial({
+    color: 0xff7733,
+    emissive: 0xff4d00,
+    emissiveIntensity: 1.5,
+    roughness: 0.1,
+    flatShading: true
+  });
+  
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.35, 8), shellMat);
+  body.rotation.x = Math.PI / 2;
+  body.castShadow = true;
+  group.add(body);
+  
+  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.15, 8), shellMat);
+  tip.position.z = -0.25;
+  tip.rotation.x = -Math.PI / 2;
+  tip.castShadow = true;
+  group.add(tip);
+  
   return group;
 }
 

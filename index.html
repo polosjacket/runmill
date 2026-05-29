@@ -48,6 +48,14 @@
           <span class="label">DISTANCE</span>
           <span id="hud-distance" class="value">0</span><span class="unit"> m</span>
         </div>
+        <div id="hud-timer-container" class="hud-item neon-yellow">
+          <span class="label">NEXT WORLD</span>
+          <span id="hud-timer" class="value">01:00</span>
+        </div>
+        <div id="hud-coins-container" class="hud-item neon-green">
+          <span class="label">COINS</span>
+          <span id="hud-coins" class="value">0</span>
+        </div>
         <div id="hud-multiplier-container" class="hud-item neon-purple hidden">
           <span class="label">MULT</span>
           <span id="hud-multiplier" class="value">x1</span>
@@ -63,7 +71,14 @@
     <div id="start-screen" class="overlay-panel">
       <div class="retro-box">
         <h1 class="game-title text-flicker">RUNMILL</h1>
-        <p class="game-subtitle">CYBER GRID RUNNER v1.7.0</p>
+        <p class="game-subtitle">CYBER GRID RUNNER v1.8.0</p>
+
+        <!-- Persistent Wallet Balance -->
+        <div id="menu-wallet" class="wallet-box neon-green">
+          <span class="wallet-label">WALLET:</span>
+          <span id="menu-wallet-amount" class="wallet-value">0</span>
+          <span class="wallet-unit"> COINS</span>
+        </div>
         
         <div class="character-select-section">
           <h3>CHOOSE VEHICLE</h3>
@@ -71,6 +86,9 @@
             <button class="char-btn active neon-cyan-glow" data-char="car">CAR</button>
             <button class="char-btn neon-pink-glow" data-char="monster_truck">MONSTER</button>
             <button class="char-btn neon-yellow-glow" data-char="truck">TRUCK</button>
+            <button class="char-btn neon-green-glow" data-char="cybertruck" data-cost="5000">CYBER (5K)</button>
+            <button class="char-btn neon-purple-glow" data-char="hovercraft" data-cost="25000">HOVER (25K)</button>
+            <button class="char-btn neon-pink-glow" data-char="tank" data-cost="150000">TANK (150K)</button>
           </div>
         </div>
         
@@ -94,7 +112,10 @@
           <p>← / A : MOVE LEFT</p>
           <p>→ / D : MOVE RIGHT</p>
           <p>SPACE / W : JUMP</p>
-          <p>↓ / S : BASH (MONSTER) / SPIN (CAR)</p>
+          <p>↓ / S : SPIN (CAR) / BASH (MONSTER) / SHOOT (TANK)</p>
+          <p class="special-info" style="font-size: 0.55rem; color: #80f7ff; margin-top: 8px; font-family: var(--font-pixel);">
+            SPECIALS: CYBER TRUCK = COIN MAGNET | HOVERCRAFT = GLIDE OVER SPIKES
+          </p>
         </div>
 
         <div class="leaderboard-section">

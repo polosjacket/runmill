@@ -722,3 +722,57 @@ body {
     0 0 20px var(--neon-cyan),
     0 0 40px var(--neon-green);
 }
+
+/* Wallet Display on Menu */
+.wallet-box {
+  margin: 10px auto 25px auto;
+  padding: 10px 20px;
+  width: fit-content;
+  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid var(--neon-green);
+  border-radius: 4px;
+  font-family: var(--font-pixel);
+  font-size: 0.85rem;
+  box-shadow: 0 0 15px rgba(57, 255, 20, 0.4), inset 0 0 5px rgba(57, 255, 20, 0.2);
+}
+.wallet-label {
+  color: #888;
+}
+.wallet-value {
+  color: var(--neon-green);
+  text-shadow: 0 0 6px var(--neon-green), 0 0 12px rgba(57, 255, 20, 0.5);
+  font-weight: bold;
+}
+.wallet-unit {
+  color: #aaa;
+  font-size: 0.65rem;
+}
+
+/* Locked Vehicles Selection buttons */
+.char-btn.locked {
+  border: 2px dashed var(--neon-pink);
+  color: var(--neon-pink);
+  background: rgba(255, 0, 127, 0.05);
+  box-shadow: none;
+}
+.char-btn.locked::before {
+  content: '🔒 ';
+}
+.char-btn.locked:hover {
+  background: rgba(255, 0, 127, 0.15);
+  box-shadow: 0 0 12px rgba(255, 0, 127, 0.5);
+}
+
+/* Lock shake failed animation feedback */
+.shake-lock {
+  animation: shake-lock-anim 0.4s ease-in-out;
+  border-color: #ff0000 !important;
+  color: #ff0000 !important;
+  box-shadow: 0 0 15px #ff0000 !important;
+}
+@keyframes shake-lock-anim {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+

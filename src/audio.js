@@ -434,6 +434,62 @@ class WebAudioSynth {
     this.playSynth(this.mtof(60), now + 0.3, 0.2, 'sawtooth', 0.1);  // C5
     this.playSynth(this.mtof(55), now + 0.45, 0.5, 'sawtooth', 0.1); // G4
   }
+
+  /**
+   * SFX: playShoot - A retro 8-bit laser/cannon blast using a square wave sweep with noise.
+   */
+  playShoot() {
+    this.init();
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    const now = this.ctx.currentTime;
+
+    const osc = this.ctx.createOscillator();
+    const gainNode = this.ctx.createGain();
+
+    osc.type = 'square';
+    // Rapid downward sweep to simulate retro laser fire (800Hz down to 100Hz)
+    osc.frequency.setValueAtTime(800, now);
+    osc.frequency.exponentialRampToValueAtTime(100, now + 0.2);
+
+    gainNode.gain.setValueAtTime(0.12, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+
+    osc.connect(gainNode);
+    gainNode.connect(this.ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.2);
+
+    // Dynamic noise burst for cannon blast crunchiness
+    try {
+      const bufferSize = this.ctx.sampleRate * 0.15;
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const noiseFilter = this.ctx.createBiquadFilter();
+      noiseFilter.type = 'bandpass';
+      noiseFilter.frequency.value = 500;
+      noiseFilter.Q.value = 3.0;
+
+      const noiseGain = this.ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.1, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+      noise.connect(noiseFilter);
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(this.ctx.destination);
+
+      noise.start(now);
+      noise.stop(now + 0.15);
+    } catch (e) {
+      // Noise fallback
+    }
+  }
 }
 
 export const audio = new WebAudioSynth();

@@ -6,11 +6,47 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.8.0] - 2026-05-29
+
+### Added
+- **Coin Currency & Persistent Wallet**:
+  - Transformed floppy disk point items into spinning 3D voxel Coins of three denominations:
+    - **Green Coin**: Worth 1 coin. Common chance of spawning (70%).
+    - **Yellow Coin**: Worth 4 coins. Uncommon chance of spawning (24%).
+    - **Black Coin**: Worth 20 coins. Rare chance of spawning (6%). Designed as a dark charcoal core with a hot pink glowing neon rim for high visibility.
+  - Stores player's total coin balance persistently in `localStorage` across runs.
+  - Displays a dedicated glowing neon-green **COINS** container on the HUD during gameplay and a **WALLET** balance indicator in the Start Menu overlay.
+- **Vehicle Shop Menu**:
+  - Integrated locking/unlocking shop mechanics directly into the character select screen.
+  - Unlocked vehicles (Car, Monster Truck, Delivery Truck) remain free.
+  - Locked vehicles show their currency cost. If a player click-selects a locked vehicle, the shop verifies if the wallet has sufficient funds, deducts the price, plays a collection chime, and unlocks it persistently (saved via `localStorage`). If funds are insufficient, a red wobble-shake animation is triggered with a hit SFX.
+- **Three Playable Cyber Vehicles**:
+  - **Cyber Truck** (Cost: 5,000 coins): starts with 5 HP. Special ability: **Coin Magnet** (automatically draws in any nearby coin point items within 4.5 units of the truck using a magnetic force pull).
+  - **Hovercraft** (Cost: 25,000 coins): starts with 3 HP. Hover/glide design (no wheels, bottom thruster plate, booster fans). Special ability: **Glide** (completely immune to spike hazards; floats right over spikes without taking collision damage).
+  - **Tank** (Cost: 150,000 coins): starts with 8 HP. Heavy tracked body and turrets. Special ability: **Shoot** (pressing Down Arrow/S or tapping mobile FIRE button fires a glowing neon shell forward along the active lane, immediately detonating and removing any obstacle it hits, including immune barriers like shields).
+- **Shooting sound effect**:
+  - Synthesized `playShoot()`: A loud, retro 8-bit laser/cannon blast (800Hz to 100Hz square sweep with bandpass filtered noise crunch).
+
+## [1.7.1] - 2026-05-29
+
+### Changed
+- **5-World Progression scaling**: Transitions world progression from distance-based (500m per world) to time-based (+1 minute per world level).
+  - World 1: 1 minute (60s)
+  - World 2: 2 minutes (120s)
+  - World 3: 3 minutes (180s)
+  - World 4: 4 minutes (240s)
+  - World 5: 5 minutes (300s)
+  - Program completion victory ending is triggered after surviving World 5's full 5 minutes.
+- **HUD Timer Overlay**: Displays a bright LED countdown timer showing remaining seconds before the next world warp or final victory.
+
+### Fixed
+- **Constructor Duplication Cleanup**: Removed the redundant `this.bashCooldownTimer = 0;` variable definition in `src/game.js`.
+
 ## [1.7.0] - 2026-05-28
 
 ### Added
 - **5-World Progression**:
-  - Implemented World 1 to World 5 gameplay progression. Players advance to the next world every 500 meters of total distance traveled.
+  - Implemented World 1 to World 5 gameplay progression. Players advance to the next world based on survived time.
   - Added a dynamic visual theme for each world with unique grid line colors, wireframe mountain colors, sunset sun gradients, background sky/fog tones, and light colors/intensities:
     - **World 1: Cyber City** (Electric Cyan grid, Purple sky/ambient)
     - **World 2: Acid Grid** (Acid Neon Green grid, Toxic Green-Black sky/ambient)

@@ -55,6 +55,9 @@ graph TD
   - **Car**: Sleek sports vehicle with active spoilers and compact tires (3 HP).
   - **Monster Truck**: Elevated chassis with shock absorber struts and giant wheels (4 HP).
   - **Truck**: Semi-cab delivery vehicle with a large cargo trailer and 6 wheels (6 HP).
+  - **Cyber Truck**: Stainless steel angular wedge cabin with neon green door panels (5 HP). Special: Coin Magnet pulls nearby coin items in a 4.5 units radius.
+  - **Hovercraft**: Aerodynamic hull with rear fan exhausts and glowing bottom thruster pad (no wheels, 3 HP). Special: Glide hover ability bypasses spike hazards completely.
+  - **Tank**: Heavy armored body, tread panels, rotatable turret, and gun barrel (8 HP). Special: Shoot fires exploding neon shells that blow up any obstacle in its lane.
   - **Spring**: Interleaved stacked coil segments designed to scale on jumps.
   - **Obstacles**: High-visibility safety hazard styling:
     - **Spikes**: Fluorescent glowing red (`0xff003c`) with emissive intensity `0.9` to stand out against the horizon.
@@ -62,7 +65,8 @@ graph TD
     - **Cassette Tapes**: Vibrant neon yellow casing (`0xfff600`) with hot pink spools (`0xff007f`, emissive intensity `0.5`).
     - **Shield**: Neon cyan energy barrier grid (`0x00f0ff` with `0xff00ff` cross-bars and `0x333333` feet). Completely indestructible (immune to Bashes, Spins, and neighboring explosions), requiring players to jump or dodge.
     - **Hearts (Health Recovery)**: Pixelated 3D heart items built using a 5x5 heart voxel pattern in pink/red (`0xff0055`) with high emissive glow (`emissiveIntensity: 0.8`).
-  - **Points**: Floppy disk.
+  - **Points (Coins)**: Voxel-based spinning currency of three denominations: Green Coin (value = 1, 70% chance), Yellow Coin (value = 4, 24% chance), and Black Coin (value = 20, 6% chance, designed with charcoal core and hot pink neon glow rim).
+
 
 ### `src/game.js` (Core Game Controller)
 - **Vehicle Orientation**: All player vehicle meshes are rotated $180^\circ$ on their Y-axis by default to face away from the camera (towards the sunset). Spin animations and bash nose-dive tilt offsets are mathematically calibrated to respect this reversed heading.
@@ -99,9 +103,9 @@ graph TD
   - **Chain Reaction Blastwave**: The ground impact flings any other active obstacles or floppy disk points within an expanded radius of **6.0 units**.
   - **Linear Propagation**: Flipped items are propelled forward along their target highway lanes ($X_{\text{target}} \in [-2.0, 0, 2.0]$ using the same air-time formulas) to maintain lane alignment and propagate linear cascading chain reactions down the lanes ("in the line").
 - **Infinite Grid Scrolling**: Two adjacent 100m road grid meshes scroll back relative to speed. When a grid passes the viewport, its offset loops forward by 200m. Color changes dynamically based on active World Theme.
-- **5-World Progression**: Game transitions to the next World every 500 meters. The current world number is shown in the HUD.
+- **5-World Progression**: Game transitions to the next World based on survived time. The target time starts at 1 minute (60s) for World 1, and increases by 1 minute for each subsequent world (+1 minute per world level). An on-screen LED countdown timer displays the remaining time to transition, and the current world number is shown in the HUD.
 - **Dynamic World Themes**: A unified configuration matrix (`WORLD_THEMES`) handles lighting intensities, ambient/directional colors, sun gradient blends, and grid/wireframe mountain colors to differentiate environments.
-- **Victory Conditions**: Reaching the end of World 5 (2500m total distance) completes the program run, playing a celebratory synth fanfare and loading the `#victory-screen` high score submission dashboard.
+- **Victory Conditions**: Completing the full duration of World 5 (5 minutes/300 seconds) completes the program run, playing a celebratory synth fanfare and loading the `#victory-screen` high score submission dashboard.
 - **Wireframe Mountains**: Roadside low-poly mountain cones are rendered in the active theme's mountainColor with glowing emissive intensity of `1.2` to blend into the horizon.
 - **LED-Bright Glow Aesthetics**: Ambient light, directional sun, and player spotlights are boosted for high illumination. The HTML HUD value panels utilize high-intensity `box-shadow` glows (up to `15px` blur with `0.8` opacity) and text-shadow glow effects to emulate glowing retro LED dashboard units.
 - **Collisions**: Calculated via bounding distances inside `checkCollision()`. Calibrates center height offset and tolerance thresholds dynamically based on chosen vehicle size.
@@ -122,7 +126,7 @@ For coordinates math and spawning:
 - **Y-Axis (Elevation)**:
   - Ground level: $Y = 0.0$.
   - Obstacles center point: $Y \approx 0.4$ to $0.5$.
-  - Floppy Disks: Float at $Y \approx 0.4$ with a sinusoidal wave fluctuation.
+  - Coins: Float at $Y \approx 0.4$ with a sinusoidal wave fluctuation.
   - Player Y: Elevates during jumps ($Y_{max} \approx 2.0$).
 
 ---
@@ -137,7 +141,7 @@ If collisions feel too lenient or too strict, modify the tolerance offsets insid
 // Change X tolerance (0.7) or Y tolerance (0.8) for Obstacles
 this.checkCollision(this.player, obs, 0.7, 0.8)
 
-// Change X tolerance (0.6) or Y tolerance (0.8) for Floppy points
+// Change X tolerance (0.6) or Y tolerance (0.8) for Coins
 this.checkCollision(this.player, point, 0.6, 0.8)
 ```
 

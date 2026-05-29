@@ -1,8 +1,17 @@
 import * as THREE from 'three';
-import { createVehicleModel, createFloppyDiskModel, createHeartItemModel, createObstacleModel } from './voxels.js';
+import { createVehicleModel, createCoinModel, createTankShellModel, createHeartItemModel, createObstacleModel } from './voxels.js';
 import { audio } from './audio.js';
 
 // Game Configuration Constants
+const VEHICLES_CONFIG = {
+  car: { cost: 0, maxLives: 3 },
+  monster_truck: { cost: 0, maxLives: 4 },
+  truck: { cost: 0, maxLives: 6 },
+  cybertruck: { cost: 5000, maxLives: 5 },
+  hovercraft: { cost: 25000, maxLives: 3 },
+  tank: { cost: 150000, maxLives: 8 }
+};
+
 const LANE_WIDTH = 2.0;
 const LANES = [-LANE_WIDTH, 0, LANE_WIDTH]; // Left, Middle, Right lane X-coordinates
 const PLAYER_START_Z = 5.0;                // Camera-relative Z position of player
@@ -106,6 +115,10 @@ class GameEngine {
     this.selectedColor = 'pink';     // Selected vehicle color
     this.bashTimer = 0;
     this.bashCooldownTimer = 0;
+    this.worldTime = 0;              // Elapsed time in current world (seconds)
+    this.wallet = parseInt(localStorage.getItem('runmill_coins') || '0', 10);
+    this.coinsCollected = 0;
+    this.shells = [];
 
     // 3. Player Movement & Physics
     this.currentLane = 1;           // Starting lane index (Middle)
@@ -148,6 +161,9 @@ class GameEngine {
     this.domPlayerName = document.getElementById('player-name');
     this.domLeaderboardList = document.getElementById('leaderboard-list');
     this.domWorld = document.getElementById('hud-world');
+    this.domTimer = document.getElementById('hud-timer');
+    this.domTimerLabel = document.querySelector('#hud-timer-container .label');
+    this.domCoins = document.getElementById('hud-coins');
 
     // Victory Screen DOM Bindings
     this.domVictoryScreen = document.getElementById('victory-screen');
@@ -170,9 +186,44 @@ class GameEngine {
     this.createStaticScenery();
     this.setupEventListeners();
     this.fetchLeaderboard();
+    this.updateWalletDisplay();
+    this.updateVehicleButtons();
     
     // Begin main render loop recursion
     this.animate();
+  }
+
+  /**
+   * updateWalletDisplay - Updates the coin count shown in the start menu wallet.
+   */
+  updateWalletDisplay() {
+    const amountEl = document.getElementById('menu-wallet-amount');
+    if (amountEl) {
+      amountEl.textContent = this.wallet.toLocaleString();
+    }
+  }
+
+  /**
+   * isUnlocked - Checks if a vehicle type is unlocked for the player.
+   */
+  isUnlocked(charType) {
+    if (!VEHICLES_CONFIG[charType]) return true;
+    if (VEHICLES_CONFIG[charType].cost === 0) return true;
+    return localStorage.getItem(`runmill_unlocked_${charType}`) === 'true';
+  }
+
+  /**
+   * updateVehicleButtons - Adds/removes the locked styling class to select buttons.
+   */
+  updateVehicleButtons() {
+    this.domCharButtons.forEach(btn => {
+      const charType = btn.getAttribute('data-char');
+      if (this.isUnlocked(charType)) {
+        btn.classList.remove('locked');
+      } else {
+        btn.classList.add('locked');
+      }
+    });
   }
 
   /**
@@ -397,9 +448,35 @@ class GameEngine {
     this.domCharButtons = document.querySelectorAll('.char-btn');
     this.domCharButtons.forEach(btn => {
       btn.addEventListener('click', () => {
-        this.domCharButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        this.selectedCharacter = btn.getAttribute('data-char');
+        const charType = btn.getAttribute('data-char');
+        if (this.isUnlocked(charType)) {
+          this.domCharButtons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          this.selectedCharacter = charType;
+        } else {
+          // Attempt to purchase!
+          const cost = VEHICLES_CONFIG[charType].cost;
+          if (this.wallet >= cost) {
+            this.wallet -= cost;
+            localStorage.setItem('runmill_coins', this.wallet);
+            localStorage.setItem(`runmill_unlocked_${charType}`, 'true');
+            audio.playCollect(); // purchase success chime
+            this.updateWalletDisplay();
+            this.updateVehicleButtons();
+            
+            // Select the purchased vehicle
+            this.domCharButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            this.selectedCharacter = charType;
+          } else {
+            // Failed purchase: play hit sound and shake button
+            btn.classList.add('shake-lock');
+            audio.playHit();
+            setTimeout(() => {
+              btn.classList.remove('shake-lock');
+            }, 400);
+          }
+        }
       });
     });
 
@@ -420,6 +497,8 @@ class GameEngine {
       this.domStartScreen.classList.remove('hidden');
       this.state = 'START';
       this.fetchLeaderboard();
+      this.updateWalletDisplay();
+      this.updateVehicleButtons();
     });
     this.btnSubmitScore.addEventListener('click', () => this.submitHighScore());
 
@@ -429,6 +508,8 @@ class GameEngine {
       this.domStartScreen.classList.remove('hidden');
       this.state = 'START';
       this.fetchLeaderboard();
+      this.updateWalletDisplay();
+      this.updateVehicleButtons();
     });
     this.btnVicSubmitScore.addEventListener('click', () => this.submitVicHighScore());
   }
@@ -451,9 +532,6 @@ class GameEngine {
     audio.playJump();
   }
 
-  /**
-   * bash - Triggers the character special ability (Monster Truck Bash or Car Spin).
-   */
   bash() {
     if (this.state !== 'PLAYING') return;
     if (this.bashCooldownTimer > 0) return;
@@ -466,7 +544,27 @@ class GameEngine {
       this.bashTimer = 0.5;          // 0.5s active spin duration
       this.bashCooldownTimer = 3.5;   // 3.5s total cooldown (3s after active spin ends)
       audio.playSpin();
+    } else if (this.selectedCharacter === 'tank') {
+      this.shoot();
     }
+  }
+
+  /**
+   * shoot - Tank fires an exploding shell projectile.
+   */
+  shoot() {
+    this.bashCooldownTimer = 1.5; // 1.5s fire cooldown
+    audio.playShoot();
+
+    const shellMesh = createTankShellModel();
+    shellMesh.position.set(this.player.position.x, this.player.position.y + 0.65, PLAYER_START_Z - 0.95);
+    this.scene.add(shellMesh);
+
+    this.shells.push({
+      mesh: shellMesh,
+      lane: this.currentLane,
+      z: PLAYER_START_Z - 0.95
+    });
   }
 
   /**
@@ -484,16 +582,16 @@ class GameEngine {
     this.distance = 0;
     this.speed = 18;
     this.world = 1;
+    this.worldTime = 0;
     this.applyWorldTheme(1);
     if (this.domWorld) this.domWorld.textContent = '1';
-    let startLives = 3;
-    if (this.selectedCharacter === 'monster_truck') {
-      startLives = 4;
-    } else if (this.selectedCharacter === 'truck') {
-      startLives = 6;
-    }
+    if (this.domTimer) this.domTimer.textContent = '01:00';
+    if (this.domTimerLabel) this.domTimerLabel.textContent = 'NEXT WORLD';
+    let startLives = VEHICLES_CONFIG[this.selectedCharacter] ? VEHICLES_CONFIG[this.selectedCharacter].maxLives : 3;
     this.lives = startLives;
     this.maxLives = startLives;
+    this.coinsCollected = 0;
+    if (this.domCoins) this.domCoins.textContent = '0';
     this.isInvincible = false;
     this.currentLane = 1;
     this.targetX = 0;
@@ -523,7 +621,7 @@ class GameEngine {
     this.bashTimer = 0;
     this.bashCooldownTimer = 0;
 
-    // Toggle BASH/SPIN UI indicators based on character selection
+    // Toggle BASH/SPIN/FIRE UI indicators based on character selection
     const hudLabel = document.querySelector('#hud-bash-container .label');
     if (this.selectedCharacter === 'monster_truck') {
       this.domBashContainer.classList.remove('hidden');
@@ -541,6 +639,14 @@ class GameEngine {
       this.btnTouchBash.classList.remove('hidden');
       this.btnTouchBash.classList.remove('cooldown');
       this.btnTouchBash.textContent = 'SPIN';
+    } else if (this.selectedCharacter === 'tank') {
+      this.domBashContainer.classList.remove('hidden');
+      this.domBashContainer.classList.remove('cooldown');
+      if (hudLabel) hudLabel.textContent = 'FIRE';
+      this.domBash.textContent = 'READY';
+      this.btnTouchBash.classList.remove('hidden');
+      this.btnTouchBash.classList.remove('cooldown');
+      this.btnTouchBash.textContent = 'FIRE';
     } else {
       this.domBashContainer.classList.add('hidden');
       this.btnTouchBash.classList.add('hidden');
@@ -567,9 +673,13 @@ class GameEngine {
     if (this.particles) {
       this.particles.forEach(p => this.scene.remove(p.mesh));
     }
+    if (this.shells) {
+      this.shells.forEach(s => this.scene.remove(s.mesh));
+    }
     this.obstacles = [];
     this.points = [];
     this.particles = [];
+    this.shells = [];
   }
 
   /**
@@ -838,14 +948,30 @@ class GameEngine {
         this.scene.add(heart);
         this.points.push(heart);
       } else {
-        const floppy = createFloppyDiskModel();
-        floppy.position.set(laneX, 0.4, SPAWN_START_Z);
-        floppy.userData = {
-          type: 'floppy',
+        const coinRand = Math.random();
+        let coinType = 'green';
+        let coinVal = 1;
+        if (coinRand < 0.06) {
+          coinType = 'black';
+          coinVal = 20;
+        } else if (coinRand < 0.3) {
+          coinType = 'yellow';
+          coinVal = 4;
+        } else {
+          coinType = 'green';
+          coinVal = 1;
+        }
+
+        const coin = createCoinModel(coinType);
+        coin.position.set(laneX, 0.4, SPAWN_START_Z);
+        coin.userData = {
+          type: 'coin',
+          coinType: coinType,
+          coinValue: coinVal,
           isKnockedOut: false
         };
-        this.scene.add(floppy);
-        this.points.push(floppy);
+        this.scene.add(coin);
+        this.points.push(coin);
       }
     } else {
       // Spawn standard obstacle block (include shield)
@@ -930,16 +1056,32 @@ class GameEngine {
       this.speed += dt * 0.25; // acceleration curve
     }
 
-    // World boundary progression checking (500m per world)
-    const targetDist = this.world * 500;
-    if (this.distance >= targetDist) {
+    // World time progression (W minutes for World W)
+    this.worldTime += dt;
+    const maxTime = this.world * 60; // 60s for World 1, 120s for World 2, etc.
+    const timeLeft = Math.max(0, maxTime - this.worldTime);
+
+    // Format countdown timer (MM:SS)
+    if (this.domTimer) {
+      const mins = Math.floor(timeLeft / 60);
+      const secs = Math.floor(timeLeft % 60);
+      this.domTimer.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    // Toggle timer label on World 5
+    if (this.domTimerLabel) {
+      this.domTimerLabel.textContent = this.world === 5 ? 'VICTORY IN' : 'NEXT WORLD';
+    }
+
+    if (this.worldTime >= maxTime) {
       if (this.world < 5) {
         this.world++;
+        this.worldTime = 0; // reset elapsed time for the new world
         audio.playWorldTransition();
         this.triggerWorldTransitionUI();
         this.applyWorldTheme(this.world);
       } else {
-        // Win game when finishing World 5 (reaches 2500m)
+        // Win game when finishing World 5
         this.victory();
       }
     }
@@ -949,8 +1091,8 @@ class GameEngine {
     this.domDistance.textContent = Math.floor(this.distance);
     this.domSpeed.textContent = Math.floor(this.speed * 4); // Virtual MPH
 
-    // Update BASH/SPIN cooldowns and HUD if playing as monster truck or sports car
-    if (this.selectedCharacter === 'monster_truck' || this.selectedCharacter === 'car') {
+    // Update BASH/SPIN/FIRE cooldowns and HUD if playing as monster truck, sports car, or tank
+    if (this.selectedCharacter === 'monster_truck' || this.selectedCharacter === 'car' || this.selectedCharacter === 'tank') {
       if (this.bashCooldownTimer > 0) {
         this.bashCooldownTimer -= dt;
         if (this.bashCooldownTimer < 0) this.bashCooldownTimer = 0;
@@ -961,10 +1103,10 @@ class GameEngine {
         if (this.bashTimer < 0) this.bashTimer = 0;
       }
 
-      const activeDuration = this.selectedCharacter === 'car' ? 0.5 : 0.4;
-      const activeText = this.selectedCharacter === 'car' ? 'SPINNING' : 'BASHING';
+      const activeDuration = this.selectedCharacter === 'car' ? 0.5 : (this.selectedCharacter === 'monster_truck' ? 0.4 : 0);
+      const activeText = this.selectedCharacter === 'car' ? 'SPINNING' : (this.selectedCharacter === 'monster_truck' ? 'BASHING' : 'READY');
 
-      // Sync BASH/SPIN UI
+      // Sync BASH/SPIN/FIRE UI
       if (this.bashCooldownTimer > 0) {
         const displayCooldown = Math.max(0, this.bashCooldownTimer - activeDuration);
         if (displayCooldown > 0) {
@@ -1121,6 +1263,43 @@ class GameEngine {
       }
     }
 
+    // Update tank shells
+    if (this.shells) {
+      for (let i = this.shells.length - 1; i >= 0; i--) {
+        const shell = this.shells[i];
+        shell.mesh.position.z -= 60 * dt;
+        
+        if (shell.mesh.position.z < SPAWN_START_Z - 20) {
+          this.scene.remove(shell.mesh);
+          this.shells.splice(i, 1);
+          continue;
+        }
+        
+        let hitObstacle = false;
+        for (let j = this.obstacles.length - 1; j >= 0; j--) {
+          const obs = this.obstacles[j];
+          if (obs.userData.isKnockedOut) continue;
+          
+          const dx = Math.abs(shell.mesh.position.x - obs.position.x);
+          const dy = Math.abs(shell.mesh.position.y - (obs.position.y + 0.45));
+          const dz = Math.abs(shell.mesh.position.z - obs.position.z);
+          
+          if (dx < 0.8 && dy < 1.0 && dz < 1.0) {
+            this.explodeObstacle(obs);
+            this.scene.remove(obs);
+            this.obstacles.splice(j, 1);
+            hitObstacle = true;
+            break;
+          }
+        }
+        
+        if (hitObstacle) {
+          this.scene.remove(shell.mesh);
+          this.shells.splice(i, 1);
+        }
+      }
+    }
+
     // 11. Move and Collide Obstacles
     for (let i = this.obstacles.length - 1; i >= 0; i--) {
       const obs = this.obstacles[i];
@@ -1192,6 +1371,11 @@ class GameEngine {
 
       // Collide Check
       if (!this.isInvincible && this.checkCollision(this.player, obs, 0.7, 0.8)) {
+        if (this.selectedCharacter === 'hovercraft' && obs.userData.type === 'spike') {
+          // Hovercraft glides smoothly over spikes without collision
+          continue;
+        }
+
         // Monster Truck Bash can knock out items except shields (you must jump or avoid shields)
         if (this.selectedCharacter === 'monster_truck' && this.bashTimer > 0 && obs.userData.type !== 'shield') {
           // Knock out the obstacle!
@@ -1265,6 +1449,19 @@ class GameEngine {
       point.rotation.y += 3 * dt;
       point.position.y = 0.4 + Math.sin(time * 5 + i) * 0.15;
 
+      // Cyber Truck Coin Magnet pull
+      if (this.selectedCharacter === 'cybertruck' && !point.userData.isKnockedOut) {
+        const dx = point.position.x - this.player.position.x;
+        const dy = point.position.y - this.player.position.y;
+        const dz = point.position.z - PLAYER_START_Z;
+        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (dist < 4.5) {
+          point.position.x = THREE.MathUtils.lerp(point.position.x, this.player.position.x, 8 * dt);
+          point.position.y = THREE.MathUtils.lerp(point.position.y, this.player.position.y + 0.4, 8 * dt);
+          point.position.z = THREE.MathUtils.lerp(point.position.z, PLAYER_START_Z, 8 * dt);
+        }
+      }
+
       // Check Car Spin Proximity Fling for Floppy disks
       const isCarSpinningProximity = (this.selectedCharacter === 'car' && this.bashTimer > 0);
       if (isCarSpinningProximity && !point.userData.isKnockedOut) {
@@ -1294,6 +1491,8 @@ class GameEngine {
       if (this.checkCollision(this.player, point, 0.6, 0.8)) {
         if (point.userData && point.userData.type === 'heart') {
           this.handleHeartCollect();
+        } else if (point.userData && point.userData.type === 'coin') {
+          this.handleCoinCollect(point);
         } else {
           this.handleCollect();
         }
@@ -1328,6 +1527,18 @@ class GameEngine {
       centerY = 0.55;
       toleranceX = defaultToleranceX * 1.15;
       toleranceY = defaultToleranceY * 1.15;
+    } else if (type === 'cybertruck') {
+      centerY = 0.45;
+      toleranceX = defaultToleranceX * 1.1;
+      toleranceY = defaultToleranceY * 1.1;
+    } else if (type === 'hovercraft') {
+      centerY = 0.4;
+      toleranceX = defaultToleranceX * 1.1;
+      toleranceY = defaultToleranceY * 1.1;
+    } else if (type === 'tank') {
+      centerY = 0.4;
+      toleranceX = defaultToleranceX * 1.2;
+      toleranceY = defaultToleranceY * 1.1;
     }
     
     const px = playerMesh.position.x;
@@ -1400,6 +1611,32 @@ class GameEngine {
     
     // Give a flat score reward for collecting it
     this.score += 200 * this.multiplier;
+  }
+
+  /**
+   * handleCoinCollect - Handles coin item accumulation.
+   */
+  handleCoinCollect(point) {
+    audio.playCollect();
+    const val = point.userData.coinValue || 1;
+    this.coinsCollected += val;
+    this.wallet += val;
+    localStorage.setItem('runmill_coins', this.wallet);
+    this.updateWalletDisplay();
+
+    // Add to score based on coin value * multiplier
+    this.score += 150 * val * this.multiplier;
+
+    // Increment active score multiplier
+    this.multiplier = Math.min(4, this.multiplier + 1);
+    this.multiplierTimer = 4.0; // Multiplier lasts 4s before resetting
+
+    this.domMultiplier.textContent = `x${this.multiplier}`;
+    this.domMultiplierContainer.classList.remove('hidden');
+
+    if (this.domCoins) {
+      this.domCoins.textContent = this.coinsCollected;
+    }
   }
 
   /**

@@ -31,18 +31,22 @@ Each vehicle features its own procedural voxel geometry, custom dimensions, rigi
 - **Neon Yellow** (`#fff600`)
 - **Neon Purple** (`#bd00ff`)
 
-| Vehicle | Speed | HP | Special Ability | Description |
-| :--- | :---: | :---: | :--- | :--- |
-| **SPORTS CAR** | Fast | 3 | **Spin Proximity Fling** | Performs a $720^\circ$ Y-axis tire screech spin. Flinges any obstacles or points within a **2.8-unit** radius up into the air. |
-| **MONSTER TRUCK** | Medium | 4 | **Forward Bash Surge** | Nose-dives and surges forward by 1.5 units, knocking out and launching any obstacles hit on impact. |
-| **DELIVERY TRUCK** | Heavy | 6 | *None* | A robust, heavy-profile vehicle with massive HP to absorb multiple collisions, but lacks a special ability. |
+| Vehicle | Speed | HP | Special Ability | Description | Cost |
+| :--- | :---: | :---: | :--- | :--- | :---: |
+| **SPORTS CAR** | Fast | 3 | **Spin Proximity Fling** | Performs a $720^\circ$ Y-axis tire screech spin. Flings any obstacles or coins within a **2.8-unit** radius up into the air. | Free |
+| **MONSTER TRUCK** | Medium | 4 | **Forward Bash Surge** | Nose-dives and surges forward by 1.5 units, knocking out and launching any obstacles hit on impact. | Free |
+| **DELIVERY TRUCK** | Heavy | 6 | *None* | A robust, heavy-profile vehicle with massive HP to absorb multiple collisions, but lacks a special ability. | Free |
+| **CYBER TRUCK** | Fast | 5 | **Coin Magnet** | Stainless steel angular truck with a magnet that automatically pulls nearby coins within **4.5 units**. | 5,000 |
+| **HOVERCRAFT** | Float | 3 | **Hover Glide** | Sleek boat-like vehicle that hovers above the road, letting you glide right over spike hazards without taking damage. | 25,000 |
+| **TANK** | Heavy | 8 | **Cannon Shoot** | Fires a neon orange shell forward to explode and completely destroy any obstacles in its path (including shields). | 150,000 |
 
 ---
 
 ## 📝 Game Rules & Mechanics
 
-### 1. Collect Points & Build Multipliers
-- Collect **Floppy Disks** (glowing retro disks) to gain score points and increase your **score multiplier**.
+### 1. Collect Coins & Buy Vehicles
+- Collect **Coins** of three types: Green (1 coin, common), Yellow (4 coins, uncommon), and Black (20 coins, rare). Coins can be spent in the menu shop to purchase premium vehicles.
+- Collecting coins increases your score and builds up your **score multiplier** (up to x4).
 - Collect **Hearts** (glowing retro 3D hearts) to restore lost health (HP) up to your vehicle's maximum health pool.
 - Multipliers decay over time, so keep collecting to maintain high scoring rates.
 
@@ -60,11 +64,11 @@ Each vehicle features its own procedural voxel geometry, custom dimensions, rigi
 
 ### 4. Cascade Ground-Impact Explosions
 - When a flung obstacle lands, it is removed from the scene and triggers a retro voxel shrapnel explosion (16 glowing cubes).
-- The ground impact creates a **6.0-unit blastwave** that flings nearby obstacles and floppy disks forward along their respective lanes, enabling chain-reaction cascade events.
+- The ground impact creates a **6.0-unit blastwave** that flings nearby obstacles and coins forward along their respective lanes, enabling chain-reaction cascade events.
 
 ### 5. 5-World Progression & Victory Ending
-- Travel 500 meters to complete a world and advance to the next, transitioning to a custom grid, mountain, sky, and lighting color theme.
-- Complete World 5 (attaining 2500m total distance) to win the game and trigger the victory ending screen.
+- Survive the countdown timer in each world to advance to the next, transitioning to a custom grid, mountain, sky, and lighting color theme. The countdown timer starts at 1 minute (60s) for World 1, and increases by 1 minute for each subsequent world (+1 minute per world level).
+- Complete the full duration of World 5 (5 minutes/300 seconds) to win the game and trigger the victory ending screen.
 
 ### 6. High Scores Upload
 - If you beat the current runners or complete the game, you'll unlock the **High Score Upload** form. Enter your 3-character initials to submit your score directly to the online leaderboard database.

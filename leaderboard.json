@@ -1,6 +1,10 @@
 [
   {
     "name": "NEO",
+    "score": 225343
+  },
+  {
+    "name": "NEO",
     "score": 155926
   },
   {
@@ -34,9 +38,5 @@
   {
     "name": "8BT",
     "score": 2000
-  },
-  {
-    "name": "SEN",
-    "score": 1068
   }
 ]

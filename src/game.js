@@ -125,9 +125,10 @@ class GameEngine {
     this.targetX = 0;               // Desired X coordinate target (lane coordinate)
     this.playerY = 0;               // Current jump height
     this.playerVelocityY = 0;       // Vertical velocity vector for jumps
-    this.gravity = -25;             // Downward acceleration force
-    this.jumpForce = 10;            // Initial upward impulse force
+    this.gravity = -10;             // Downward acceleration force (lower gravity for longer airtime)
+    this.jumpForce = 7.5;           // Initial upward impulse force (adjusted for exact 1.5s jump)
     this.isJumping = false;         // Flag tracking if player is in mid-air
+    this.jumpTimeElapsed = 0;       // Time since the jump started
 
     // 4. Scene Collections
     this.player = null;             // Reference to player's 3D voxel group
@@ -318,7 +319,11 @@ class GameEngine {
 
     // Dark black underlay plane below the grid to block stars showing under the road
     const roadGeom = new THREE.PlaneGeometry(30, size * 2);
-    const roadMat = new THREE.MeshBasicMaterial({ color: 0x05010a });
+    const roadMat = new THREE.MeshStandardMaterial({ 
+      color: 0x05010a,
+      roughness: 0.8,
+      metalness: 0.1
+    });
     const roadPlane = new THREE.Mesh(roadGeom, roadMat);
     roadPlane.rotation.x = -Math.PI / 2;
     roadPlane.position.set(0, -0.01, -size / 2);
@@ -529,6 +534,7 @@ class GameEngine {
     if (this.isJumping) return;
     this.isJumping = true;
     this.playerVelocityY = this.jumpForce;
+    this.jumpTimeElapsed = 0;
     audio.playJump();
   }
 
@@ -598,6 +604,7 @@ class GameEngine {
     this.playerY = 0;
     this.playerVelocityY = 0;
     this.isJumping = false;
+    this.jumpTimeElapsed = 0;
     this.multiplier = 1;
     this.multiplierTimer = 0;
 
@@ -1182,6 +1189,7 @@ class GameEngine {
 
     // 7. Gravity physics calculation
     if (this.isJumping) {
+      this.jumpTimeElapsed += dt;
       this.playerVelocityY += this.gravity * dt;
       this.playerY += this.playerVelocityY * dt;
 
@@ -1190,6 +1198,7 @@ class GameEngine {
         this.playerY = 0;
         this.playerVelocityY = 0;
         this.isJumping = false;
+        this.jumpTimeElapsed = 0;
       }
     }
     this.player.position.y = this.playerY;
@@ -1210,15 +1219,15 @@ class GameEngine {
       // B. Spring Jump Extension/Retraction
       const spring = vehicleData.spring;
       if (spring) {
-        if (this.isJumping) {
-          // During jump, spring shoots out to touch ground (y=0) from vehicle chassis base (vehicleData.springY)
+        if (this.isJumping && this.jumpTimeElapsed < 0.2) {
+          // During the initial phase of the jump, the spring shoots out to touch the ground
           const totalHeight = this.playerY + vehicleData.springY;
           const targetScaleY = totalHeight / 0.6;
           
-          spring.scale.y = THREE.MathUtils.lerp(spring.scale.y, targetScaleY, 20 * dt);
+          spring.scale.y = THREE.MathUtils.lerp(spring.scale.y, targetScaleY, 25 * dt);
         } else {
-          // Retract spring inside the vehicle (scale Y back to 0)
-          spring.scale.y = THREE.MathUtils.lerp(spring.scale.y, 0, 20 * dt);
+          // Retract spring inside the vehicle (scale Y back to 0) in the air/when grounded
+          spring.scale.y = THREE.MathUtils.lerp(spring.scale.y, 0, 15 * dt);
         }
       }
     }
@@ -1387,7 +1396,7 @@ class GameEngine {
           obs.userData.velocityY = vy0;
           
           // Calculate exact velocityX to land on targetLaneX
-          const tAir = vy0 / 12.5; // (since gravity is -25, half gravity is 12.5)
+          const tAir = vy0 / (Math.abs(this.gravity) / 2);
           obs.userData.velocityX = (targetLaneX - obs.position.x) / tAir;
           
           // Fly forward (negative Z direction)

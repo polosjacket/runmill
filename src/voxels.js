@@ -403,6 +403,55 @@ export function createSpringModel() {
 }
 
 /**
+ * addLEDLights - Helper function to attach glowing LED headlights and neon underglow to a vehicle.
+ */
+function addLEDLights(parentMesh, headlightX, headlightY, headlightZ, underglowY, underglowColor, isCybertruck = false) {
+  const headlightMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    emissive: 0xffffff,
+    emissiveIntensity: 2.5,
+    flatShading: true
+  });
+
+  if (isCybertruck) {
+    // Cybertruck single light bar
+    const barGeom = new THREE.BoxGeometry(0.8, 0.04, 0.04);
+    const lightBar = new THREE.Mesh(barGeom, headlightMat);
+    lightBar.position.set(0, headlightY, headlightZ);
+    parentMesh.add(lightBar);
+
+    // Light source
+    const light = new THREE.PointLight(0xffffff, 3.0, 15);
+    light.position.set(0, 0, 0.05);
+    lightBar.add(light);
+  } else {
+    // Two headlights
+    const eyeGeom = new THREE.BoxGeometry(0.12, 0.08, 0.08);
+    
+    const headlightL = new THREE.Mesh(eyeGeom, headlightMat);
+    headlightL.position.set(-headlightX, headlightY, headlightZ);
+    parentMesh.add(headlightL);
+
+    const lightL = new THREE.PointLight(0xffffff, 2.0, 15);
+    lightL.position.set(0, 0, 0.05);
+    headlightL.add(lightL);
+
+    const headlightR = new THREE.Mesh(eyeGeom, headlightMat);
+    headlightR.position.set(headlightX, headlightY, headlightZ);
+    parentMesh.add(headlightR);
+
+    const lightR = new THREE.PointLight(0xffffff, 2.0, 15);
+    lightR.position.set(0, 0, 0.05);
+    headlightR.add(lightR);
+  }
+
+  // Underglow light
+  const underglowLight = new THREE.PointLight(underglowColor, 3.5, 8);
+  underglowLight.position.set(0, underglowY, 0);
+  parentMesh.add(underglowLight);
+}
+
+/**
  * createVehicleModel - Procedurally constructs Car, Monster Truck, and Truck voxel models.
  * 
  * @param {string} type - 'car', 'monster_truck', or 'truck'
@@ -429,25 +478,35 @@ export function createVehicleModel(type, colorNameOrHex) {
   const group = new THREE.Group();
   const wheels = [];
 
+  // Determine underglow color
+  const underglowColor = bodyColor !== null ? bodyColor : (
+    type === 'car' ? 0xfffa66 :
+    type === 'monster_truck' ? 0xd666ff :
+    type === 'truck' ? 0x80f7ff :
+    type === 'cybertruck' ? 0x73ff66 :
+    type === 'hovercraft' ? 0x80f7ff :
+    0x73ff66 // tank
+  );
+
   // Shared wheel/windshield materials - lightened and shinier
   const tireMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.7, flatShading: true }); // Rubber
-  const hubMat = new THREE.MeshStandardMaterial({ color: 0xff66cc, emissive: 0xff66cc, emissiveIntensity: 0.4, flatShading: true }); // Pink hubs
-  const glassMat = new THREE.MeshStandardMaterial({ color: 0x80f7ff, emissive: 0x80f7ff, emissiveIntensity: 0.6, flatShading: true }); // Windshield cyan glow
+  const hubMat = new THREE.MeshStandardMaterial({ color: 0xff66cc, emissive: 0xff66cc, emissiveIntensity: 1.2, flatShading: true }); // Pink hubs
+  const glassMat = new THREE.MeshStandardMaterial({ color: 0x80f7ff, emissive: 0x80f7ff, emissiveIntensity: 1.4, flatShading: true }); // Windshield cyan glow
 
   if (type === 'car') {
     // 1. Sleek Retro Sports Car (Lighter body, pink spoiler) with emissive shine
     const bodyMat = new THREE.MeshStandardMaterial({ 
       color: bodyColor !== null ? bodyColor : 0xfffa66, 
       emissive: bodyColor !== null ? bodyColor : 0xfffa66,
-      emissiveIntensity: 0.25,
-      roughness: 0.15,
-      metalness: 0.4,
+      emissiveIntensity: 1.2, // LED glow
+      roughness: 0.1,
+      metalness: 0.5,
       flatShading: true 
     });
     const spoilerMat = new THREE.MeshStandardMaterial({ 
       color: 0xff66cc, 
       emissive: 0xff66cc,
-      emissiveIntensity: 0.3,
+      emissiveIntensity: 1.2, // LED glow
       flatShading: true 
     });
 
@@ -479,6 +538,9 @@ export function createVehicleModel(type, colorNameOrHex) {
     spoilerWing.position.set(0, 0.25, -0.8);
     chassis.add(spoilerStrutL, spoilerStrutR, spoilerWing);
 
+    // Add LED headlights and neon underglow
+    addLEDLights(chassis, 0.35, 0.2, 0.9, -0.15, underglowColor);
+
     // 4 Wheels
     const wheelPositions = [
       [-0.5, 0.15, 0.5],   // Front Left
@@ -504,21 +566,21 @@ export function createVehicleModel(type, colorNameOrHex) {
     const bodyMat = new THREE.MeshStandardMaterial({ 
       color: bodyColor !== null ? bodyColor : 0xd666ff, 
       emissive: bodyColor !== null ? bodyColor : 0xd666ff,
-      emissiveIntensity: 0.25,
-      roughness: 0.15,
-      metalness: 0.4,
+      emissiveIntensity: 1.2, // LED glow
+      roughness: 0.1,
+      metalness: 0.5,
       flatShading: true 
     });
     const suspensionMat = new THREE.MeshStandardMaterial({ 
       color: 0xff66cc, 
       emissive: 0xff66cc,
-      emissiveIntensity: 0.3,
+      emissiveIntensity: 1.2, // LED glow
       flatShading: true 
     });
     const giantHubMat = new THREE.MeshStandardMaterial({ 
       color: 0x80f7ff, 
       emissive: 0x80f7ff,
-      emissiveIntensity: 0.4,
+      emissiveIntensity: 1.2, // LED glow
       flatShading: true 
     });
 
@@ -557,6 +619,9 @@ export function createVehicleModel(type, colorNameOrHex) {
       group.add(strut);
     });
 
+    // Add LED headlights and neon underglow
+    addLEDLights(chassis, 0.38, 0.1, 0.8, -0.4, underglowColor);
+
     // 4 Giant wheels
     const wheelPositions = [
       [-0.6, 0.45, 0.55],
@@ -578,20 +643,20 @@ export function createVehicleModel(type, colorNameOrHex) {
     });
 
   } else if (type === 'truck') {
-    // 3. Cargo Truck (Lighter Cyan cabin cab, light grey trailer back, 6 wheels)
+    // 3. Cargo Truck (Lighter Cyan cabin cab, glowing trailer back, 6 wheels)
     const bodyMat = new THREE.MeshStandardMaterial({ 
       color: bodyColor !== null ? bodyColor : 0x80f7ff, 
       emissive: bodyColor !== null ? bodyColor : 0x80f7ff,
-      emissiveIntensity: 0.25,
-      roughness: 0.15,
-      metalness: 0.4,
+      emissiveIntensity: 1.2, // LED glow
+      roughness: 0.1,
+      metalness: 0.5,
       flatShading: true 
     });
     const cargoMat = new THREE.MeshStandardMaterial({ 
-      color: 0xeeeeee, 
-      emissive: 0x333333,
-      emissiveIntensity: 0.15,
-      roughness: 0.2,
+      color: 0xffffff, 
+      emissive: 0xff66cc, // glowing hot pink trailer sides
+      emissiveIntensity: 0.8,
+      roughness: 0.1,
       flatShading: true 
     });
 
@@ -613,6 +678,9 @@ export function createVehicleModel(type, colorNameOrHex) {
     trailer.castShadow = true;
     trailer.receiveShadow = true;
     group.add(trailer);
+
+    // Add LED headlights and neon underglow
+    addLEDLights(cab, 0.35, -0.1, 0.35, -0.3, underglowColor);
 
     // 6 wheels
     const wheelPositions = [
@@ -641,15 +709,15 @@ export function createVehicleModel(type, colorNameOrHex) {
     const bodyMat = new THREE.MeshStandardMaterial({ 
       color: bodyColor !== null ? bodyColor : 0xcccccc, 
       emissive: bodyColor !== null ? bodyColor : 0xcccccc,
-      emissiveIntensity: 0.15,
-      roughness: 0.1,
-      metalness: 0.8,
+      emissiveIntensity: 1.0, // Sleek glowing metal
+      roughness: 0.05,
+      metalness: 0.9,
       flatShading: true 
     });
     const neonGreenMat = new THREE.MeshStandardMaterial({
       color: 0x73ff66,
       emissive: 0x73ff66,
-      emissiveIntensity: 1.2,
+      emissiveIntensity: 1.8, // Super bright green LED stripes
       flatShading: true
     });
 
@@ -680,6 +748,9 @@ export function createVehicleModel(type, colorNameOrHex) {
     sideLightR.position.set(0.485, 0.05, -0.15);
     base.add(sideLightL, sideLightR);
 
+    // Add horizontal LED light bar and neon underglow
+    addLEDLights(base, 0, 0.25, 0.9, -0.2, underglowColor, true);
+
     const wheelPositions = [
       [-0.52, 0.2, 0.5],
       [0.52, 0.2, 0.5],
@@ -704,8 +775,8 @@ export function createVehicleModel(type, colorNameOrHex) {
     const bodyMat = new THREE.MeshStandardMaterial({ 
       color: bodyColor !== null ? bodyColor : 0x80f7ff,
       emissive: bodyColor !== null ? bodyColor : 0x80f7ff,
-      emissiveIntensity: 0.3,
-      roughness: 0.2,
+      emissiveIntensity: 1.2, // LED glow
+      roughness: 0.1,
       flatShading: true 
     });
     const metalMat = new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.8, roughness: 0.2, flatShading: true });
@@ -734,6 +805,9 @@ export function createVehicleModel(type, colorNameOrHex) {
     windshield.rotation.x = -0.6;
     hull.add(windshield);
 
+    // Add LED headlights and neon underglow
+    addLEDLights(hull, 0.35, 0.0, 0.85, -0.15, underglowColor);
+
     const thrusterL = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.4), metalMat);
     thrusterL.position.set(-0.3, 0.18, -0.85);
     const thrusterR = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.4), metalMat);
@@ -754,11 +828,11 @@ export function createVehicleModel(type, colorNameOrHex) {
   } else if (type === 'tank') {
     // 6. Tank (Heavy treads, turret, 8 HP, shooting ability)
     const bodyMat = new THREE.MeshStandardMaterial({ 
-      color: bodyColor !== null ? bodyColor : 0x224422,
-      emissive: bodyColor !== null ? bodyColor : 0x224422,
-      emissiveIntensity: 0.1,
-      roughness: 0.4,
-      metalness: 0.6,
+      color: bodyColor !== null ? bodyColor : 0x00aa33, // Glowing sci-fi green body
+      emissive: bodyColor !== null ? bodyColor : 0x00aa33,
+      emissiveIntensity: 0.8,
+      roughness: 0.2,
+      metalness: 0.7,
       flatShading: true 
     });
     const metalMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.8, roughness: 0.2, flatShading: true });
@@ -795,6 +869,9 @@ export function createVehicleModel(type, colorNameOrHex) {
     const visorR = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.04), hubMat);
     visorR.position.set(0.35, 0.1, 0.91);
     chassis.add(visorL, visorR);
+
+    // Add LED headlights and neon underglow
+    addLEDLights(chassis, 0.38, 0.1, 0.9, -0.2, underglowColor);
 
     const wheelPositions = [
       [-0.55, 0.18, 0.6],

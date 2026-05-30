@@ -776,3 +776,235 @@ body {
   40%, 80% { transform: translateX(6px); }
 }
 
+/* Audio Settings Section */
+.audio-settings-section {
+  margin: 20px 0 10px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 15px;
+}
+
+.audio-settings-section h3 {
+  font-family: var(--font-pixel);
+  font-size: 0.7rem;
+  color: var(--neon-cyan);
+  margin-bottom: 12px;
+  text-shadow: 0 0 5px rgba(0, 240, 255, 0.3);
+}
+
+.audio-controls-row {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.audio-toggle-btn {
+  font-family: var(--font-pixel);
+  font-size: 0.6rem;
+  color: #888;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  padding: 8px 12px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+  width: 110px;
+}
+
+.audio-toggle-btn.active {
+  color: #fff;
+}
+
+.audio-toggle-btn.active.neon-pink-glow {
+  border-color: var(--neon-pink);
+  box-shadow: 0 0 10px rgba(255, 0, 127, 0.4);
+}
+
+.audio-toggle-btn.active.neon-pink-glow:hover {
+  background: rgba(255, 0, 127, 0.2);
+}
+
+.audio-toggle-btn.active.neon-cyan-glow {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+}
+
+.audio-toggle-btn.active.neon-cyan-glow:hover {
+  background: rgba(0, 240, 255, 0.2);
+}
+
+.audio-toggle-btn:not(.active) {
+  border-color: #333;
+  color: #444;
+  text-decoration: line-through;
+  box-shadow: none;
+}
+
+.volume-slider-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  font-family: var(--font-pixel);
+  font-size: 0.6rem;
+  color: #aaa;
+  width: 90%;
+  margin: 0 auto;
+}
+
+.volume-label {
+  width: 60px;
+  text-align: left;
+}
+
+.volume-value {
+  width: 40px;
+  text-align: right;
+  color: var(--neon-yellow);
+  text-shadow: 0 0 5px rgba(255, 246, 0, 0.5);
+}
+
+#volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 6px;
+  background: #222;
+  border: 1px solid #444;
+  border-radius: 3px;
+  outline: none;
+}
+
+#volume-slider::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+}
+
+#volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  background: var(--neon-cyan);
+  border: 2px solid #fff;
+  box-shadow: 0 0 8px var(--neon-cyan);
+  cursor: pointer;
+  margin-top: -5px;
+  transition: transform 0.1s ease;
+}
+
+#volume-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+/* AFK Floating Button */
+.afk-floating-btn {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 12;
+  font-size: 0.7rem;
+  padding: 8px 16px;
+  border-radius: 4px;
+}
+
+/* AFK Overlay and Box */
+.afk-box {
+  border-color: var(--neon-green);
+  box-shadow: 0 0 25px rgba(57, 255, 20, 0.5), inset 0 0 10px rgba(57, 255, 20, 0.2);
+}
+
+.afk-title {
+  font-family: var(--font-cyber);
+  font-size: 2.2rem;
+  color: var(--neon-green);
+  text-shadow: 0 0 10px rgba(57, 255, 20, 0.8), 0 0 20px rgba(57, 255, 20, 0.4);
+  margin-bottom: 5px;
+  letter-spacing: 2px;
+}
+
+.afk-stats-box {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(57, 255, 20, 0.3);
+  border-radius: 4px;
+  padding: 15px 25px;
+  margin: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family: var(--font-pixel);
+  font-size: 0.75rem;
+}
+
+.afk-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.afk-stat-label {
+  color: #888;
+}
+
+.afk-stat-value {
+  font-weight: bold;
+}
+
+.afk-stat-value.neon-yellow {
+  color: var(--neon-yellow);
+  text-shadow: 0 0 5px var(--neon-yellow);
+}
+
+.afk-stat-value.neon-green {
+  color: var(--neon-green);
+  text-shadow: 0 0 5px var(--neon-green);
+}
+
+/* AFK Cyber Visualizer */
+.afk-visualizer {
+  position: relative;
+  background: #05010a;
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  height: 60px;
+  margin: 20px 0;
+  overflow: hidden;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scanner-line {
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background: var(--neon-cyan);
+  box-shadow: 0 0 8px var(--neon-cyan);
+  top: 0;
+  animation: scan-vertical 2s linear infinite;
+}
+
+.matrix-rain {
+  font-family: var(--font-pixel);
+  font-size: 0.6rem;
+  color: rgba(57, 255, 20, 0.4);
+  display: flex;
+  gap: 20px;
+  animation: text-pulse 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes scan-vertical {
+  0% { top: 0; }
+  50% { top: 100%; }
+  100% { top: 0; }
+}
+
+@keyframes text-pulse {
+  0% { opacity: 0.3; transform: scale(0.95); }
+  100% { opacity: 0.8; transform: scale(1.05); }
+}
+

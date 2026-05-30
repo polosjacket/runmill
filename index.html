@@ -102,6 +102,20 @@
             <button class="color-btn" data-color="purple" style="background-color: var(--neon-purple); color: var(--neon-purple);"></button>
           </div>
         </div>
+
+        <!-- Audio Settings Section -->
+        <div class="audio-settings-section">
+          <h3>AUDIO SYSTEM</h3>
+          <div class="audio-controls-row">
+            <button id="toggle-music-btn" class="audio-toggle-btn active neon-pink-glow">MUSIC: ON</button>
+            <button id="toggle-sfx-btn" class="audio-toggle-btn active neon-cyan-glow">SFX: ON</button>
+          </div>
+          <div class="volume-slider-container">
+            <span class="volume-label">VOLUME</span>
+            <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="0.8">
+            <span id="volume-display" class="volume-value">80%</span>
+          </div>
+        </div>
         
         <div class="menu-section">
           <button id="start-btn" class="retro-btn neon-pink-glow">RUN PROGRAM</button>
@@ -186,6 +200,39 @@
         </div>
       </div>
     </div>
+
+    <!-- AFK SCREEN OVERLAY -->
+    <div id="afk-screen" class="overlay-panel hidden">
+      <div class="retro-box afk-box">
+        <h2 class="afk-title text-flicker">AFK SYSTEM ENGAGED</h2>
+        <p class="game-subtitle">MINING DATA COINS...</p>
+        
+        <div class="afk-stats-box">
+          <div class="afk-stat-row">
+            <span class="afk-stat-label">NEXT PAYOUT IN:</span>
+            <span id="afk-timer" class="afk-stat-value neon-yellow">60s</span>
+          </div>
+          <div class="afk-stat-row">
+            <span class="afk-stat-label">COINS MINED:</span>
+            <span id="afk-earned" class="afk-stat-value neon-green">0</span>
+          </div>
+        </div>
+
+        <div class="afk-visualizer">
+          <div class="scanner-line"></div>
+          <div class="matrix-rain">
+            <span>[010011]</span><span>[110100]</span><span>[001110]</span>
+          </div>
+        </div>
+        
+        <div class="menu-section" style="margin-top: 30px;">
+          <button id="exit-afk-btn" class="retro-btn neon-pink-glow">RETURN TO SYSTEM</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AFK Mode Floating Button -->
+    <button id="afk-btn" class="retro-btn neon-green-glow afk-floating-btn">AFK MODE</button>
 
     <!-- Touch Controls for Mobile Devices -->
     <div id="touch-controls" class="hidden">

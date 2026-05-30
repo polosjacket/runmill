@@ -181,11 +181,23 @@ class GameEngine {
     this.btnVicSubmitScore = document.getElementById('vic-submit-score-btn');
     this.btnVicRestart = document.getElementById('vic-restart-btn');
 
+    // AFK Mode and Audio Settings Elements
+    this.btnAfk = document.getElementById('afk-btn');
+    this.btnExitAfk = document.getElementById('exit-afk-btn');
+    this.domAfkScreen = document.getElementById('afk-screen');
+    this.domAfkTimer = document.getElementById('afk-timer');
+    this.domAfkEarned = document.getElementById('afk-earned');
+    this.btnToggleMusic = document.getElementById('toggle-music-btn');
+    this.btnToggleSfx = document.getElementById('toggle-sfx-btn');
+    this.sliderVolume = document.getElementById('volume-slider');
+    this.displayVolume = document.getElementById('volume-display');
+
     // 8. Core Initialization Steps
     this.initThree();
     this.setupLighting();
     this.createStaticScenery();
     this.setupEventListeners();
+    this.initAudioSettingsUI();
     this.fetchLeaderboard();
     this.updateWalletDisplay();
     this.updateVehicleButtons();
@@ -201,6 +213,97 @@ class GameEngine {
     const amountEl = document.getElementById('menu-wallet-amount');
     if (amountEl) {
       amountEl.textContent = this.wallet.toLocaleString();
+    }
+  }
+
+  /**
+   * initAudioSettingsUI - Populates the audio sliders and buttons from current state.
+   */
+  initAudioSettingsUI() {
+    if (this.sliderVolume) {
+      this.sliderVolume.value = audio.masterVolume;
+    }
+    this.updateAudioSettingsUI();
+  }
+
+  /**
+   * updateAudioSettingsUI - Syncs the audio settings DOM buttons and labels.
+   */
+  updateAudioSettingsUI() {
+    if (this.btnToggleMusic) {
+      if (audio.musicMuted) {
+        this.btnToggleMusic.classList.remove('active');
+        this.btnToggleMusic.textContent = 'MUSIC: OFF';
+      } else {
+        this.btnToggleMusic.classList.add('active');
+        this.btnToggleMusic.textContent = 'MUSIC: ON';
+      }
+    }
+    if (this.btnToggleSfx) {
+      if (audio.sfxMuted) {
+        this.btnToggleSfx.classList.remove('active');
+        this.btnToggleSfx.textContent = 'SFX: OFF';
+      } else {
+        this.btnToggleSfx.classList.add('active');
+        this.btnToggleSfx.textContent = 'SFX: ON';
+      }
+    }
+    if (this.displayVolume) {
+      this.displayVolume.textContent = Math.round(audio.masterVolume * 100) + '%';
+    }
+  }
+
+  /**
+   * enterAfkMode - Swaps to the AFK mining screensaver and starts timers.
+   */
+  enterAfkMode() {
+    audio.init();
+    this.state = 'AFK';
+    this.afkTimer = 60;
+    this.afkCoinsEarned = 0;
+    
+    audio.playCollect();
+
+    this.domStartScreen.classList.add('hidden');
+    this.domAfkScreen.classList.remove('hidden');
+    
+    if (this.domAfkTimer) this.domAfkTimer.textContent = '60s';
+    if (this.domAfkEarned) this.domAfkEarned.textContent = '0';
+  }
+
+  /**
+   * exitAfkMode - Returns back to the main startup menu.
+   */
+  exitAfkMode() {
+    this.state = 'START';
+    audio.playCollect();
+
+    this.domAfkScreen.classList.add('hidden');
+    this.domStartScreen.classList.remove('hidden');
+
+    this.updateWalletDisplay();
+    this.updateVehicleButtons();
+  }
+
+  /**
+   * updateAfk - Handles ticking the AFK countdown timer and payout of data coins.
+   */
+  updateAfk(dt) {
+    this.afkTimer -= dt;
+    if (this.afkTimer <= 0) {
+      this.afkTimer = 60;
+      this.afkCoinsEarned += 100;
+      this.wallet += 100;
+      localStorage.setItem('runmill_coins', this.wallet);
+      
+      audio.playCollect();
+      if (this.domAfkEarned) {
+        this.domAfkEarned.textContent = this.afkCoinsEarned;
+      }
+    }
+    
+    if (this.domAfkTimer) {
+      this.domAfkTimer.textContent = Math.ceil(this.afkTimer) + 's';
     }
   }
 
@@ -508,7 +611,7 @@ class GameEngine {
     this.btnSubmitScore.addEventListener('click', () => this.submitHighScore());
 
     // Victory Screen event listeners
-    this.btnVicRestart.addEventListener('click', () => {
+     this.btnVicRestart.addEventListener('click', () => {
       this.domVictoryScreen.classList.add('hidden');
       this.domStartScreen.classList.remove('hidden');
       this.state = 'START';
@@ -517,6 +620,34 @@ class GameEngine {
       this.updateVehicleButtons();
     });
     this.btnVicSubmitScore.addEventListener('click', () => this.submitVicHighScore());
+
+    // AFK Mode Listeners
+    if (this.btnAfk) {
+      this.btnAfk.addEventListener('click', () => this.enterAfkMode());
+    }
+    if (this.btnExitAfk) {
+      this.btnExitAfk.addEventListener('click', () => this.exitAfkMode());
+    }
+
+    // Audio Control Listeners
+    if (this.btnToggleMusic) {
+      this.btnToggleMusic.addEventListener('click', () => {
+        audio.toggleMusic();
+        this.updateAudioSettingsUI();
+      });
+    }
+    if (this.btnToggleSfx) {
+      this.btnToggleSfx.addEventListener('click', () => {
+        audio.toggleSfx();
+        this.updateAudioSettingsUI();
+      });
+    }
+    if (this.sliderVolume) {
+      this.sliderVolume.addEventListener('input', (e) => {
+        audio.setMasterVolume(parseFloat(e.target.value));
+        this.updateAudioSettingsUI();
+      });
+    }
   }
 
   /**
@@ -1006,6 +1137,9 @@ class GameEngine {
     // Route updates depending on playing states
     if (this.state === 'PLAYING') {
       this.updatePlaying(dt);
+    } else if (this.state === 'AFK') {
+      this.updateAfk(dt);
+      this.updateMenu(dt);
     } else {
       this.updateMenu(dt);
     }

@@ -1,5 +1,5 @@
 /**
- * WebAudioSynth - Procedural Synthesizer for Retro Sound Effects and Looping Music.
+ * WebAudioSynth - Procedurally Synthesizer for Retro Sound Effects and Looping Music.
  * 
  * Uses the Web Audio API to create real-time oscillators, filters, noise nodes,
  * and gain envelopes without loading any external .mp3 or .wav assets.
@@ -14,6 +14,20 @@ class WebAudioSynth {
     this.step = 0;                // Current active step in the 16-step sequencer (0-15)
     this.nextNoteTime = 0.0;      // Time to schedule the next sequencer step
     
+    // Default volumes and mute state
+    this.musicVolume = 0.8;
+    this.sfxVolume = 0.8;
+    this.masterVolume = 0.8;
+    this.musicMuted = false;
+    this.sfxMuted = false;
+    
+    // Retrieve values from localStorage if present
+    this.musicVolume = parseFloat(localStorage.getItem('runmill_music_volume') ?? '0.8');
+    this.sfxVolume = parseFloat(localStorage.getItem('runmill_sfx_volume') ?? '0.8');
+    this.masterVolume = parseFloat(localStorage.getItem('runmill_master_volume') ?? '0.8');
+    this.musicMuted = localStorage.getItem('runmill_music_muted') === 'true';
+    this.sfxMuted = localStorage.getItem('runmill_sfx_muted') === 'true';
+
     // MIDI note numbers for the repeating synth bassline (sawtooth wave)
     this.bassPattern = [36, 36, 43, 43, 36, 36, 48, 48]; 
 
@@ -32,7 +46,74 @@ class WebAudioSynth {
   init() {
     if (!this.ctx) {
       this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      
+      // Create gain nodes for mixing
+      this.masterGain = this.ctx.createGain();
+      this.musicGain = this.ctx.createGain();
+      this.sfxGain = this.ctx.createGain();
+      
+      // Connect sub-mixes to master
+      this.musicGain.connect(this.masterGain);
+      this.sfxGain.connect(this.masterGain);
+      
+      // Connect master to output
+      this.masterGain.connect(this.ctx.destination);
+      
+      // Apply loaded settings
+      this.applyVolumes();
     }
+  }
+
+  /**
+   * Helper function to clamp volume values between 0.0 and 1.0.
+   */
+  clamp(val, min, max) {
+    return Math.min(Math.max(val, min), max);
+  }
+
+  /**
+   * Applies the current volume settings to the Web Audio GainNodes.
+   */
+  applyVolumes() {
+    if (!this.ctx) return;
+    
+    // Set gains
+    this.masterGain.gain.setValueAtTime(this.masterVolume, this.ctx.currentTime);
+    this.musicGain.gain.setValueAtTime(this.musicMuted ? 0 : this.musicVolume, this.ctx.currentTime);
+    this.sfxGain.gain.setValueAtTime(this.sfxMuted ? 0 : this.sfxVolume, this.ctx.currentTime);
+  }
+
+  /**
+   * Setters and toggles for audio config
+   */
+  setMasterVolume(val) {
+    this.masterVolume = this.clamp(val, 0, 1);
+    localStorage.setItem('runmill_master_volume', this.masterVolume);
+    this.applyVolumes();
+  }
+
+  setMusicVolume(val) {
+    this.musicVolume = this.clamp(val, 0, 1);
+    localStorage.setItem('runmill_music_volume', this.musicVolume);
+    this.applyVolumes();
+  }
+
+  setSfxVolume(val) {
+    this.sfxVolume = this.clamp(val, 0, 1);
+    localStorage.setItem('runmill_sfx_volume', this.sfxVolume);
+    this.applyVolumes();
+  }
+
+  toggleMusic(muted) {
+    this.musicMuted = muted !== undefined ? muted : !this.musicMuted;
+    localStorage.setItem('runmill_music_muted', this.musicMuted);
+    this.applyVolumes();
+  }
+
+  toggleSfx(muted) {
+    this.sfxMuted = muted !== undefined ? muted : !this.sfxMuted;
+    localStorage.setItem('runmill_sfx_muted', this.sfxMuted);
+    this.applyVolumes();
   }
 
   /**
@@ -51,8 +132,9 @@ class WebAudioSynth {
    * @param {number} duration - Envelope duration in seconds
    * @param {string} type - Oscillator type ('sine', 'square', 'sawtooth', 'triangle')
    * @param {number} gainValue - Maximum volume level (0.0 to 1.0)
+   * @param {boolean} isMusic - Whether this is part of the background music sequencer
    */
-  playSynth(freq, startTime, duration, type = 'sawtooth', gainValue = 0.1) {
+  playSynth(freq, startTime, duration, type = 'sawtooth', gainValue = 0.1, isMusic = false) {
     this.init();
     
     // Create audio nodes
@@ -73,10 +155,10 @@ class WebAudioSynth {
     filterNode.frequency.setValueAtTime(freq * 3, startTime);
     filterNode.frequency.exponentialRampToValueAtTime(100, startTime + duration);
 
-    // Connect nodes: Osc -> Filter -> Gain -> Output (Destination)
+    // Connect nodes: Osc -> Filter -> Gain -> Output (mix gain)
     osc.connect(filterNode);
     filterNode.connect(gainNode);
-    gainNode.connect(this.ctx.destination);
+    gainNode.connect(isMusic ? this.musicGain : this.sfxGain);
 
     // Schedule playback start and stop times
     osc.start(startTime);
@@ -98,7 +180,7 @@ class WebAudioSynth {
     gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.15);
 
     osc.connect(gainNode);
-    gainNode.connect(this.ctx.destination);
+    gainNode.connect(this.musicGain);
 
     osc.start(startTime);
     osc.stop(startTime + 0.15);
@@ -131,7 +213,7 @@ class WebAudioSynth {
 
     noise.connect(filter);
     filter.connect(gainNode);
-    gainNode.connect(this.ctx.destination);
+    gainNode.connect(this.musicGain);
 
     noise.start(startTime);
     noise.stop(startTime + 0.05);
@@ -177,12 +259,12 @@ class WebAudioSynth {
   scheduleNextStep(step, time) {
     // 1. Bassline (Sawtooth note on every eighth note step)
     const bassNote = this.bassPattern[step % this.bassPattern.length];
-    this.playSynth(this.mtof(bassNote), time, this.tempo * 0.8, 'sawtooth', 0.08);
+    this.playSynth(this.mtof(bassNote), time, this.tempo * 0.8, 'sawtooth', 0.08, true);
 
     // 2. Lead Melody (Triangle wave note on non-zero pattern indices)
     const melNote = this.melodyPattern[step];
     if (melNote > 0) {
-      this.playSynth(this.mtof(melNote), time, this.tempo * 1.5, 'triangle', 0.06);
+      this.playSynth(this.mtof(melNote), time, this.tempo * 1.5, 'triangle', 0.06, true);
     }
 
     // 3. Drums (Kick drum on beats 1, 5, 9, 13; Hi-hat on offbeats 3, 7, 11, 15)
@@ -212,7 +294,7 @@ class WebAudioSynth {
     gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
 
     osc.connect(gainNode);
-    gainNode.connect(this.ctx.destination);
+    gainNode.connect(this.sfxGain);
 
     osc.start(now);
     osc.stop(now + 0.15);
@@ -227,10 +309,10 @@ class WebAudioSynth {
     const now = this.ctx.currentTime;
     
     // Quick ascending square wave notes simulating pixel floppy retrieval
-    this.playSynth(this.mtof(72), now, 0.08, 'square', 0.05);        // C5
-    this.playSynth(this.mtof(76), now + 0.06, 0.08, 'square', 0.05);  // E5
-    this.playSynth(this.mtof(79), now + 0.12, 0.15, 'square', 0.05);  // G5
-    this.playSynth(this.mtof(84), now + 0.18, 0.25, 'square', 0.05);  // C6
+    this.playSynth(this.mtof(72), now, 0.08, 'square', 0.05, false);        // C5
+    this.playSynth(this.mtof(76), now + 0.06, 0.08, 'square', 0.05, false);  // E5
+    this.playSynth(this.mtof(79), now + 0.12, 0.15, 'square', 0.05, false);  // G5
+    this.playSynth(this.mtof(84), now + 0.18, 0.25, 'square', 0.05, false);  // C6
   }
 
   /**
@@ -259,7 +341,7 @@ class WebAudioSynth {
 
     osc.connect(filter);
     filter.connect(gainNode);
-    gainNode.connect(this.ctx.destination);
+    gainNode.connect(this.sfxGain);
 
     osc.start(now);
     osc.stop(now + 0.3);
@@ -285,7 +367,7 @@ class WebAudioSynth {
 
       noise.connect(noiseFilter);
       noiseFilter.connect(noiseGain);
-      noiseGain.connect(this.ctx.destination);
+      noiseGain.connect(this.sfxGain);
 
       noise.start(now);
       noise.stop(now + 0.25);
@@ -323,7 +405,7 @@ class WebAudioSynth {
 
     osc.connect(filter);
     filter.connect(gainNode);
-    gainNode.connect(this.ctx.destination);
+    gainNode.connect(this.sfxGain);
 
     osc.start(now);
     osc.stop(now + 0.4);
@@ -350,7 +432,7 @@ class WebAudioSynth {
     gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
 
     osc.connect(gainNode);
-    gainNode.connect(this.ctx.destination);
+    gainNode.connect(this.sfxGain);
 
     osc.start(now);
     osc.stop(now + 0.35);
@@ -365,9 +447,9 @@ class WebAudioSynth {
     const now = this.ctx.currentTime;
     
     // Healing chime sweep (E5 -> A5 -> E6) using a triangle wave (for a warm bell-like chime)
-    this.playSynth(this.mtof(76), now, 0.15, 'triangle', 0.08);       // E5
-    this.playSynth(this.mtof(81), now + 0.1, 0.15, 'triangle', 0.08);  // A5
-    this.playSynth(this.mtof(88), now + 0.2, 0.3, 'triangle', 0.08);   // E6
+    this.playSynth(this.mtof(76), now, 0.15, 'triangle', 0.08, false);       // E5
+    this.playSynth(this.mtof(81), now + 0.1, 0.15, 'triangle', 0.08, false);  // A5
+    this.playSynth(this.mtof(88), now + 0.2, 0.3, 'triangle', 0.08, false);   // E6
   }
 
   /**
@@ -389,7 +471,7 @@ class WebAudioSynth {
     gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
     
     osc.connect(gainNode);
-    gainNode.connect(this.ctx.destination);
+    gainNode.connect(this.sfxGain);
     
     osc.start(now);
     osc.stop(now + 0.5);
@@ -405,18 +487,18 @@ class WebAudioSynth {
     const now = this.ctx.currentTime;
     
     // Celebratory ascending major arpeggio
-    this.playSynth(this.mtof(60), now, 0.12, 'triangle', 0.1);        // C5
-    this.playSynth(this.mtof(64), now + 0.1, 0.12, 'triangle', 0.1);  // E5
-    this.playSynth(this.mtof(67), now + 0.2, 0.12, 'triangle', 0.1);  // G5
-    this.playSynth(this.mtof(72), now + 0.3, 0.12, 'triangle', 0.1);  // C6
-    this.playSynth(this.mtof(76), now + 0.4, 0.12, 'triangle', 0.1);  // E6
-    this.playSynth(this.mtof(79), now + 0.5, 0.12, 'triangle', 0.1);  // G6
-    this.playSynth(this.mtof(84), now + 0.6, 0.4, 'triangle', 0.1);   // C7
+    this.playSynth(this.mtof(60), now, 0.12, 'triangle', 0.1, false);        // C5
+    this.playSynth(this.mtof(64), now + 0.1, 0.12, 'triangle', 0.1, false);  // E5
+    this.playSynth(this.mtof(67), now + 0.2, 0.12, 'triangle', 0.1, false);  // G5
+    this.playSynth(this.mtof(72), now + 0.3, 0.12, 'triangle', 0.1, false);  // C6
+    this.playSynth(this.mtof(76), now + 0.4, 0.12, 'triangle', 0.1, false);  // E6
+    this.playSynth(this.mtof(79), now + 0.5, 0.12, 'triangle', 0.1, false);  // G6
+    this.playSynth(this.mtof(84), now + 0.6, 0.4, 'triangle', 0.1, false);   // C7
     
     // Play a dual-oscillator backing chord at the end
-    this.playSynth(this.mtof(60), now + 0.6, 0.4, 'sawtooth', 0.06);
-    this.playSynth(this.mtof(64), now + 0.6, 0.4, 'sawtooth', 0.06);
-    this.playSynth(this.mtof(67), now + 0.6, 0.4, 'sawtooth', 0.06);
+    this.playSynth(this.mtof(60), now + 0.6, 0.4, 'sawtooth', 0.06, false);
+    this.playSynth(this.mtof(64), now + 0.6, 0.4, 'sawtooth', 0.06, false);
+    this.playSynth(this.mtof(67), now + 0.6, 0.4, 'sawtooth', 0.06, false);
   }
 
   /**
@@ -429,10 +511,10 @@ class WebAudioSynth {
     const now = this.ctx.currentTime;
     
     // Descending minor progression (G5 -> Eb5 -> C5 -> G4)
-    this.playSynth(this.mtof(67), now, 0.2, 'sawtooth', 0.1);        // G5
-    this.playSynth(this.mtof(63), now + 0.15, 0.2, 'sawtooth', 0.1); // Eb5
-    this.playSynth(this.mtof(60), now + 0.3, 0.2, 'sawtooth', 0.1);  // C5
-    this.playSynth(this.mtof(55), now + 0.45, 0.5, 'sawtooth', 0.1); // G4
+    this.playSynth(this.mtof(67), now, 0.2, 'sawtooth', 0.1, false);        // G5
+    this.playSynth(this.mtof(63), now + 0.15, 0.2, 'sawtooth', 0.1, false); // Eb5
+    this.playSynth(this.mtof(60), now + 0.3, 0.2, 'sawtooth', 0.1, false);  // C5
+    this.playSynth(this.mtof(55), now + 0.45, 0.5, 'sawtooth', 0.1, false); // G4
   }
 
   /**
@@ -455,7 +537,7 @@ class WebAudioSynth {
     gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
 
     osc.connect(gainNode);
-    gainNode.connect(this.ctx.destination);
+    gainNode.connect(this.sfxGain);
 
     osc.start(now);
     osc.stop(now + 0.2);
@@ -482,7 +564,7 @@ class WebAudioSynth {
 
       noise.connect(noiseFilter);
       noiseFilter.connect(noiseGain);
-      noiseGain.connect(this.ctx.destination);
+      noiseGain.connect(this.sfxGain);
 
       noise.start(now);
       noise.stop(now + 0.15);

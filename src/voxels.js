@@ -406,6 +406,7 @@ export function createSpringModel() {
  * addLEDLights - Helper function to attach glowing LED headlights and neon underglow to a vehicle.
  */
 function addLEDLights(parentMesh, headlightX, headlightY, headlightZ, underglowY, underglowColor, isCybertruck = false) {
+  // Headlight material
   const headlightMat = new THREE.MeshStandardMaterial({
     color: 0xffffff,
     emissive: 0xffffff,

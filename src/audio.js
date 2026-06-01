@@ -28,14 +28,113 @@ class WebAudioSynth {
     this.musicMuted = localStorage.getItem('runmill_music_muted') === 'true';
     this.sfxMuted = localStorage.getItem('runmill_sfx_muted') === 'true';
 
-    // MIDI note numbers for the repeating synth bassline (sawtooth wave)
-    this.bassPattern = [36, 36, 43, 43, 36, 36, 48, 48]; 
+    // 128-step Mario Overworld Theme Melody (0 = rest)
+    this.marioMelody = [
+      // Steps 0-15: Intro
+      76, 76,  0, 76,  0, 72, 76,  0, 79,  0,  0,  0, 67,  0,  0,  0,
+      // Steps 16-31: Part A1
+      72,  0,  0, 67,  0,  0, 64,  0, 69,  0, 71,  0, 70, 69, 67,  0,
+      // Steps 32-47: Part A2
+      76, 79, 81,  0, 77, 79,  0, 76,  0, 72, 74, 71,  0,  0,  0,  0,
+      // Steps 48-63: Part B1
+      0, 79, 78, 77, 75,  0, 76,  0, 68, 69, 72,  0, 69, 72, 74,  0,
+      // Steps 64-79: Part B2
+      0, 79, 78, 77, 75,  0, 76,  0, 84,  0, 84, 84,  0,  0,  0,  0,
+      // Steps 80-95: Part B3
+      0, 79, 78, 77, 75,  0, 76,  0, 68, 69, 72,  0, 69, 72, 74,  0,
+      // Steps 96-111: Part B4
+      0, 75,  0,  0, 74,  0,  0,  0, 72,  0,  0,  0,  0,  0,  0,  0,
+      // Steps 112-127: Part C1 (climbing bridge)
+      72, 72,  0, 72,  0, 72, 74,  0, 76, 72,  0, 69, 67,  0,  0,  0
+    ];
 
-    // MIDI note numbers for the lead retro arpeggiated melody (triangle wave)
-    // 0 represents a rest (no note played)
-    this.melodyPattern = [
-      60, 0, 63, 65, 0, 67, 70, 72,
-      70, 67, 65, 63, 60, 0, 0, 0
+    // Chords (null = no chord on this step)
+    this.marioChords = new Array(128).fill(null);
+    // Intro
+    this.marioChords[0] = [60, 64, 67];  // C
+    this.marioChords[4] = [60, 64, 67];  // C
+    this.marioChords[8] = [60, 64, 67];  // C
+    this.marioChords[12] = [55, 59, 62]; // G
+    
+    // Part A1
+    this.marioChords[16] = [60, 64, 67]; // C
+    this.marioChords[20] = [60, 64, 67]; // C
+    this.marioChords[24] = [57, 60, 64]; // Am
+    this.marioChords[28] = [56, 60, 65]; // Fm
+    
+    // Part A2
+    this.marioChords[32] = [60, 64, 67]; // C
+    this.marioChords[36] = [60, 64, 67]; // C
+    this.marioChords[40] = [60, 64, 67]; // C
+    this.marioChords[44] = [55, 59, 62]; // G
+    
+    // Part B1
+    this.marioChords[48] = [60, 64, 67]; // C
+    this.marioChords[52] = [57, 60, 64]; // Am
+    this.marioChords[56] = [60, 64, 67]; // C
+    this.marioChords[60] = [55, 59, 62]; // G
+    
+    // Part B2
+    this.marioChords[64] = [60, 64, 67]; // C
+    this.marioChords[68] = [57, 60, 64]; // Am
+    this.marioChords[72] = [60, 64, 67]; // C
+    this.marioChords[76] = [60, 64, 67]; // C
+    
+    // Part B3
+    this.marioChords[80] = [60, 64, 67]; // C
+    this.marioChords[84] = [57, 60, 64]; // Am
+    this.marioChords[88] = [60, 64, 67]; // C
+    this.marioChords[92] = [55, 59, 62]; // G
+    
+    // Part B4
+    this.marioChords[96] = [56, 60, 63];  // Ab
+    this.marioChords[100] = [58, 62, 65]; // Bb
+    this.marioChords[104] = [60, 64, 67]; // C
+    
+    // Part C1
+    this.marioChords[112] = [60, 64, 67]; // C
+    this.marioChords[116] = [60, 64, 67]; // C
+    this.marioChords[120] = [57, 60, 64]; // Am
+    this.marioChords[124] = [55, 59, 62]; // G
+
+    // Sparse, laid-back bassline for the Menu Theme
+    this.marioBassMenu = [
+      // Steps 0-15: Intro
+      48, 0, 0, 0, 48, 0, 0, 0, 43, 0, 0, 0, 43, 0, 0, 0,
+      // Steps 16-31: Part A1
+      48, 0, 0, 0, 48, 0, 0, 0, 41, 0, 0, 0, 41, 0, 0, 0,
+      // Steps 32-47: Part A2
+      48, 0, 0, 0, 41, 0, 0, 0, 48, 0, 0, 0, 43, 0, 0, 0,
+      // Steps 48-63: Part B1
+      48, 0, 0, 0, 41, 0, 0, 0, 48, 0, 0, 0, 43, 0, 0, 0,
+      // Steps 64-79: Part B2
+      48, 0, 0, 0, 41, 0, 0, 0, 48, 0, 0, 0, 48, 0, 0, 0,
+      // Steps 80-95: Part B3
+      48, 0, 0, 0, 41, 0, 0, 0, 48, 0, 0, 0, 43, 0, 0, 0,
+      // Steps 96-111: Part B4
+      44, 0, 0, 0, 46, 0, 0, 0, 48, 0, 0, 0, 48, 0, 0, 0,
+      // Steps 112-127: Part C1
+      48, 0, 0, 0, 48, 0, 0, 0, 41, 0, 0, 0, 43, 0, 0, 0
+    ];
+
+    // Upbeat driving bassline for the Game Theme
+    this.marioBassGame = [
+      // Steps 0-15: Intro
+      48, 0, 48, 48, 0, 48, 0, 48, 43, 0, 43, 43, 0, 43, 0, 43,
+      // Steps 16-31: Part A1
+      48, 0, 48, 48, 0, 48, 0, 48, 41, 0, 41, 41, 0, 41, 0, 41,
+      // Steps 32-47: Part A2
+      48, 0, 48, 48, 0, 41, 0, 41, 48, 0, 48, 48, 0, 43, 0, 43,
+      // Steps 48-63: Part B1
+      48, 0, 48, 48, 0, 41, 0, 41, 48, 0, 48, 48, 0, 43, 0, 43,
+      // Steps 64-79: Part B2
+      48, 0, 48, 48, 0, 41, 0, 41, 48, 0, 48, 48, 0, 48, 0, 48,
+      // Steps 80-95: Part B3
+      48, 0, 48, 48, 0, 41, 0, 41, 48, 0, 48, 48, 0, 43, 0, 43,
+      // Steps 96-111: Part B4
+      44, 0, 44, 44, 0, 46, 0, 46, 48, 0, 48, 48, 0, 48, 0, 48,
+      // Steps 112-127: Part C1
+      48, 0, 48, 48, 0, 48, 0, 48, 41, 0, 41, 41, 0, 43, 0, 43
     ];
   }
 
@@ -166,6 +265,239 @@ class WebAudioSynth {
   }
 
   /**
+   * playElectricPiano - Additive synthesis to mimic a Rhodes electric piano / bell sound.
+   */
+  playElectricPiano(freq, startTime, duration, gainValue = 0.08) {
+    this.init();
+    const now = startTime;
+    
+    // Fundamental (sine)
+    const osc1 = this.ctx.createOscillator();
+    const gain1 = this.ctx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(freq, now);
+    gain1.gain.setValueAtTime(gainValue * 0.7, now);
+    gain1.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    osc1.connect(gain1);
+    gain1.connect(this.musicGain);
+    osc1.start(now);
+    osc1.stop(now + duration);
+
+    // Tine strike 1 (2nd Harmonic)
+    const osc2 = this.ctx.createOscillator();
+    const gain2 = this.ctx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(freq * 2, now);
+    gain2.gain.setValueAtTime(gainValue * 0.3, now);
+    gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+    osc2.connect(gain2);
+    gain2.connect(this.musicGain);
+    osc2.start(now);
+    osc2.stop(now + 0.12);
+
+    // Tine strike 2 (3rd Harmonic)
+    const osc3 = this.ctx.createOscillator();
+    const gain3 = this.ctx.createGain();
+    osc3.type = 'sine';
+    osc3.frequency.setValueAtTime(freq * 3, now);
+    gain3.gain.setValueAtTime(gainValue * 0.2, now);
+    gain3.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+    osc3.connect(gain3);
+    gain3.connect(this.musicGain);
+    osc3.start(now);
+    osc3.stop(now + 0.2);
+
+    // Metallic bite (4.15x Harmonic)
+    const osc4 = this.ctx.createOscillator();
+    const gain4 = this.ctx.createGain();
+    osc4.type = 'sine';
+    osc4.frequency.setValueAtTime(freq * 4.15, now);
+    gain4.gain.setValueAtTime(gainValue * 0.15, now);
+    gain4.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
+    osc4.connect(gain4);
+    gain4.connect(this.musicGain);
+    osc4.start(now);
+    osc4.stop(now + 0.04);
+  }
+
+  /**
+   * playWarmPad - Smooth detuned triangle waves to create a warm background chord bed.
+   */
+  playWarmPad(freq, startTime, duration, gainValue = 0.05) {
+    this.init();
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gainNode = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+
+    osc1.type = 'triangle';
+    osc1.frequency.setValueAtTime(freq, startTime);
+    osc1.detune.setValueAtTime(-8, startTime);
+
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(freq, startTime);
+    osc2.detune.setValueAtTime(8, startTime);
+
+    gainNode.gain.setValueAtTime(0, startTime);
+    gainNode.gain.linearRampToValueAtTime(gainValue, startTime + 0.1);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(freq * 2, startTime);
+    filter.frequency.exponentialRampToValueAtTime(freq * 1.2, startTime + duration);
+
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(this.musicGain);
+
+    osc1.start(startTime);
+    osc1.stop(startTime + duration);
+    osc2.start(startTime);
+    osc2.stop(startTime + duration);
+  }
+
+  /**
+   * playAcousticBass - Warm double-bass sweep.
+   */
+  playAcousticBass(freq, startTime, duration, gainValue = 0.1) {
+    this.init();
+    const oscTri = this.ctx.createOscillator();
+    const oscSaw = this.ctx.createOscillator();
+    const gainNode = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+
+    oscTri.type = 'triangle';
+    oscTri.frequency.setValueAtTime(freq, startTime);
+
+    oscSaw.type = 'sawtooth';
+    oscSaw.frequency.setValueAtTime(freq, startTime);
+
+    gainNode.gain.setValueAtTime(gainValue, startTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(freq * 1.5, startTime);
+    filter.frequency.exponentialRampToValueAtTime(70, startTime + duration);
+
+    oscTri.connect(filter);
+    oscSaw.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(this.musicGain);
+
+    oscTri.start(startTime);
+    oscTri.stop(startTime + duration);
+    oscSaw.start(startTime);
+    oscSaw.stop(startTime + duration);
+  }
+
+  /**
+   * playChillKick - Gentle deep sub kick drum.
+   */
+  playChillKick(startTime) {
+    this.init();
+    const osc = this.ctx.createOscillator();
+    const gainNode = this.ctx.createGain();
+
+    osc.frequency.setValueAtTime(90, startTime);
+    osc.frequency.exponentialRampToValueAtTime(30, startTime + 0.15);
+
+    gainNode.gain.setValueAtTime(0.25, startTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.15);
+
+    osc.connect(gainNode);
+    gainNode.connect(this.musicGain);
+
+    osc.start(startTime);
+    osc.stop(startTime + 0.15);
+  }
+
+  /**
+   * playChillHihat - Soft highpass filtered noise.
+   */
+  playChillHihat(startTime) {
+    this.init();
+    try {
+      const bufferSize = this.ctx.sampleRate * 0.03;
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.value = 10000;
+
+      const gainNode = this.ctx.createGain();
+      gainNode.gain.setValueAtTime(0.015, startTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.025);
+
+      noise.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(this.musicGain);
+
+      noise.start(startTime);
+      noise.stop(startTime + 0.03);
+    } catch (e) {
+      // Fallback
+    }
+  }
+
+  /**
+   * playChillRimshot - Soft stick/rimshot sound.
+   */
+  playChillRimshot(startTime) {
+    this.init();
+    const osc = this.ctx.createOscillator();
+    const gainNode = this.ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(550, startTime);
+    osc.frequency.exponentialRampToValueAtTime(100, startTime + 0.04);
+
+    gainNode.gain.setValueAtTime(0.12, startTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.04);
+
+    osc.connect(gainNode);
+    gainNode.connect(this.musicGain);
+    osc.start(startTime);
+    osc.stop(startTime + 0.04);
+
+    try {
+      const bufferSize = this.ctx.sampleRate * 0.015;
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 1200;
+      filter.Q.value = 6.0;
+
+      const noiseGain = this.ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.03, startTime);
+      noiseGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.015);
+
+      noise.connect(filter);
+      filter.connect(noiseGain);
+      noiseGain.connect(this.musicGain);
+
+      noise.start(startTime);
+      noise.stop(startTime + 0.015);
+    } catch (e) {
+      // Fallback
+    }
+  }
+
+  /**
    * playDrum - Synthesizes a kick drum punch sound.
    * Sweeps frequency rapidly downward from 120Hz to 0.01Hz to simulate a bass drum click/thump.
    */
@@ -222,7 +554,7 @@ class WebAudioSynth {
   /**
    * startMusic - Begins the background music sequencer.
    * Uses a lookahead scheduler to ensure precise timing independent of JS main thread lag.
-   * @param {string} trackType - 'menu' (chill Synthwave) or 'game' (fast cyber runner)
+   * @param {string} trackType - 'menu' (chill lounge) or 'game' (upbeat driving)
    */
   startMusic(trackType = 'game') {
     this.init();
@@ -236,8 +568,8 @@ class WebAudioSynth {
     this.step = 0;
     this.nextNoteTime = this.ctx.currentTime;
     
-    // Set tempo depending on trackType
-    const bpm = trackType === 'menu' ? 95 : 110;
+    // Set tempo depending on trackType: chill menu lounge vs upbeat game driving
+    const bpm = trackType === 'menu' ? 90 : 115;
     this.tempo = 60 / bpm;
     
     // Look ahead 100ms and schedule notes every 50ms interval
@@ -245,7 +577,7 @@ class WebAudioSynth {
       while (this.nextNoteTime < this.ctx.currentTime + 0.1) {
         this.scheduleNextStep(this.step, this.nextNoteTime);
         this.nextNoteTime += this.tempo / 2; // eighth notes
-        this.step = (this.step + 1) % 32; // Loop over 32 steps
+        this.step = (this.step + 1) % 128; // Loop over 128 steps
       }
     };
     
@@ -268,54 +600,66 @@ class WebAudioSynth {
    */
   scheduleNextStep(step, time) {
     if (this.currentTrack === 'menu') {
-      // MENU THEME (Chill Instrumental Lounge remix of Mario Overworld)
-      // 32-step melody notes (0 = rest, notes are C5 to G5 range)
-      const melodyPattern = [
-        76, 76,  0, 76,  0, 72, 76,  0, 79,  0,  0,  0, 67,  0,  0,  0,
-        72,  0,  0, 67,  0,  0, 64,  0, 69,  0, 71,  0, 70, 69, 67,  0
-      ];
-
-      // 32-step bass notes (C -> G -> F -> C)
-      const bassPattern = [
-        48,  0, 48,  0, 48,  0, 48,  0, 43,  0, 43,  0, 43,  0, 43,  0,
-        41,  0, 41,  0, 41,  0, 41,  0, 36,  0, 36,  0, 36,  0, 36,  0
-      ];
-
-      // 1. Bassline (Warm sub-bass triangle wave)
-      const bassNote = bassPattern[step];
+      // MENU THEME (Chill Lounge Instrumental remix of Mario Overworld)
+      // 1. Bassline (Warm double-bass plucks)
+      const bassNote = this.marioBassMenu[step];
       if (bassNote > 0) {
-        this.playSynth(this.mtof(bassNote), time, this.tempo * 0.7, 'triangle', 0.08, true);
+        this.playAcousticBass(this.mtof(bassNote), time, this.tempo * 1.8, 0.08);
       }
 
-      // 2. Lead Melody (Sweet, pure instrumental sine wave bells)
-      const melNote = melodyPattern[step];
+      // 2. Chords Pad (Warm detuned background chord pads)
+      const chordNotes = this.marioChords[step];
+      if (chordNotes) {
+        chordNotes.forEach(note => {
+          this.playWarmPad(this.mtof(note), time, this.tempo * 3.5, 0.02);
+        });
+      }
+
+      // 3. Lead Melody (Sweet instrumental Electric Piano)
+      const melNote = this.marioMelody[step];
       if (melNote > 0) {
-        this.playSynth(this.mtof(melNote), time, this.tempo * 1.0, 'sine', 0.04, true);
+        this.playElectricPiano(this.mtof(melNote), time, this.tempo * 1.0, 0.04);
       }
 
-      // 3. Chill Drums (Kick on beats 1 and 3, Hi-hat on offbeats)
+      // 4. Chill Lounge Drums (Kick on 1/3, rimshot on 2/4, hats on upbeats)
       if (step % 8 === 0) {
-        this.playDrum(time);
+        this.playChillKick(time);
+      } else if (step % 8 === 4) {
+        this.playChillRimshot(time);
       } else if (step % 4 === 2) {
-        this.playHihat(time);
+        this.playChillHihat(time);
       }
     } else {
-      // GAME THEME (Fast cyber runner)
-      // 1. Bassline (Sawtooth note on every eighth note step)
-      const bassNote = this.bassPattern[step % this.bassPattern.length];
-      this.playSynth(this.mtof(bassNote), time, this.tempo * 0.8, 'sawtooth', 0.08, true);
-
-      // 2. Lead Melody (Triangle wave note on non-zero pattern indices)
-      const melNote = this.melodyPattern[step % this.melodyPattern.length];
-      if (melNote > 0) {
-        this.playSynth(this.mtof(melNote), time, this.tempo * 1.5, 'triangle', 0.06, true);
+      // GAME THEME (Upbeat driving instrumental remix of Mario Overworld)
+      // 1. Bassline (Syncopated driving acoustic bassline)
+      const bassNote = this.marioBassGame[step];
+      if (bassNote > 0) {
+        this.playAcousticBass(this.mtof(bassNote), time, this.tempo * 0.7, 0.08);
       }
 
-      // 3. Drums (Kick drum on beats 1, 5, 9, 13; Hi-hat on offbeats 3, 7, 11, 15)
+      // 2. Chords Pluck (Rhythmic Electric Piano plucks)
+      const chordNotes = this.marioChords[step];
+      if (chordNotes) {
+        chordNotes.forEach(note => {
+          this.playElectricPiano(this.mtof(note), time, this.tempo * 0.5, 0.025);
+        });
+      }
+
+      // 3. Lead Melody (Bright, driving instrumental Electric Piano)
+      const melNote = this.marioMelody[step];
+      if (melNote > 0) {
+        this.playElectricPiano(this.mtof(melNote), time, this.tempo * 0.7, 0.06);
+      }
+
+      // 4. Drums (Driving four-on-the-floor kick, upbeat hats, solid rimshot backbeat)
       if (step % 4 === 0) {
-        this.playDrum(time);
-      } else if (step % 4 === 2) {
-        this.playHihat(time);
+        this.playChillKick(time);
+      }
+      if (step % 8 === 4) {
+        this.playChillRimshot(time);
+      }
+      if (step % 4 === 2) {
+        this.playChillHihat(time);
       }
     }
   }

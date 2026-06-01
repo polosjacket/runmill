@@ -7,9 +7,9 @@ const VEHICLES_CONFIG = {
   car: { cost: 0, maxLives: 3 },
   monster_truck: { cost: 0, maxLives: 4 },
   truck: { cost: 0, maxLives: 6 },
-  cybertruck: { cost: 5000, maxLives: 5 },
-  hovercraft: { cost: 25000, maxLives: 3 },
-  tank: { cost: 150000, maxLives: 8 }
+  cybertruck: { cost: 1000, maxLives: 5 },
+  hovercraft: { cost: 1500, maxLives: 3 },
+  tank: { cost: 5000, maxLives: 8 }
 };
 
 const LANE_WIDTH = 2.0;

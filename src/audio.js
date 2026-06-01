@@ -626,8 +626,8 @@ class WebAudioSynth {
     this.step = 0;
     this.nextNoteTime = this.ctx.currentTime;
     
-    // Set tempo: Mario Rap (95 BPM) vs high-energy gameplay driving (120 BPM)
-    const bpm = trackType === 'menu' ? 95 : 120;
+    // Set tempo: Mario Rap (115 BPM) vs high-energy gameplay driving (128 BPM)
+    const bpm = trackType === 'menu' ? 115 : 128;
     this.tempo = 60 / bpm;
     
     // Look ahead 100ms and schedule notes every 50ms interval
@@ -679,17 +679,19 @@ class WebAudioSynth {
         this.playElectricPiano(this.mtof(melNote), time, this.tempo * 0.9, 0.04);
       }
 
-      // 4. Boom-Bap Hip-Hop Drums (Double kicks, backbeat rims, turntable scratches)
-      const hipHopKick = [0, 1, 6, 8, 9, 14];
-      if (hipHopKick.includes(step % 16)) {
+      // 4. Iconic Mario Calypso/Samba Drums with Turntable Rap Scratches
+      // Kick plays on 0, 3, 5 of every 8-step measure
+      if (step % 8 === 0 || step % 8 === 3 || step % 8 === 5) {
         this.playChillKick(time);
       }
 
-      if (step % 8 === 4) {
+      // Snare/Rimshot plays on 2, 6 of every 8-step measure
+      if (step % 8 === 2 || step % 8 === 6) {
         this.playChillRimshot(time);
       }
 
-      if (step % 2 === 0) {
+      // Hi-hat plays on offbeats
+      if (step % 2 === 1) {
         this.playChillHihat(time);
       }
 
@@ -719,14 +721,19 @@ class WebAudioSynth {
         this.playElectricPiano(this.mtof(melNote), time, this.tempo * 0.7, 0.06);
       }
 
-      // 4. Drums (Driving four-on-the-floor kick, upbeat hats, solid rimshot backbeat)
-      if (step % 4 === 0) {
+      // 4. Iconic Mario Calypso/Samba Drums
+      // Kick plays on 0, 3, 5 of every 8-step measure
+      if (step % 8 === 0 || step % 8 === 3 || step % 8 === 5) {
         this.playChillKick(time);
       }
-      if (step % 8 === 4) {
+
+      // Snare/Rimshot plays on 2, 6 of every 8-step measure
+      if (step % 8 === 2 || step % 8 === 6) {
         this.playChillRimshot(time);
       }
-      if (step % 4 === 2) {
+
+      // Hi-hat plays on offbeats
+      if (step % 2 === 1) {
         this.playChillHihat(time);
       }
     }

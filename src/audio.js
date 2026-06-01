@@ -97,24 +97,24 @@ class WebAudioSynth {
     this.marioChords[120] = [57, 60, 64]; // Am
     this.marioChords[124] = [55, 59, 62]; // G
 
-    // Sparse, laid-back bassline for the Menu Theme
+    // Syncopated double-bounce bassline for the Mario Rap Menu Theme
     this.marioBassMenu = [
-      // Steps 0-15: Intro
-      48, 0, 0, 0, 48, 0, 0, 0, 43, 0, 0, 0, 43, 0, 0, 0,
+      // Steps 0-15: Intro (funky bounce)
+      48, 48,  0,  0, 48,  0, 48,  0, 43, 43,  0,  0, 43,  0, 43,  0,
       // Steps 16-31: Part A1
-      48, 0, 0, 0, 48, 0, 0, 0, 41, 0, 0, 0, 41, 0, 0, 0,
+      48, 48,  0,  0, 48,  0, 48,  0, 41, 41,  0,  0, 41,  0, 41,  0,
       // Steps 32-47: Part A2
-      48, 0, 0, 0, 41, 0, 0, 0, 48, 0, 0, 0, 43, 0, 0, 0,
+      48, 48,  0,  0, 41,  0, 41,  0, 48, 48,  0,  0, 43,  0, 43,  0,
       // Steps 48-63: Part B1
-      48, 0, 0, 0, 41, 0, 0, 0, 48, 0, 0, 0, 43, 0, 0, 0,
+      48, 48,  0,  0, 41,  0, 41,  0, 48, 48,  0,  0, 43,  0, 43,  0,
       // Steps 64-79: Part B2
-      48, 0, 0, 0, 41, 0, 0, 0, 48, 0, 0, 0, 48, 0, 0, 0,
+      48, 48,  0,  0, 41,  0, 41,  0, 48, 48,  0,  0, 48,  0, 48,  0,
       // Steps 80-95: Part B3
-      48, 0, 0, 0, 41, 0, 0, 0, 48, 0, 0, 0, 43, 0, 0, 0,
+      48, 48,  0,  0, 41,  0, 41,  0, 48, 48,  0,  0, 43,  0, 43,  0,
       // Steps 96-111: Part B4
-      44, 0, 0, 0, 46, 0, 0, 0, 48, 0, 0, 0, 48, 0, 0, 0,
+      44, 44,  0,  0, 46,  0, 46,  0, 48, 48,  0,  0, 48,  0, 48,  0,
       // Steps 112-127: Part C1
-      48, 0, 0, 0, 48, 0, 0, 0, 41, 0, 0, 0, 43, 0, 0, 0
+      48, 48,  0,  0, 48,  0, 48,  0, 41, 41,  0,  0, 43,  0, 43,  0
     ];
 
     // Upbeat driving bassline for the Game Theme
@@ -498,6 +498,64 @@ class WebAudioSynth {
   }
 
   /**
+   * playScratch - Synthesizes a bi-directional record scratch sound for hip-hop tracks.
+   */
+  playScratch(startTime) {
+    this.init();
+    const now = startTime;
+    const osc = this.ctx.createOscillator();
+    const gainNode = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(600, now);
+    osc.frequency.linearRampToValueAtTime(1600, now + 0.05);
+    osc.frequency.linearRampToValueAtTime(300, now + 0.1);
+
+    gainNode.gain.setValueAtTime(0.06, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.1);
+
+    filter.type = 'bandpass';
+    filter.frequency.value = 1000;
+    filter.Q.value = 3.0;
+
+    osc.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(this.musicGain);
+
+    osc.start(now);
+    osc.stop(now + 0.1);
+
+    // Add a tiny noise crunch on top of the scratch for realistic grit
+    try {
+      const bufferSize = this.ctx.sampleRate * 0.08;
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const noiseFilter = this.ctx.createBiquadFilter();
+      noiseFilter.type = 'bandpass';
+      noiseFilter.frequency.value = 1400;
+      noiseFilter.Q.value = 2.0;
+
+      const noiseGain = this.ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.02, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+
+      noise.connect(noiseFilter);
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(this.musicGain);
+
+      noise.start(now);
+      noise.stop(now + 0.08);
+    } catch (e) {}
+  }
+
+  /**
    * playDrum - Synthesizes a kick drum punch sound.
    * Sweeps frequency rapidly downward from 120Hz to 0.01Hz to simulate a bass drum click/thump.
    */
@@ -554,7 +612,7 @@ class WebAudioSynth {
   /**
    * startMusic - Begins the background music sequencer.
    * Uses a lookahead scheduler to ensure precise timing independent of JS main thread lag.
-   * @param {string} trackType - 'menu' (chill lounge) or 'game' (upbeat driving)
+   * @param {string} trackType - 'menu' (Mario Rap) or 'game' (upbeat Mario driving)
    */
   startMusic(trackType = 'game') {
     this.init();
@@ -568,8 +626,8 @@ class WebAudioSynth {
     this.step = 0;
     this.nextNoteTime = this.ctx.currentTime;
     
-    // Set tempo depending on trackType: chill menu lounge vs upbeat game driving
-    const bpm = trackType === 'menu' ? 90 : 115;
+    // Set tempo: Mario Rap (95 BPM) vs high-energy gameplay driving (120 BPM)
+    const bpm = trackType === 'menu' ? 95 : 120;
     this.tempo = 60 / bpm;
     
     // Look ahead 100ms and schedule notes every 50ms interval
@@ -600,37 +658,47 @@ class WebAudioSynth {
    */
   scheduleNextStep(step, time) {
     if (this.currentTrack === 'menu') {
-      // MENU THEME (Chill Lounge Instrumental remix of Mario Overworld)
-      // 1. Bassline (Warm double-bass plucks)
+      // MENU THEME (Mario Brothers Rap / Funk Hip-Hop Remix of Mario Overworld)
+      // 1. Bassline (Syncopated hip-hop double-bounce double-bass)
       const bassNote = this.marioBassMenu[step];
       if (bassNote > 0) {
-        this.playAcousticBass(this.mtof(bassNote), time, this.tempo * 1.8, 0.08);
+        this.playAcousticBass(this.mtof(bassNote), time, this.tempo * 0.9, 0.1);
       }
 
-      // 2. Chords Pad (Warm detuned background chord pads)
+      // 2. Chords Pad (Warm background chord pads)
       const chordNotes = this.marioChords[step];
       if (chordNotes) {
         chordNotes.forEach(note => {
-          this.playWarmPad(this.mtof(note), time, this.tempo * 3.5, 0.02);
+          this.playWarmPad(this.mtof(note), time, this.tempo * 3.2, 0.02);
         });
       }
 
       // 3. Lead Melody (Sweet instrumental Electric Piano)
       const melNote = this.marioMelody[step];
       if (melNote > 0) {
-        this.playElectricPiano(this.mtof(melNote), time, this.tempo * 1.0, 0.04);
+        this.playElectricPiano(this.mtof(melNote), time, this.tempo * 0.9, 0.04);
       }
 
-      // 4. Chill Lounge Drums (Kick on 1/3, rimshot on 2/4, hats on upbeats)
-      if (step % 8 === 0) {
+      // 4. Boom-Bap Hip-Hop Drums (Double kicks, backbeat rims, turntable scratches)
+      const hipHopKick = [0, 1, 6, 8, 9, 14];
+      if (hipHopKick.includes(step % 16)) {
         this.playChillKick(time);
-      } else if (step % 8 === 4) {
+      }
+
+      if (step % 8 === 4) {
         this.playChillRimshot(time);
-      } else if (step % 4 === 2) {
+      }
+
+      if (step % 2 === 0) {
         this.playChillHihat(time);
       }
+
+      // Procedural turntable record scratches at measure endings (turnaround fill)
+      if (step % 16 === 14 || step % 16 === 15) {
+        this.playScratch(time);
+      }
     } else {
-      // GAME THEME (Upbeat driving instrumental remix of Mario Overworld)
+      // GAME THEME (Upbeat high-energy instrumental Mario Overworld Theme)
       // 1. Bassline (Syncopated driving acoustic bassline)
       const bassNote = this.marioBassGame[step];
       if (bassNote > 0) {

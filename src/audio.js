@@ -222,20 +222,30 @@ class WebAudioSynth {
   /**
    * startMusic - Begins the background music sequencer.
    * Uses a lookahead scheduler to ensure precise timing independent of JS main thread lag.
+   * @param {string} trackType - 'menu' (chill Synthwave) or 'game' (fast cyber runner)
    */
-  startMusic() {
+  startMusic(trackType = 'game') {
     this.init();
-    if (this.isPlayingMusic) return;
+    if (this.isPlayingMusic) {
+      if (this.currentTrack === trackType) return;
+      this.stopMusic();
+    }
+    
+    this.currentTrack = trackType;
     this.isPlayingMusic = true;
     this.step = 0;
     this.nextNoteTime = this.ctx.currentTime;
+    
+    // Set tempo depending on trackType
+    const bpm = trackType === 'menu' ? 95 : 110;
+    this.tempo = 60 / bpm;
     
     // Look ahead 100ms and schedule notes every 50ms interval
     const scheduler = () => {
       while (this.nextNoteTime < this.ctx.currentTime + 0.1) {
         this.scheduleNextStep(this.step, this.nextNoteTime);
         this.nextNoteTime += this.tempo / 2; // eighth notes
-        this.step = (this.step + 1) % 16;
+        this.step = (this.step + 1) % 32; // Loop over 32 steps
       }
     };
     
@@ -257,21 +267,56 @@ class WebAudioSynth {
    * scheduleNextStep - Triggers sound outputs corresponding to the current grid step.
    */
   scheduleNextStep(step, time) {
-    // 1. Bassline (Sawtooth note on every eighth note step)
-    const bassNote = this.bassPattern[step % this.bassPattern.length];
-    this.playSynth(this.mtof(bassNote), time, this.tempo * 0.8, 'sawtooth', 0.08, true);
+    if (this.currentTrack === 'menu') {
+      // MENU THEME (Chill Instrumental Lounge remix of Mario Overworld)
+      // 32-step melody notes (0 = rest, notes are C5 to G5 range)
+      const melodyPattern = [
+        76, 76,  0, 76,  0, 72, 76,  0, 79,  0,  0,  0, 67,  0,  0,  0,
+        72,  0,  0, 67,  0,  0, 64,  0, 69,  0, 71,  0, 70, 69, 67,  0
+      ];
 
-    // 2. Lead Melody (Triangle wave note on non-zero pattern indices)
-    const melNote = this.melodyPattern[step];
-    if (melNote > 0) {
-      this.playSynth(this.mtof(melNote), time, this.tempo * 1.5, 'triangle', 0.06, true);
-    }
+      // 32-step bass notes (C -> G -> F -> C)
+      const bassPattern = [
+        48,  0, 48,  0, 48,  0, 48,  0, 43,  0, 43,  0, 43,  0, 43,  0,
+        41,  0, 41,  0, 41,  0, 41,  0, 36,  0, 36,  0, 36,  0, 36,  0
+      ];
 
-    // 3. Drums (Kick drum on beats 1, 5, 9, 13; Hi-hat on offbeats 3, 7, 11, 15)
-    if (step % 4 === 0) {
-      this.playDrum(time);
-    } else if (step % 4 === 2) {
-      this.playHihat(time);
+      // 1. Bassline (Warm sub-bass triangle wave)
+      const bassNote = bassPattern[step];
+      if (bassNote > 0) {
+        this.playSynth(this.mtof(bassNote), time, this.tempo * 0.7, 'triangle', 0.08, true);
+      }
+
+      // 2. Lead Melody (Sweet, pure instrumental sine wave bells)
+      const melNote = melodyPattern[step];
+      if (melNote > 0) {
+        this.playSynth(this.mtof(melNote), time, this.tempo * 1.0, 'sine', 0.04, true);
+      }
+
+      // 3. Chill Drums (Kick on beats 1 and 3, Hi-hat on offbeats)
+      if (step % 8 === 0) {
+        this.playDrum(time);
+      } else if (step % 4 === 2) {
+        this.playHihat(time);
+      }
+    } else {
+      // GAME THEME (Fast cyber runner)
+      // 1. Bassline (Sawtooth note on every eighth note step)
+      const bassNote = this.bassPattern[step % this.bassPattern.length];
+      this.playSynth(this.mtof(bassNote), time, this.tempo * 0.8, 'sawtooth', 0.08, true);
+
+      // 2. Lead Melody (Triangle wave note on non-zero pattern indices)
+      const melNote = this.melodyPattern[step % this.melodyPattern.length];
+      if (melNote > 0) {
+        this.playSynth(this.mtof(melNote), time, this.tempo * 1.5, 'triangle', 0.06, true);
+      }
+
+      // 3. Drums (Kick drum on beats 1, 5, 9, 13; Hi-hat on offbeats 3, 7, 11, 15)
+      if (step % 4 === 0) {
+        this.playDrum(time);
+      } else if (step % 4 === 2) {
+        this.playHihat(time);
+      }
     }
   }
 

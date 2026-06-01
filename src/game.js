@@ -202,6 +202,37 @@ class GameEngine {
     this.updateWalletDisplay();
     this.updateVehicleButtons();
     
+    // Start background music when window gets focus or becomes visible (entering the tab)
+    const playMusicOnTabEntry = () => {
+      if (this.state === 'START' || this.state === 'AFK') {
+        audio.startMusic('menu');
+      } else if (this.state === 'PLAYING') {
+        audio.startMusic('game');
+      }
+    };
+
+    const pauseMusicOnTabLeave = () => {
+      audio.stopMusic();
+    };
+
+    window.addEventListener('focus', playMusicOnTabEntry);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        playMusicOnTabEntry();
+      } else {
+        pauseMusicOnTabLeave();
+      }
+    });
+
+    // Also trigger on first click for browsers blocking focus-based autoplay initially
+    const startMenuMusicOnInteraction = () => {
+      playMusicOnTabEntry();
+      document.removeEventListener('click', startMenuMusicOnInteraction);
+      document.removeEventListener('pointerdown', startMenuMusicOnInteraction);
+    };
+    document.addEventListener('click', startMenuMusicOnInteraction);
+    document.addEventListener('pointerdown', startMenuMusicOnInteraction);
+
     // Begin main render loop recursion
     this.animate();
   }
@@ -604,6 +635,7 @@ class GameEngine {
       this.domGameOverScreen.classList.add('hidden');
       this.domStartScreen.classList.remove('hidden');
       this.state = 'START';
+      audio.startMusic('menu');
       this.fetchLeaderboard();
       this.updateWalletDisplay();
       this.updateVehicleButtons();
@@ -615,6 +647,7 @@ class GameEngine {
       this.domVictoryScreen.classList.add('hidden');
       this.domStartScreen.classList.remove('hidden');
       this.state = 'START';
+      audio.startMusic('menu');
       this.fetchLeaderboard();
       this.updateWalletDisplay();
       this.updateVehicleButtons();
@@ -683,6 +716,10 @@ class GameEngine {
       audio.playSpin();
     } else if (this.selectedCharacter === 'tank') {
       this.shoot();
+    } else if (this.selectedCharacter === 'cybertruck') {
+      this.bashTimer = 1.5;          // 1.5s active magnet duration
+      this.bashCooldownTimer = 5.5;   // 5.5s total cooldown (4s after active magnet ends)
+      audio.playCollect();           // Play collect chime on activation
     }
   }
 
@@ -759,7 +796,7 @@ class GameEngine {
     this.bashTimer = 0;
     this.bashCooldownTimer = 0;
 
-    // Toggle BASH/SPIN/FIRE UI indicators based on character selection
+    // Toggle BASH/SPIN/FIRE/MAGNET UI indicators based on character selection
     const hudLabel = document.querySelector('#hud-bash-container .label');
     if (this.selectedCharacter === 'monster_truck') {
       this.domBashContainer.classList.remove('hidden');
@@ -785,6 +822,14 @@ class GameEngine {
       this.btnTouchBash.classList.remove('hidden');
       this.btnTouchBash.classList.remove('cooldown');
       this.btnTouchBash.textContent = 'FIRE';
+    } else if (this.selectedCharacter === 'cybertruck') {
+      this.domBashContainer.classList.remove('hidden');
+      this.domBashContainer.classList.remove('cooldown');
+      if (hudLabel) hudLabel.textContent = 'MAGNET';
+      this.domBash.textContent = 'READY';
+      this.btnTouchBash.classList.remove('hidden');
+      this.btnTouchBash.classList.remove('cooldown');
+      this.btnTouchBash.textContent = 'MAGNET';
     } else {
       this.domBashContainer.classList.add('hidden');
       this.btnTouchBash.classList.add('hidden');
@@ -1232,8 +1277,8 @@ class GameEngine {
     this.domDistance.textContent = Math.floor(this.distance);
     this.domSpeed.textContent = Math.floor(this.speed * 4); // Virtual MPH
 
-    // Update BASH/SPIN/FIRE cooldowns and HUD if playing as monster truck, sports car, or tank
-    if (this.selectedCharacter === 'monster_truck' || this.selectedCharacter === 'car' || this.selectedCharacter === 'tank') {
+    // Update BASH/SPIN/FIRE/MAGNET cooldowns and HUD
+    if (this.selectedCharacter === 'monster_truck' || this.selectedCharacter === 'car' || this.selectedCharacter === 'tank' || this.selectedCharacter === 'cybertruck') {
       if (this.bashCooldownTimer > 0) {
         this.bashCooldownTimer -= dt;
         if (this.bashCooldownTimer < 0) this.bashCooldownTimer = 0;
@@ -1244,10 +1289,10 @@ class GameEngine {
         if (this.bashTimer < 0) this.bashTimer = 0;
       }
 
-      const activeDuration = this.selectedCharacter === 'car' ? 0.5 : (this.selectedCharacter === 'monster_truck' ? 0.4 : 0);
-      const activeText = this.selectedCharacter === 'car' ? 'SPINNING' : (this.selectedCharacter === 'monster_truck' ? 'BASHING' : 'READY');
+      const activeDuration = this.selectedCharacter === 'car' ? 0.5 : (this.selectedCharacter === 'monster_truck' ? 0.4 : (this.selectedCharacter === 'cybertruck' ? 1.5 : 0));
+      const activeText = this.selectedCharacter === 'car' ? 'SPINNING' : (this.selectedCharacter === 'monster_truck' ? 'BASHING' : (this.selectedCharacter === 'cybertruck' ? 'ACTIVE' : 'READY'));
 
-      // Sync BASH/SPIN/FIRE UI
+      // Sync BASH/SPIN/FIRE/MAGNET UI
       if (this.bashCooldownTimer > 0) {
         const displayCooldown = Math.max(0, this.bashCooldownTimer - activeDuration);
         if (displayCooldown > 0) {
@@ -1592,16 +1637,16 @@ class GameEngine {
       point.rotation.y += 3 * dt;
       point.position.y = 0.4 + Math.sin(time * 5 + i) * 0.15;
 
-      // Cyber Truck Coin Magnet pull
-      if (this.selectedCharacter === 'cybertruck' && !point.userData.isKnockedOut) {
+      // Cyber Truck Coin Magnet pull (active ability during bashTimer)
+      if (this.selectedCharacter === 'cybertruck' && this.bashTimer > 0 && !point.userData.isKnockedOut) {
         const dx = point.position.x - this.player.position.x;
         const dy = point.position.y - this.player.position.y;
         const dz = point.position.z - PLAYER_START_Z;
         const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        if (dist < 4.5) {
-          point.position.x = THREE.MathUtils.lerp(point.position.x, this.player.position.x, 8 * dt);
-          point.position.y = THREE.MathUtils.lerp(point.position.y, this.player.position.y + 0.4, 8 * dt);
-          point.position.z = THREE.MathUtils.lerp(point.position.z, PLAYER_START_Z, 8 * dt);
+        if (dist < 10.0) { // Large pull radius since it is active with a cooldown
+          point.position.x = THREE.MathUtils.lerp(point.position.x, this.player.position.x, 10 * dt);
+          point.position.y = THREE.MathUtils.lerp(point.position.y, this.player.position.y + 0.4, 10 * dt);
+          point.position.z = THREE.MathUtils.lerp(point.position.z, PLAYER_START_Z, 10 * dt);
         }
       }
 

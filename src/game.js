@@ -1189,16 +1189,29 @@ class GameEngine {
       this.updateMenu(dt);
     }
 
-    // Camera hit impact screen-shake controller
+    // Smooth camera X tracking follow (dynamic lane offset centering)
+    let targetCamX = 0;
+    if (this.state === 'PLAYING') {
+      targetCamX = this.player.position.x * 0.45; // camera tracks 45% of player's lateral displacement
+    }
+    
+    // Smoothly lerp camera X using exponential decay
+    const currentCamX = THREE.MathUtils.lerp(this.camera.position.x, targetCamX, 1 - Math.exp(-5 * dt));
+    
+    // Handle hit impact screen-shake on top of smooth position
     if (this.cameraShakeTimer > 0) {
       this.cameraShakeTimer -= dt;
       const shakeAmt = 0.15;
-      this.camera.position.x = (Math.random() - 0.5) * shakeAmt;
+      this.camera.position.x = currentCamX + (Math.random() - 0.5) * shakeAmt;
       this.camera.position.y = 3.2 + (Math.random() - 0.5) * shakeAmt;
-      if (this.cameraShakeTimer <= 0) {
-        this.resetCamera(); // Reset camera positions to standard offset
-      }
+    } else {
+      this.camera.position.x = currentCamX;
+      this.camera.position.y = 3.2;
     }
+    this.camera.position.z = PLAYER_START_Z + 4.5; // lock depth
+
+    // Focus camera slightly offset towards the track ahead
+    this.camera.lookAt(targetCamX * 0.5, 1.2, PLAYER_START_Z - 5);
 
     this.renderer.render(this.scene, this.camera);
   }
@@ -1342,7 +1355,7 @@ class GameEngine {
 
     // 6. Lerp player X coordinate toward target lane coordinate (smooth lane changes)
     const prevX = this.player.position.x;
-    this.player.position.x = THREE.MathUtils.lerp(this.player.position.x, this.targetX, 15 * dt);
+    this.player.position.x = THREE.MathUtils.lerp(this.player.position.x, this.targetX, 1 - Math.exp(-15 * dt));
     const deltaX = this.player.position.x - prevX;
     
     // Calculate lateral velocity (units per second)
@@ -1382,8 +1395,8 @@ class GameEngine {
     targetRoll = Math.max(-0.25, Math.min(0.25, targetRoll));
 
     // Smoothly lerp towards target drift angles to prevent jitter
-    this.driftYaw = THREE.MathUtils.lerp(this.driftYaw, targetYaw, 12 * dt);
-    this.driftRoll = THREE.MathUtils.lerp(this.driftRoll, targetRoll, 12 * dt);
+    this.driftYaw = THREE.MathUtils.lerp(this.driftYaw, targetYaw, 1 - Math.exp(-12 * dt));
+    this.driftRoll = THREE.MathUtils.lerp(this.driftRoll, targetRoll, 1 - Math.exp(-12 * dt));
 
     // Spawn drift visual effects (tire smoke or thruster sparks) if moving laterally fast on the ground
     if (!this.isJumping && Math.abs(driftSpeed) > 1.5) {
@@ -1470,10 +1483,10 @@ class GameEngine {
           const totalHeight = this.playerY + vehicleData.springY;
           const targetScaleY = totalHeight / 0.6;
           
-          spring.scale.y = THREE.MathUtils.lerp(spring.scale.y, targetScaleY, 25 * dt);
+          spring.scale.y = THREE.MathUtils.lerp(spring.scale.y, targetScaleY, 1 - Math.exp(-25 * dt));
         } else {
           // Retract spring inside the vehicle (scale Y back to 0) in the air/when grounded
-          spring.scale.y = THREE.MathUtils.lerp(spring.scale.y, 0, 15 * dt);
+          spring.scale.y = THREE.MathUtils.lerp(spring.scale.y, 0, 1 - Math.exp(-15 * dt));
         }
       }
     }
@@ -1711,9 +1724,9 @@ class GameEngine {
         const dz = point.position.z - PLAYER_START_Z;
         const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
         if (dist < 10.0) { // Large pull radius since it is active with a cooldown
-          point.position.x = THREE.MathUtils.lerp(point.position.x, this.player.position.x, 10 * dt);
-          point.position.y = THREE.MathUtils.lerp(point.position.y, this.player.position.y + 0.4, 10 * dt);
-          point.position.z = THREE.MathUtils.lerp(point.position.z, PLAYER_START_Z, 10 * dt);
+          point.position.x = THREE.MathUtils.lerp(point.position.x, this.player.position.x, 1 - Math.exp(-10 * dt));
+          point.position.y = THREE.MathUtils.lerp(point.position.y, this.player.position.y + 0.4, 1 - Math.exp(-10 * dt));
+          point.position.z = THREE.MathUtils.lerp(point.position.z, PLAYER_START_Z, 1 - Math.exp(-10 * dt));
         }
       }
 

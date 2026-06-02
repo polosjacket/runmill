@@ -1341,7 +1341,71 @@ class GameEngine {
     }
 
     // 6. Lerp player X coordinate toward target lane coordinate (smooth lane changes)
+    const prevX = this.player.position.x;
     this.player.position.x = THREE.MathUtils.lerp(this.player.position.x, this.targetX, 15 * dt);
+    const deltaX = this.player.position.x - prevX;
+    
+    // Calculate lateral velocity (units per second)
+    const driftSpeed = deltaX / (dt || 0.016);
+
+    // Initialize drift values if undefined
+    if (this.driftYaw === undefined) this.driftYaw = 0;
+    if (this.driftRoll === undefined) this.driftRoll = 0;
+
+    let targetYaw = 0;
+    let targetRoll = 0;
+
+    // Define vehicle-specific drift characteristics (body rolls & steering angles)
+    if (this.selectedCharacter === 'hovercraft') {
+      // Hovercraft leans heavily INTO the turn (like a motorcycle/jet ski)
+      targetYaw = -driftSpeed * 0.045;
+      targetRoll = driftSpeed * 0.035;
+    } else if (this.selectedCharacter === 'monster_truck' || this.selectedCharacter === 'truck') {
+      // Large trucks lean heavily AWAY from the turn (simulating high-center-of-gravity body roll)
+      targetYaw = -driftSpeed * 0.02;
+      targetRoll = -driftSpeed * 0.045;
+    } else if (this.selectedCharacter === 'car' || this.selectedCharacter === 'cybertruck') {
+      // Sports cars slide/drift with moderate weight-transfer roll away from turn
+      targetYaw = -driftSpeed * 0.035;
+      targetRoll = -driftSpeed * 0.02;
+    } else if (this.selectedCharacter === 'tank') {
+      // Tanks stay extremely flat and steer slowly
+      targetYaw = -driftSpeed * 0.015;
+      targetRoll = 0;
+    } else {
+      targetYaw = -driftSpeed * 0.03;
+      targetRoll = -driftSpeed * 0.02;
+    }
+
+    // Clamp values to prevent excessive rotations (yaw max ~23 deg, roll max ~14 deg)
+    targetYaw = Math.max(-0.4, Math.min(0.4, targetYaw));
+    targetRoll = Math.max(-0.25, Math.min(0.25, targetRoll));
+
+    // Smoothly lerp towards target drift angles to prevent jitter
+    this.driftYaw = THREE.MathUtils.lerp(this.driftYaw, targetYaw, 12 * dt);
+    this.driftRoll = THREE.MathUtils.lerp(this.driftRoll, targetRoll, 12 * dt);
+
+    // Spawn drift visual effects (tire smoke or thruster sparks) if moving laterally fast on the ground
+    if (!this.isJumping && Math.abs(driftSpeed) > 1.5) {
+      if (Math.random() < 0.35) {
+        const pX = this.player.position.x;
+        const pY = this.player.position.y;
+        const pZ = this.player.position.z;
+
+        if (this.selectedCharacter === 'hovercraft') {
+          // Hovercraft thruster dust: spawn glowing cyan/ice blue sparks from left/right exhaust ports
+          this.spawnDriftSmoke(pX - 0.3, pY + 0.1, pZ + 0.5, 0x80f7ff, 0.5);
+          this.spawnDriftSmoke(pX + 0.3, pY + 0.1, pZ + 0.5, 0x80f7ff, 0.5);
+        } else if (this.selectedCharacter === 'tank') {
+          // Tank exhaust: spawn thick dark smoke puffs
+          this.spawnDriftSmoke(pX, pY + 0.3, pZ + 0.6, 0x444444, 0.6);
+        } else {
+          // Cars & trucks: spawn tire smoke from left and right rear wheel contact points
+          this.spawnDriftSmoke(pX - 0.4, pY, pZ + 0.5, 0xdddddd, 0.6);
+          this.spawnDriftSmoke(pX + 0.4, pY, pZ + 0.5, 0xdddddd, 0.6);
+        }
+      }
+    }
 
     // Surge player Z position forward if bashing
     if (this.selectedCharacter === 'monster_truck' && this.bashTimer > 0) {
@@ -1354,16 +1418,19 @@ class GameEngine {
       const tiltAngle = Math.sin(bashProgress * Math.PI) * 0.18;
       this.player.rotation.x = tiltAngle;
       this.player.rotation.y = Math.PI; // Maintain facing away
+      this.player.rotation.z = 0; // Reset roll during bash
     } else if (this.selectedCharacter === 'car' && this.bashTimer > 0) {
       const spinProgress = this.bashTimer / 0.5; // goes from 1.0 down to 0.0
       // Rotate 720 degrees (2 full spins) during the spin duration, starting and ending facing away (Math.PI)
       this.player.rotation.y = Math.PI + spinProgress * Math.PI * 4;
       this.player.position.z = PLAYER_START_Z;
       this.player.rotation.x = 0;
+      this.player.rotation.z = 0; // Reset roll during spin
     } else {
       this.player.position.z = PLAYER_START_Z;
       this.player.rotation.x = 0;
-      this.player.rotation.y = Math.PI; // Default to facing away from camera (towards the sunset)
+      this.player.rotation.y = Math.PI + this.driftYaw; // Apply drift steering rotation
+      this.player.rotation.z = this.driftRoll;           // Apply drift body roll/tilt
     }
 
     // 7. Gravity physics calculation
@@ -1825,6 +1892,32 @@ class GameEngine {
     if (this.domCoins) {
       this.domCoins.textContent = this.coinsCollected;
     }
+  }
+
+  /**
+   * spawnDriftSmoke - Spawns a custom smoke or exhaust spark particle for drifting.
+   */
+  spawnDriftSmoke(x, y, z, color = 0xcccccc, opacity = 0.6) {
+    const size = Math.random() * 0.12 + 0.08;
+    const geom = new THREE.BoxGeometry(size, size, size);
+    const mat = new THREE.MeshBasicMaterial({ 
+      color: color, 
+      transparent: true, 
+      opacity: opacity, 
+      fog: true 
+    });
+    const mesh = new THREE.Mesh(geom, mat);
+    mesh.position.set(x, y, z);
+    this.scene.add(mesh);
+
+    this.particles.push({
+      mesh: mesh,
+      vx: (Math.random() - 0.5) * 1.5,
+      vy: Math.random() * 2 + 1.0, 
+      vz: this.speed + (Math.random() - 0.5) * 3,
+      life: 0.4,
+      maxLife: 0.4
+    });
   }
 
   /**

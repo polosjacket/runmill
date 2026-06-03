@@ -115,6 +115,7 @@ class GameEngine {
     this.selectedColor = 'pink';     // Selected vehicle color
     this.bashTimer = 0;
     this.bashCooldownTimer = 0;
+    this.currentHoverHeight = 0.35;
     this.worldTime = 0;              // Elapsed time in current world (seconds)
     this.wallet = parseInt(localStorage.getItem('runmill_coins') || '0', 10);
     this.coinsCollected = 0;
@@ -720,6 +721,10 @@ class GameEngine {
       this.bashTimer = 1.5;          // 1.5s active magnet duration
       this.bashCooldownTimer = 5.5;   // 5.5s total cooldown (4s after active magnet ends)
       audio.playCollect();           // Play collect chime on activation
+    } else if (this.selectedCharacter === 'hovercraft') {
+      this.bashTimer = 2.0;          // 2.0s active flight duration
+      this.bashCooldownTimer = 8.0;   // 8.0s total cooldown (6s after active flight ends)
+      audio.playWorldTransition();   // Play futuristic whine sound
     }
   }
 
@@ -795,6 +800,7 @@ class GameEngine {
     // Reset BASH state
     this.bashTimer = 0;
     this.bashCooldownTimer = 0;
+    this.currentHoverHeight = 0.35;
 
     // Toggle BASH/SPIN/FIRE/MAGNET UI indicators based on character selection
     const hudLabel = document.querySelector('#hud-bash-container .label');
@@ -830,6 +836,14 @@ class GameEngine {
       this.btnTouchBash.classList.remove('hidden');
       this.btnTouchBash.classList.remove('cooldown');
       this.btnTouchBash.textContent = 'MAGNET';
+    } else if (this.selectedCharacter === 'hovercraft') {
+      this.domBashContainer.classList.remove('hidden');
+      this.domBashContainer.classList.remove('cooldown');
+      if (hudLabel) hudLabel.textContent = 'HOVER';
+      this.domBash.textContent = 'READY';
+      this.btnTouchBash.classList.remove('hidden');
+      this.btnTouchBash.classList.remove('cooldown');
+      this.btnTouchBash.textContent = 'HOVER';
     } else {
       this.domBashContainer.classList.add('hidden');
       this.btnTouchBash.classList.add('hidden');
@@ -1290,8 +1304,8 @@ class GameEngine {
     this.domDistance.textContent = Math.floor(this.distance);
     this.domSpeed.textContent = Math.floor(this.speed * 4); // Virtual MPH
 
-    // Update BASH/SPIN/FIRE/MAGNET cooldowns and HUD
-    if (this.selectedCharacter === 'monster_truck' || this.selectedCharacter === 'car' || this.selectedCharacter === 'tank' || this.selectedCharacter === 'cybertruck') {
+    // Update BASH/SPIN/FIRE/MAGNET/HOVER cooldowns and HUD
+    if (this.selectedCharacter === 'monster_truck' || this.selectedCharacter === 'car' || this.selectedCharacter === 'tank' || this.selectedCharacter === 'cybertruck' || this.selectedCharacter === 'hovercraft') {
       if (this.bashCooldownTimer > 0) {
         this.bashCooldownTimer -= dt;
         if (this.bashCooldownTimer < 0) this.bashCooldownTimer = 0;
@@ -1302,21 +1316,17 @@ class GameEngine {
         if (this.bashTimer < 0) this.bashTimer = 0;
       }
 
-      const activeDuration = this.selectedCharacter === 'car' ? 0.5 : (this.selectedCharacter === 'monster_truck' ? 0.4 : (this.selectedCharacter === 'cybertruck' ? 1.5 : 0));
-      const activeText = this.selectedCharacter === 'car' ? 'SPINNING' : (this.selectedCharacter === 'monster_truck' ? 'BASHING' : (this.selectedCharacter === 'cybertruck' ? 'ACTIVE' : 'READY'));
+      const activeText = this.selectedCharacter === 'car' ? 'SPINNING' : (this.selectedCharacter === 'monster_truck' ? 'BASHING' : (this.selectedCharacter === 'cybertruck' ? 'ACTIVE' : (this.selectedCharacter === 'hovercraft' ? 'HOVERING' : 'READY')));
 
-      // Sync BASH/SPIN/FIRE/MAGNET UI
-      if (this.bashCooldownTimer > 0) {
-        const displayCooldown = Math.max(0, this.bashCooldownTimer - activeDuration);
-        if (displayCooldown > 0) {
-          this.domBash.textContent = displayCooldown.toFixed(1) + 's';
-          this.domBashContainer.classList.add('cooldown');
-          this.btnTouchBash.classList.add('cooldown');
-        } else {
-          this.domBash.textContent = activeText;
-          this.domBashContainer.classList.add('cooldown');
-          this.btnTouchBash.classList.add('cooldown');
-        }
+      // Sync BASH/SPIN/FIRE/MAGNET/HOVER UI
+      if (this.bashTimer > 0) {
+        this.domBash.textContent = activeText;
+        this.domBashContainer.classList.add('cooldown');
+        this.btnTouchBash.classList.add('cooldown');
+      } else if (this.bashCooldownTimer > 0) {
+        this.domBash.textContent = this.bashCooldownTimer.toFixed(1) + 's';
+        this.domBashContainer.classList.add('cooldown');
+        this.btnTouchBash.classList.add('cooldown');
       } else {
         this.domBash.textContent = 'READY';
         this.domBashContainer.classList.remove('cooldown');
@@ -1460,7 +1470,14 @@ class GameEngine {
         this.jumpTimeElapsed = 0;
       }
     }
-    this.player.position.y = this.playerY;
+    if (this.selectedCharacter === 'hovercraft') {
+      const targetHeight = (this.bashTimer > 0) ? 1.6 : 0.35;
+      this.currentHoverHeight = THREE.MathUtils.lerp(this.currentHoverHeight, targetHeight, 1 - Math.exp(-6 * dt));
+      const bobbing = Math.sin(time * 6) * 0.12;
+      this.player.position.y = this.playerY + this.currentHoverHeight + bobbing;
+    } else {
+      this.player.position.y = this.playerY;
+    }
 
     // 8. Dynamic Voxel Vehicle Wheels & Spring Animation
     const vehicleData = this.player.userData;
@@ -1480,7 +1497,10 @@ class GameEngine {
       if (spring) {
         if (this.isJumping && this.jumpTimeElapsed < 0.2) {
           // During the initial phase of the jump, the spring shoots out to touch the ground
-          const totalHeight = this.playerY + vehicleData.springY;
+          let totalHeight = this.playerY + vehicleData.springY;
+          if (this.selectedCharacter === 'hovercraft') {
+            totalHeight += this.currentHoverHeight; // account for dynamic hovering height
+          }
           const targetScaleY = totalHeight / 0.6;
           
           spring.scale.y = THREE.MathUtils.lerp(spring.scale.y, targetScaleY, 1 - Math.exp(-25 * dt));
@@ -1639,9 +1659,11 @@ class GameEngine {
 
       // Collide Check
       if (!this.isInvincible && this.checkCollision(this.player, obs, 0.7, 0.8)) {
-        if (this.selectedCharacter === 'hovercraft' && obs.userData.type === 'spike') {
-          // Hovercraft glides smoothly over spikes without collision
-          continue;
+        if (this.selectedCharacter === 'hovercraft') {
+          // Hovercraft glides smoothly over spikes without collision, and over all obstacles when actively hovering
+          if (obs.userData.type === 'spike' || this.bashTimer > 0) {
+            continue;
+          }
         }
 
         // Monster Truck Bash can knock out items except shields (you must jump or avoid shields)
@@ -1717,13 +1739,15 @@ class GameEngine {
       point.rotation.y += 3 * dt;
       point.position.y = 0.4 + Math.sin(time * 5 + i) * 0.15;
 
-      // Cyber Truck Coin Magnet pull (active ability during bashTimer)
-      if (this.selectedCharacter === 'cybertruck' && this.bashTimer > 0 && !point.userData.isKnockedOut) {
+      // Cyber Truck & Hovercraft Coin Magnet pull (active ability during bashTimer)
+      const isMagnetActive = (this.selectedCharacter === 'cybertruck' && this.bashTimer > 0) || (this.selectedCharacter === 'hovercraft' && this.bashTimer > 0);
+      if (isMagnetActive && !point.userData.isKnockedOut) {
         const dx = point.position.x - this.player.position.x;
         const dy = point.position.y - this.player.position.y;
         const dz = point.position.z - PLAYER_START_Z;
         const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        if (dist < 10.0) { // Large pull radius since it is active with a cooldown
+        const pullRadius = this.selectedCharacter === 'hovercraft' ? 12.0 : 10.0;
+        if (dist < pullRadius) { // Pull radius of 12.0 for hovercraft as requested, 10.0 for cybertruck
           point.position.x = THREE.MathUtils.lerp(point.position.x, this.player.position.x, 1 - Math.exp(-10 * dt));
           point.position.y = THREE.MathUtils.lerp(point.position.y, this.player.position.y + 0.4, 1 - Math.exp(-10 * dt));
           point.position.z = THREE.MathUtils.lerp(point.position.z, PLAYER_START_Z, 1 - Math.exp(-10 * dt));

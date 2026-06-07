@@ -644,53 +644,87 @@ export function createVehicleModel(type, colorNameOrHex) {
     });
 
   } else if (type === 'truck') {
-    // 3. Cargo Truck (Lighter Cyan cabin cab, glowing trailer back, 6 wheels)
+    // 3. Garbage Truck (Industrial Green body, dark compactor hopper, yellow/black hazard lines, 6 wheels)
     const bodyMat = new THREE.MeshStandardMaterial({ 
-      color: bodyColor !== null ? bodyColor : 0x80f7ff, 
-      emissive: bodyColor !== null ? bodyColor : 0x80f7ff,
-      emissiveIntensity: 1.2, // LED glow
+      color: bodyColor !== null ? bodyColor : 0x2e7d32, // Dark Green
+      emissive: bodyColor !== null ? bodyColor : 0x1b5e20,
+      emissiveIntensity: 1.0, // LED glow
       roughness: 0.1,
       metalness: 0.5,
       flatShading: true 
     });
-    const cargoMat = new THREE.MeshStandardMaterial({ 
-      color: 0xffffff, 
-      emissive: 0xff66cc, // glowing hot pink trailer sides
-      emissiveIntensity: 0.8,
-      roughness: 0.1,
+    const compactorMat = new THREE.MeshStandardMaterial({ 
+      color: 0x333333, 
+      roughness: 0.5,
+      metalness: 0.8,
       flatShading: true 
+    });
+    const hazardYellowMat = new THREE.MeshStandardMaterial({
+      color: 0xffea00,
+      emissive: 0xffea00,
+      emissiveIntensity: 0.8,
+      flatShading: true
+    });
+    const hazardBlackMat = new THREE.MeshStandardMaterial({
+      color: 0x111111,
+      flatShading: true
     });
 
     // Cab
-    const cab = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.8, 0.7), bodyMat);
-    cab.position.set(0, 0.55, 0.65);
+    const cab = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.75, 0.7), bodyMat);
+    cab.position.set(0, 0.525, 0.65);
     cab.castShadow = true;
     cab.receiveShadow = true;
     group.add(cab);
 
     // windshield
     const windshield = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.3, 0.1), glassMat);
-    windshield.position.set(0, 0.22, 0.36);
+    windshield.position.set(0, 0.18, 0.36);
     cab.add(windshield);
 
-    // Large rectangular cargo container
-    const trailer = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.9, 1.4), cargoMat);
-    trailer.position.set(0, 0.6, -0.35);
-    trailer.castShadow = true;
-    trailer.receiveShadow = true;
-    group.add(trailer);
+    // Compactor container in back
+    const compactor = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.95, 1.3), bodyMat);
+    compactor.position.set(0, 0.625, -0.3);
+    compactor.castShadow = true;
+    compactor.receiveShadow = true;
+    group.add(compactor);
+
+    // Sloped rear loader hopper at the back
+    const rearHopper = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.8, 0.3), compactorMat);
+    rearHopper.position.set(0, 0.5, -1.05);
+    rearHopper.rotation.x = -0.2;
+    rearHopper.castShadow = true;
+    group.add(rearHopper);
+
+    // Rear hazard stripes
+    const stripe1 = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.08, 0.03), hazardYellowMat);
+    stripe1.position.set(0, 0.75, -0.96);
+    const stripe2 = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.08, 0.03), hazardBlackMat);
+    stripe2.position.set(0, 0.65, -0.96);
+    const stripe3 = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.08, 0.03), hazardYellowMat);
+    stripe3.position.set(0, 0.55, -0.96);
+    group.add(stripe1, stripe2, stripe3);
+
+    // Side grabber arm (automated side-loader mechanism on the right)
+    const armBase = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.3), compactorMat);
+    armBase.position.set(0.48, 0.45, 0.1);
+    const armExt = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.08, 0.08), compactorMat);
+    armExt.position.set(0.58, 0.45, 0.1);
+    const grabberProng = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.15, 0.25), hazardYellowMat);
+    grabberProng.position.set(0.7, 0.45, 0.1);
+    group.add(armBase, armExt, grabberProng);
 
     // Add LED headlights and neon underglow
     addLEDLights(cab, 0.35, -0.1, 0.35, -0.3, underglowColor);
 
     // 6 wheels
     const wheelPositions = [
-      [-0.5, 0.15, 0.65],  // Front Left
-      [0.5, 0.15, 0.65],   // Front Right
-      [-0.48, 0.15, -0.2], // Middle Left
-      [0.48, 0.15, -0.2],  // Middle Right
-      [-0.48, 0.15, -0.7], // Rear Left
-      [0.48, 0.15, -0.7]   // Rear Right
+      [-0.5, 0.15, 0.65],   // Front Left
+      [0.5, 0.15, 0.65],    // Front Right
+      [-0.48, 0.15, -0.15], // Middle Left
+      [0.48, 0.15, -0.15],  // Middle Right
+      [-0.48, 0.15, -0.65], // Rear Left
+      [0.48, 0.15, -0.65]   // Rear Right
     ];
 
     wheelPositions.forEach(([x, y, z]) => {
@@ -1006,6 +1040,57 @@ export function createTankShellModel() {
   tip.castShadow = true;
   group.add(tip);
   
+  return group;
+}
+
+/**
+ * createTrashBagModel - Constructs a 3D dark grey garbage bag with yellow ties.
+ */
+export function createTrashBagModel() {
+  const group = new THREE.Group();
+  
+  const bagMat = new THREE.MeshStandardMaterial({
+    color: 0x222222,
+    roughness: 0.8,
+    metalness: 0.1,
+    flatShading: true
+  });
+  
+  const tieMat = new THREE.MeshStandardMaterial({
+    color: 0xffea00,
+    emissive: 0xffea00,
+    emissiveIntensity: 0.8,
+    flatShading: true
+  });
+  
+  // Main bag body
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.22, 0.35, 8), bagMat);
+  body.position.y = 0.175;
+  body.castShadow = true;
+  group.add(body);
+  
+  // Knot/tie part
+  const knot = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.08, 0.1, 8), bagMat);
+  knot.position.y = 0.35 + 0.05;
+  knot.castShadow = true;
+  group.add(knot);
+
+  // Yellow tie string
+  const tie = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.03, 0.16), tieMat);
+  tie.position.y = 0.35;
+  group.add(tie);
+  
+  // Little ear/flaps of the tied bag
+  const ear1 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.1, 0.04), bagMat);
+  ear1.position.set(-0.04, 0.44, 0);
+  ear1.rotation.z = 0.4;
+  
+  const ear2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.1, 0.04), bagMat);
+  ear2.position.set(0.04, 0.44, 0);
+  ear2.rotation.z = -0.4;
+  
+  group.add(ear1, ear2);
+
   return group;
 }
 

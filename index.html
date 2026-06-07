@@ -19,19 +19,22 @@
     <!-- Three.js Canvas Container -->
     <div id="canvas-container"></div>
 
+    <!-- Settings Button (Gear icon) -->
+    <button id="settings-btn" class="settings-floating-btn" aria-label="Settings">⚙</button>
+
     <!-- HUD (Heads-Up Display) -->
     <div id="hud" class="hidden">
       <div class="hud-top">
         <div class="hud-item neon-purple">
-          <span class="label">WORLD</span>
+          <span class="label" data-lang-key="world">WORLD</span>
           <span id="hud-world" class="value">1</span>
         </div>
         <div class="hud-item neon-cyan">
-          <span class="label">SCORE</span>
+          <span class="label" data-lang-key="score">SCORE</span>
           <span id="hud-score" class="value">00000</span>
         </div>
         <div class="hud-item neon-yellow">
-          <span class="label">SPEED</span>
+          <span class="label" data-lang-key="speed">SPEED</span>
           <span id="hud-speed" class="value">0</span><span class="unit"> km/h</span>
         </div>
         <div class="hud-item neon-pink">
@@ -45,15 +48,15 @@
       </div>
       <div class="hud-bottom">
         <div class="hud-item neon-cyan">
-          <span class="label">DISTANCE</span>
+          <span class="label" data-lang-key="distance">DISTANCE</span>
           <span id="hud-distance" class="value">0</span><span class="unit"> m</span>
         </div>
         <div id="hud-timer-container" class="hud-item neon-yellow">
-          <span class="label">NEXT WORLD</span>
+          <span class="label" data-lang-key="next_world">NEXT WORLD</span>
           <span id="hud-timer" class="value">01:00</span>
         </div>
         <div id="hud-coins-container" class="hud-item neon-green">
-          <span class="label">COINS</span>
+          <span class="label" data-lang-key="coins">COINS</span>
           <span id="hud-coins" class="value">0</span>
         </div>
         <div id="hud-multiplier-container" class="hud-item neon-purple hidden">
@@ -61,7 +64,7 @@
           <span id="hud-multiplier" class="value">x1</span>
         </div>
         <div id="hud-bash-container" class="hud-item neon-green hidden">
-          <span class="label">BASH</span>
+          <span class="label" data-lang-key="bash">BASH</span>
           <span id="hud-bash" class="value">READY</span>
         </div>
       </div>
@@ -71,29 +74,29 @@
     <div id="start-screen" class="overlay-panel">
       <div class="retro-box">
         <h1 class="game-title text-flicker">RUNMILL</h1>
-        <p class="game-subtitle">CYBER GRID RUNNER v1.8.0</p>
+        <p class="game-subtitle" data-lang-key="game_subtitle">CYBER GRID RUNNER v1.8.0</p>
 
         <!-- Persistent Wallet Balance -->
         <div id="menu-wallet" class="wallet-box neon-green">
-          <span class="wallet-label">WALLET:</span>
+          <span class="wallet-label" data-lang-key="wallet">WALLET:</span>
           <span id="menu-wallet-amount" class="wallet-value">0</span>
           <span class="wallet-unit"> COINS</span>
         </div>
         
         <div class="character-select-section">
-          <h3>CHOOSE VEHICLE</h3>
+          <h3 data-lang-key="choose_vehicle">CHOOSE VEHICLE</h3>
           <div class="character-grid">
-            <button class="char-btn active neon-cyan-glow" data-char="car">CAR</button>
-            <button class="char-btn neon-pink-glow" data-char="monster_truck">MONSTER</button>
-            <button class="char-btn neon-yellow-glow" data-char="truck">TRUCK</button>
-            <button class="char-btn neon-green-glow" data-char="cybertruck" data-cost="1000">CYBER (1K)</button>
-            <button class="char-btn neon-purple-glow" data-char="hovercraft" data-cost="1500">HOVER (1.5K)</button>
-            <button class="char-btn neon-pink-glow" data-char="tank" data-cost="5000">TANK (5K)</button>
+            <button class="char-btn active neon-cyan-glow" data-char="car" data-lang-key="car">CAR</button>
+            <button class="char-btn neon-pink-glow" data-char="monster_truck" data-lang-key="monster">MONSTER</button>
+            <button class="char-btn neon-yellow-glow" data-char="truck" data-lang-key="garbage">GARBAGE</button>
+            <button class="char-btn neon-green-glow" data-char="cybertruck" data-cost="1000" data-lang-key="cyber">CYBER (1K)</button>
+            <button class="char-btn neon-purple-glow" data-char="hovercraft" data-cost="1500" data-lang-key="hover">HOVER (1.5K)</button>
+            <button class="char-btn neon-pink-glow" data-char="tank" data-cost="5000" data-lang-key="tank">TANK (5K)</button>
           </div>
         </div>
         
         <div class="color-select-section">
-          <h3>VEHICLE COLOR</h3>
+          <h3 data-lang-key="vehicle_color">VEHICLE COLOR</h3>
           <div class="color-grid">
             <button class="color-btn active" data-color="pink" style="background-color: var(--neon-pink); color: var(--neon-pink);"></button>
             <button class="color-btn" data-color="cyan" style="background-color: var(--neon-cyan); color: var(--neon-cyan);"></button>
@@ -105,35 +108,35 @@
 
         <!-- Audio Settings Section -->
         <div class="audio-settings-section">
-          <h3>AUDIO SYSTEM</h3>
+          <h3 data-lang-key="audio_system">AUDIO SYSTEM</h3>
           <div class="audio-controls-row">
             <button id="toggle-music-btn" class="audio-toggle-btn active neon-pink-glow">MUSIC: ON</button>
             <button id="toggle-sfx-btn" class="audio-toggle-btn active neon-cyan-glow">SFX: ON</button>
           </div>
           <div class="volume-slider-container">
-            <span class="volume-label">VOLUME</span>
+            <span class="volume-label" data-lang-key="volume">VOLUME</span>
             <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="0.8">
             <span id="volume-display" class="volume-value">80%</span>
           </div>
         </div>
         
         <div class="menu-section">
-          <button id="start-btn" class="retro-btn neon-pink-glow">RUN PROGRAM</button>
+          <button id="start-btn" class="retro-btn neon-pink-glow" data-lang-key="run_program">RUN PROGRAM</button>
         </div>
 
         <div class="instructions-section">
-          <h3>CONTROLS:</h3>
-          <p>← / A : MOVE LEFT</p>
-          <p>→ / D : MOVE RIGHT</p>
-          <p>SPACE / W : JUMP</p>
-          <p>↓ / S : SPIN (CAR) / BASH (MONSTER) / SHOOT (TANK)</p>
-          <p class="special-info" style="font-size: 0.55rem; color: #80f7ff; margin-top: 8px; font-family: var(--font-pixel);">
+          <h3 data-lang-key="controls_title">CONTROLS:</h3>
+          <p data-lang-key="controls_left">← / A : MOVE LEFT</p>
+          <p data-lang-key="controls_right">→ / D : MOVE RIGHT</p>
+          <p data-lang-key="controls_jump">SPACE / W : JUMP</p>
+          <p data-lang-key="controls_special">↓ / S : SPIN (CAR) / BASH (MONSTER) / SHOOT (TANK)</p>
+          <p class="special-info" data-lang-key="controls_info" style="font-size: 0.55rem; color: #80f7ff; margin-top: 8px; font-family: var(--font-pixel);">
             SPECIALS: CYBER TRUCK = COIN MAGNET | HOVERCRAFT = GLIDE OVER SPIKES
           </p>
         </div>
 
         <div class="leaderboard-section">
-          <h3>TOP RUNNERS</h3>
+          <h3 data-lang-key="top_runners">TOP RUNNERS</h3>
           <ol id="leaderboard-list">
             <li class="loading">RETRIEVING DATA...</li>
           </ol>
@@ -144,25 +147,25 @@
     <!-- GAME OVER SCREEN OVERLAY -->
     <div id="game-over-screen" class="overlay-panel hidden">
       <div class="retro-box game-over-box">
-        <h2 class="game-over-title text-glitch">CONNECTION LOST</h2>
-        <p class="game-subtitle">SESSION TERMINATED</p>
+        <h2 class="game-over-title text-glitch" data-lang-key="connection_lost">CONNECTION LOST</h2>
+        <p class="game-subtitle" data-lang-key="session_terminated">SESSION TERMINATED</p>
         
         <div class="stats-summary">
-          <p>FINAL SCORE: <span id="final-score" class="neon-cyan">0</span></p>
-          <p>DISTANCE: <span id="final-distance" class="neon-yellow">0</span>m</p>
+          <p><span data-lang-key="final_score_label">FINAL SCORE:</span> <span id="final-score" class="neon-cyan">0</span></p>
+          <p><span data-lang-key="distance_label">DISTANCE:</span> <span id="final-distance" class="neon-yellow">0</span>m</p>
         </div>
 
         <!-- Submit High Score Form -->
         <div id="high-score-form" class="hidden">
-          <p class="neon-pink">NEW HIGH SCORE UNLOCKED!</p>
+          <p class="neon-pink" data-lang-key="new_high_score">NEW HIGH SCORE UNLOCKED!</p>
           <div class="form-group">
-            <input type="text" id="player-name" placeholder="ENTER INITIALS" maxlength="3" autofocus>
-            <button id="submit-score-btn" class="retro-btn btn-sm neon-cyan-glow">UPLOAD</button>
+            <input type="text" id="player-name" placeholder="ENTER INITIALS" data-lang-placeholder="enter_initials" maxlength="3" autofocus>
+            <button id="submit-score-btn" class="retro-btn btn-sm neon-cyan-glow" data-lang-key="upload">UPLOAD</button>
           </div>
         </div>
 
         <div class="menu-section">
-          <button id="restart-btn" class="retro-btn neon-pink-glow">REBOOT MENU</button>
+          <button id="restart-btn" class="retro-btn neon-pink-glow" data-lang-key="reboot_menu">REBOOT MENU</button>
         </div>
       </div>
     </div>
@@ -178,25 +181,25 @@
     <!-- VICTORY SCREEN OVERLAY -->
     <div id="victory-screen" class="overlay-panel hidden">
       <div class="retro-box victory-box">
-        <h2 class="victory-title text-flicker">PROGRAM COMPLETED</h2>
-        <h3 class="game-subtitle">CYBER-GRID DOMINATED</h3>
+        <h2 class="victory-title text-flicker" data-lang-key="program_completed">PROGRAM COMPLETED</h2>
+        <h3 class="game-subtitle" data-lang-key="cyber_grid_dominated">CYBER-GRID DOMINATED</h3>
         
         <div class="stats-summary">
-          <p>FINAL SCORE: <span id="vic-final-score" class="neon-cyan">0</span></p>
-          <p>DISTANCE: <span id="vic-final-distance" class="neon-yellow">0</span>m</p>
+          <p><span data-lang-key="final_score_label">FINAL SCORE:</span> <span id="vic-final-score" class="neon-cyan">0</span></p>
+          <p><span data-lang-key="distance_label">DISTANCE:</span> <span id="vic-final-distance" class="neon-yellow">0</span>m</p>
         </div>
 
         <!-- Submit High Score Form -->
         <div id="vic-high-score-form" class="hidden">
-          <p class="neon-green">YOU ARE A LEGENDARY RUNNER!</p>
+          <p class="neon-green" data-lang-key="legendary_runner">YOU ARE A LEGENDARY RUNNER!</p>
           <div class="form-group">
-            <input type="text" id="vic-player-name" placeholder="ENTER INITIALS" maxlength="3">
-            <button id="vic-submit-score-btn" class="retro-btn btn-sm neon-cyan-glow">UPLOAD</button>
+            <input type="text" id="vic-player-name" placeholder="ENTER INITIALS" data-lang-placeholder="enter_initials" maxlength="3">
+            <button id="vic-submit-score-btn" class="retro-btn btn-sm neon-cyan-glow" data-lang-key="upload">UPLOAD</button>
           </div>
         </div>
 
         <div class="menu-section">
-          <button id="vic-restart-btn" class="retro-btn neon-pink-glow">REBOOT MENU</button>
+          <button id="vic-restart-btn" class="retro-btn neon-pink-glow" data-lang-key="reboot_menu">REBOOT MENU</button>
         </div>
       </div>
     </div>
@@ -204,16 +207,16 @@
     <!-- AFK SCREEN OVERLAY -->
     <div id="afk-screen" class="overlay-panel hidden">
       <div class="retro-box afk-box">
-        <h2 class="afk-title text-flicker">AFK SYSTEM ENGAGED</h2>
-        <p class="game-subtitle">MINING DATA COINS...</p>
+        <h2 class="afk-title text-flicker" data-lang-key="afk_system_engaged">AFK SYSTEM ENGAGED</h2>
+        <p class="game-subtitle" data-lang-key="mining_coins">MINING DATA COINS...</p>
         
         <div class="afk-stats-box">
           <div class="afk-stat-row">
-            <span class="afk-stat-label">NEXT PAYOUT IN:</span>
+            <span class="afk-stat-label" data-lang-key="next_payout">NEXT PAYOUT IN:</span>
             <span id="afk-timer" class="afk-stat-value neon-yellow">60s</span>
           </div>
           <div class="afk-stat-row">
-            <span class="afk-stat-label">COINS MINED:</span>
+            <span class="afk-stat-label" data-lang-key="coins_mined">COINS MINED:</span>
             <span id="afk-earned" class="afk-stat-value neon-green">0</span>
           </div>
         </div>
@@ -226,13 +229,13 @@
         </div>
         
         <div class="menu-section" style="margin-top: 30px;">
-          <button id="exit-afk-btn" class="retro-btn neon-pink-glow">RETURN TO SYSTEM</button>
+          <button id="exit-afk-btn" class="retro-btn neon-pink-glow" data-lang-key="return_to_system">RETURN TO SYSTEM</button>
         </div>
       </div>
     </div>
 
     <!-- AFK Mode Floating Button -->
-    <button id="afk-btn" class="retro-btn neon-green-glow afk-floating-btn">AFK MODE</button>
+    <button id="afk-btn" class="retro-btn neon-green-glow afk-floating-btn" data-lang-key="afk_mode">AFK MODE</button>
 
     <!-- Touch Controls for Mobile Devices -->
     <div id="touch-controls" class="hidden">
@@ -240,6 +243,23 @@
       <button id="touch-jump" class="touch-btn">JUMP</button>
       <button id="touch-bash" class="touch-btn hidden">BASH</button>
       <button id="touch-right" class="touch-btn">→</button>
+    </div>
+
+    <!-- SETTINGS / LANGUAGE MODAL OVERLAY -->
+    <div id="settings-modal" class="overlay-panel hidden" style="z-index: 20;">
+      <div class="retro-box settings-box" style="border-color: var(--neon-cyan); box-shadow: 0 0 25px rgba(0, 240, 255, 0.5);">
+        <h2 id="settings-modal-title" class="game-subtitle" style="font-size: 1.5rem; color: var(--neon-cyan); text-shadow: 0 0 8px var(--neon-cyan); margin-bottom: 20px;">LANGUAGE SELECT</h2>
+        
+        <div class="language-options">
+          <button class="lang-btn neon-cyan-glow active" data-lang="en">ENGLISH</button>
+          <button class="lang-btn neon-pink-glow" data-lang="es">ESPAÑOL</button>
+          <button class="lang-btn neon-yellow-glow" data-lang="ja">日本語</button>
+        </div>
+
+        <div class="menu-section" style="margin-top: 30px;">
+          <button id="close-settings-btn" class="retro-btn neon-cyan-glow">BACK</button>
+        </div>
+      </div>
     </div>
   </div>
 

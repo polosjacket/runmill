@@ -1036,6 +1036,115 @@ class WebAudioSynth {
       // Noise fallback
     }
   }
+
+  /**
+   * SFX: playThrow - A swoosh sound effect to simulate tossing a garbage bag.
+   */
+  playThrow() {
+    this.init();
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    const now = this.ctx.currentTime;
+
+    const osc = this.ctx.createOscillator();
+    const gainNode = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(120, now);
+    osc.frequency.exponentialRampToValueAtTime(380, now + 0.25);
+
+    gainNode.gain.setValueAtTime(0.15, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1000, now);
+    filter.frequency.exponentialRampToValueAtTime(200, now + 0.25);
+
+    osc.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(this.sfxGain);
+
+    osc.start(now);
+    osc.stop(now + 0.25);
+  }
+
+  /**
+   * SFX: playTrashExplosion - A messy, clattering, wet crash sound representing rubbish exploding.
+   */
+  playTrashExplosion() {
+    this.init();
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    const now = this.ctx.currentTime;
+
+    // Wet low punch
+    const baseOsc = this.ctx.createOscillator();
+    const baseGain = this.ctx.createGain();
+    baseOsc.type = 'sine';
+    baseOsc.frequency.setValueAtTime(90, now);
+    baseOsc.frequency.exponentialRampToValueAtTime(30, now + 0.45);
+    baseGain.gain.setValueAtTime(0.3, now);
+    baseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+    baseOsc.connect(baseGain);
+    baseGain.connect(this.sfxGain);
+    baseOsc.start(now);
+    baseOsc.stop(now + 0.45);
+
+    // Clattering metal/cans (4 short high-passed square waves at random intervals)
+    for (let i = 0; i < 4; i++) {
+      const delay = Math.random() * 0.25;
+      const osc = this.ctx.createOscillator();
+      const gainNode = this.ctx.createGain();
+      const filter = this.ctx.createBiquadFilter();
+
+      osc.type = Math.random() > 0.5 ? 'square' : 'sawtooth';
+      osc.frequency.setValueAtTime(Math.random() * 600 + 400, now + delay);
+      osc.frequency.linearRampToValueAtTime(Math.random() * 200 + 100, now + delay + 0.15);
+
+      gainNode.gain.setValueAtTime(0.08, now + delay);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.15);
+
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(1000, now + delay);
+
+      osc.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(this.sfxGain);
+
+      osc.start(now + delay);
+      osc.stop(now + delay + 0.15);
+    }
+
+    // Noise burst for the splash/mess
+    try {
+      const bufferSize = this.ctx.sampleRate * 0.4;
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      const noiseNode = this.ctx.createBufferSource();
+      noiseNode.buffer = buffer;
+
+      const noiseFilter = this.ctx.createBiquadFilter();
+      noiseFilter.type = 'bandpass';
+      noiseFilter.frequency.setValueAtTime(600, now);
+      noiseFilter.Q.setValueAtTime(1.5, now);
+
+      const noiseGain = this.ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.18, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+      noiseNode.connect(noiseFilter);
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(this.sfxGain);
+
+      noiseNode.start(now);
+      noiseNode.stop(now + 0.4);
+    } catch (e) {
+      console.warn("Noise buffer generation failed", e);
+    }
+  }
 }
 
 export const audio = new WebAudioSynth();
+

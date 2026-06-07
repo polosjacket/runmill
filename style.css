@@ -1008,3 +1008,85 @@ body {
   100% { opacity: 0.8; transform: scale(1.05); }
 }
 
+/* Settings Floating Button */
+.settings-floating-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 38px;
+  height: 38px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid var(--neon-cyan);
+  border-radius: 50%;
+  color: var(--neon-cyan);
+  font-size: 1.4rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  z-index: 15;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.settings-floating-btn:hover {
+  transform: rotate(45deg) scale(1.1);
+  box-shadow: 0 0 15px var(--neon-cyan);
+  color: #fff;
+  border-color: #fff;
+}
+
+/* Settings Box and Language Buttons */
+.settings-box {
+  max-width: 400px;
+}
+
+.language-options {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.lang-btn {
+  font-family: var(--font-pixel);
+  font-size: 0.9rem;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: #aaa;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 2px;
+}
+
+.lang-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.lang-btn.active.neon-cyan-glow {
+  border-color: var(--neon-cyan);
+  color: #fff;
+  text-shadow: 0 0 5px var(--neon-cyan);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+}
+
+.lang-btn.active.neon-pink-glow {
+  border-color: var(--neon-pink);
+  color: #fff;
+  text-shadow: 0 0 5px var(--neon-pink);
+  box-shadow: 0 0 15px rgba(255, 0, 127, 0.4);
+}
+
+.lang-btn.active.neon-yellow-glow {
+  border-color: var(--neon-yellow);
+  color: #fff;
+  text-shadow: 0 0 5px var(--neon-yellow);
+  box-shadow: 0 0 15px rgba(255, 250, 102, 0.4);
+}
+
+

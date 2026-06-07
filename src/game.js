@@ -1,6 +1,202 @@
 import * as THREE from 'three';
-import { createVehicleModel, createCoinModel, createTankShellModel, createHeartItemModel, createObstacleModel } from './voxels.js';
+import { createVehicleModel, createCoinModel, createTankShellModel, createHeartItemModel, createObstacleModel, createTrashBagModel } from './voxels.js';
 import { audio } from './audio.js';
+
+// Multi-Language Translation Dictionaries
+const TRANSLATIONS = {
+  en: {
+    world: "WORLD",
+    score: "SCORE",
+    speed: "SPEED",
+    distance: "DISTANCE",
+    coins: "COINS",
+    next_world: "NEXT WORLD",
+    victory_in: "VICTORY IN",
+    game_subtitle: "CYBER GRID RUNNER v1.8.0",
+    wallet: "WALLET:",
+    choose_vehicle: "CHOOSE VEHICLE",
+    car: "CAR",
+    monster: "MONSTER",
+    garbage: "GARBAGE",
+    cyber: "CYBER (1K)",
+    hover: "HOVER (1.5K)",
+    tank: "TANK (5K)",
+    vehicle_color: "VEHICLE COLOR",
+    audio_system: "AUDIO SYSTEM",
+    volume: "VOLUME",
+    run_program: "RUN PROGRAM",
+    controls_title: "CONTROLS:",
+    controls_left: "← / A : MOVE LEFT",
+    controls_right: "→ / D : MOVE RIGHT",
+    controls_jump: "SPACE / W : JUMP",
+    controls_special: "↓ / S : SPIN (CAR) / BASH (MONSTER) / SHOOT (TANK)",
+    controls_info: "SPECIALS: CYBER TRUCK = COIN MAGNET | HOVERCRAFT = GLIDE OVER SPIKES",
+    top_runners: "TOP RUNNERS",
+    afk_mode: "AFK MODE",
+    music_on: "MUSIC: ON",
+    music_off: "MUSIC: OFF",
+    sfx_on: "SFX: ON",
+    sfx_off: "SFX: OFF",
+    language_select: "LANGUAGE SELECT",
+    back: "BACK",
+    connection_lost: "CONNECTION LOST",
+    session_terminated: "SESSION TERMINATED",
+    final_score_label: "FINAL SCORE:",
+    distance_label: "DISTANCE:",
+    new_high_score: "NEW HIGH SCORE UNLOCKED!",
+    enter_initials: "ENTER INITIALS",
+    upload: "UPLOAD",
+    reboot_menu: "REBOOT MENU",
+    program_completed: "PROGRAM COMPLETED",
+    cyber_grid_dominated: "CYBER-GRID DOMINATED",
+    legendary_runner: "YOU ARE A LEGENDARY RUNNER!",
+    afk_system_engaged: "AFK SYSTEM ENGAGED",
+    mining_coins: "MINING DATA COINS...",
+    next_payout: "NEXT PAYOUT IN:",
+    coins_mined: "COINS MINED:",
+    return_to_system: "RETURN TO SYSTEM",
+    bash: "BASH",
+    spin: "SPIN",
+    fire: "FIRE",
+    magnet: "MAGNET",
+    hover: "HOVER",
+    trash: "TRASH",
+    ready: "READY",
+    spinning: "SPINNING",
+    bashing: "BASHING",
+    active: "ACTIVE",
+    hovering: "HOVERING",
+    saving: "SAVING..."
+  },
+  es: {
+    world: "MUNDO",
+    score: "PUNTOS",
+    speed: "VELOCIDAD",
+    distance: "DISTANCIA",
+    coins: "MONEDAS",
+    next_world: "SIG. MUNDO",
+    victory_in: "VICTORIA EN",
+    game_subtitle: "CORREDOR CIBERNÉTICO v1.8.0",
+    wallet: "BILLETERA:",
+    choose_vehicle: "ELEGIR VEHÍCULO",
+    car: "AUTO",
+    monster: "MONSTRUO",
+    garbage: "BASURA",
+    cyber: "CYBER (1K)",
+    hover: "HOVER (1.5K)",
+    tank: "TANQUE (5K)",
+    vehicle_color: "COLOR DE VEHÍCULO",
+    audio_system: "SISTEMA DE AUDIO",
+    volume: "VOLUMEN",
+    run_program: "EJECUTAR PROGRAMA",
+    controls_title: "CONTROLES:",
+    controls_left: "← / A : MOVER IZQUIERDA",
+    controls_right: "→ / D : MOVER DERECHA",
+    controls_jump: "ESPACIO / W : SALTAR",
+    controls_special: "↓ / S : GIRO (AUTO) / CHOQUE (MONS.) / DISPARO (TANQ.)",
+    controls_info: "ESPECIALES: CYBER TRUCK = IMÁN COINS | HOVERCRAFT = FLOTAR SOBRE PICOS",
+    top_runners: "MEJORES MARCAS",
+    afk_mode: "MODO AFK",
+    music_on: "MÚSICA: SÍ",
+    music_off: "MÚSICA: NO",
+    sfx_on: "SFX: SÍ",
+    sfx_off: "SFX: NO",
+    language_select: "ELEGIR IDIOMA",
+    back: "VOLVER",
+    connection_lost: "CONEXIÓN PERDIDA",
+    session_terminated: "SESIÓN TERMINADA",
+    final_score_label: "PUNTAJE FINAL:",
+    distance_label: "DISTANCIA:",
+    new_high_score: "¡NUEVA MARCA MÁXIMA!",
+    enter_initials: "INICIALES",
+    upload: "SUBIR",
+    reboot_menu: "REINICIAR MENÚ",
+    program_completed: "PROGRAMA COMPLETADO",
+    cyber_grid_dominated: "CIBER-REJILLA DOMINADA",
+    legendary_runner: "¡ERES UN CORREDOR LEGENDARIO!",
+    afk_system_engaged: "SISTEMA AFK ACTIVO",
+    mining_coins: "MINANDO MONEDAS DE DATOS...",
+    next_payout: "SIG. PAGO EN:",
+    coins_mined: "MONEDAS MINADAS:",
+    return_to_system: "VOLVER AL SISTEMA",
+    bash: "CHOCAR",
+    spin: "GIRAR",
+    fire: "DISPARAR",
+    magnet: "IMÁN",
+    hover: "FLOTAR",
+    trash: "BASURA",
+    ready: "LISTO",
+    spinning: "GIRANDO",
+    bashing: "CHOCANDO",
+    active: "ACTIVO",
+    hovering: "FLOTANDO",
+    saving: "GUARDANDO..."
+  },
+  ja: {
+    world: "ワールド",
+    score: "スコア",
+    speed: "スピード",
+    distance: "キョリ",
+    coins: "コイン",
+    next_world: "次ワールド",
+    victory_in: "ビクトリーまで",
+    game_subtitle: "サイバーグリッドランナー v1.8.0",
+    wallet: "ウォレット:",
+    choose_vehicle: "マシンせんたく",
+    car: "スポーツカー",
+    monster: "モンスター",
+    garbage: "ゴミシュウシュウ",
+    cyber: "サイバー (1K)",
+    hover: "ホバー (1.5K)",
+    tank: "戦車 (5K)",
+    vehicle_color: "ボディーカラー",
+    audio_system: "オーディオ",
+    volume: "ボリューム",
+    run_program: "プログラム起動",
+    controls_title: "操作方法:",
+    controls_left: "← / A : 左に移動",
+    controls_right: "→ / D : 右に移動",
+    controls_jump: "スペース / W : ジャンプ",
+    controls_special: "↓ / S : スピン(スポーツ) / バッシュ(モンスタ) / ショット(戦車)",
+    controls_info: "トクベツ: サイバー = コインすいよせ | ホバー = トゲ無効化",
+    top_runners: "トップスコア",
+    afk_mode: "AFKモード",
+    music_on: "音楽: オン",
+    music_off: "音楽: オフ",
+    sfx_on: "効果音: オン",
+    sfx_off: "効果音: オフ",
+    language_select: "げんごせんたく",
+    back: "もどる",
+    connection_lost: "オフライン",
+    session_terminated: "セッション終了",
+    final_score_label: "最終スコア:",
+    distance_label: "走行距離:",
+    new_high_score: "ハイスコア更新！",
+    enter_initials: "イニシャル",
+    upload: "アップロード",
+    reboot_menu: "メニュー再起動",
+    program_completed: "プログラム完了",
+    cyber_grid_dominated: "グリッド制覇",
+    legendary_runner: "キミは伝説 of ランナーだ！",
+    afk_system_engaged: "AFKシステム起動中",
+    mining_coins: "データコイン収穫中...",
+    next_payout: "次回支払まで:",
+    coins_mined: "獲得コイン:",
+    return_to_system: "システムに戻る",
+    bash: "突進",
+    spin: "スピン",
+    fire: "ファイア",
+    magnet: "じしゃく",
+    hover: "ホバー",
+    trash: "ゴミ投げ",
+    ready: "準備完了",
+    spinning: "スピン中",
+    bashing: "突進中",
+    active: "アクティブ",
+    hovering: "ホバー中",
+    saving: "保存中..."
+  }
+};
 
 // Game Configuration Constants
 const VEHICLES_CONFIG = {
@@ -120,6 +316,7 @@ class GameEngine {
     this.wallet = parseInt(localStorage.getItem('runmill_coins') || '0', 10);
     this.coinsCollected = 0;
     this.shells = [];
+    this.trashBags = [];
 
     // 3. Player Movement & Physics
     this.currentLane = 1;           // Starting lane index (Middle)
@@ -193,12 +390,19 @@ class GameEngine {
     this.sliderVolume = document.getElementById('volume-slider');
     this.displayVolume = document.getElementById('volume-display');
 
+    // Settings & Language DOM Elements
+    this.btnSettings = document.getElementById('settings-btn');
+    this.modalSettings = document.getElementById('settings-modal');
+    this.btnCloseSettings = document.getElementById('close-settings-btn');
+    this.currentLanguage = localStorage.getItem('runmill_language') || 'en';
+
     // 8. Core Initialization Steps
     this.initThree();
     this.setupLighting();
     this.createStaticScenery();
     this.setupEventListeners();
     this.initAudioSettingsUI();
+    this.applyLanguage(this.currentLanguage);
     this.fetchLeaderboard();
     this.updateWalletDisplay();
     this.updateVehicleButtons();
@@ -262,27 +466,77 @@ class GameEngine {
    * updateAudioSettingsUI - Syncs the audio settings DOM buttons and labels.
    */
   updateAudioSettingsUI() {
+    const dict = TRANSLATIONS[this.currentLanguage || 'en'] || TRANSLATIONS.en;
+
     if (this.btnToggleMusic) {
       if (audio.musicMuted) {
         this.btnToggleMusic.classList.remove('active');
-        this.btnToggleMusic.textContent = 'MUSIC: OFF';
+        this.btnToggleMusic.textContent = dict.music_off;
       } else {
         this.btnToggleMusic.classList.add('active');
-        this.btnToggleMusic.textContent = 'MUSIC: ON';
+        this.btnToggleMusic.textContent = dict.music_on;
       }
     }
     if (this.btnToggleSfx) {
       if (audio.sfxMuted) {
         this.btnToggleSfx.classList.remove('active');
-        this.btnToggleSfx.textContent = 'SFX: OFF';
+        this.btnToggleSfx.textContent = dict.sfx_off;
       } else {
         this.btnToggleSfx.classList.add('active');
-        this.btnToggleSfx.textContent = 'SFX: ON';
+        this.btnToggleSfx.textContent = dict.sfx_on;
       }
     }
     if (this.displayVolume) {
       this.displayVolume.textContent = Math.round(audio.masterVolume * 100) + '%';
     }
+  }
+
+  /**
+   * applyLanguage - Persists language selection and updates DOM nodes translation text.
+   */
+  applyLanguage(lang) {
+    this.currentLanguage = lang;
+    localStorage.setItem('runmill_language', lang);
+
+    const dict = TRANSLATIONS[lang] || TRANSLATIONS.en;
+
+    // 1. Update text content for translatable keys
+    document.querySelectorAll('[data-lang-key]').forEach(el => {
+      const key = el.getAttribute('data-lang-key');
+      if (dict[key]) {
+        el.textContent = dict[key];
+      }
+    });
+
+    // 2. Update input placeholders
+    document.querySelectorAll('[data-lang-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-lang-placeholder');
+      if (dict[key]) {
+        el.setAttribute('placeholder', dict[key]);
+      }
+    });
+
+    // 3. Highlight the active language selector button
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      if (btn.getAttribute('data-lang') === lang) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
+    // 4. Update Modal Titles & Labels
+    const titleEl = document.getElementById('settings-modal-title');
+    if (titleEl && dict.language_select) {
+      titleEl.textContent = dict.language_select;
+    }
+    const closeEl = document.getElementById('close-settings-btn');
+    if (closeEl && dict.back) {
+      closeEl.textContent = dict.back;
+    }
+
+    // 5. Update audio labels immediately
+    this.updateAudioSettingsUI();
   }
 
   /**
@@ -682,6 +936,28 @@ class GameEngine {
         this.updateAudioSettingsUI();
       });
     }
+
+    // Settings Gear click
+    if (this.btnSettings) {
+      this.btnSettings.addEventListener('click', () => {
+        this.modalSettings.classList.remove('hidden');
+      });
+    }
+
+    // Settings Back click
+    if (this.btnCloseSettings) {
+      this.btnCloseSettings.addEventListener('click', () => {
+        this.modalSettings.classList.add('hidden');
+      });
+    }
+
+    // Language selector buttons
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const lang = e.currentTarget.getAttribute('data-lang');
+        this.applyLanguage(lang);
+      });
+    });
   }
 
   /**
@@ -725,12 +1001,11 @@ class GameEngine {
       this.bashTimer = 2.0;          // 2.0s active flight duration
       this.bashCooldownTimer = 8.0;   // 8.0s total cooldown (6s after active flight ends)
       audio.playWorldTransition();   // Play futuristic whine sound
+    } else if (this.selectedCharacter === 'truck') {
+      this.throwTrashBag();
     }
   }
 
-  /**
-   * shoot - Tank fires an exploding shell projectile.
-   */
   shoot() {
     this.bashCooldownTimer = 1.5; // 1.5s fire cooldown
     audio.playShoot();
@@ -743,6 +1018,28 @@ class GameEngine {
       mesh: shellMesh,
       lane: this.currentLane,
       z: PLAYER_START_Z - 0.95
+    });
+  }
+
+  /**
+   * throwTrashBag - Garbage Truck throws a trashbag in a parabolic arc.
+   */
+  throwTrashBag() {
+    this.bashCooldownTimer = 4.0; // 4.0s total cooldown
+    audio.playThrow();
+
+    const bagMesh = createTrashBagModel();
+    // Position it at the truck's cab front center, slightly raised
+    bagMesh.position.set(this.player.position.x, this.player.position.y + 0.5, PLAYER_START_Z - 1.0);
+    this.scene.add(bagMesh);
+
+    this.trashBags.push({
+      mesh: bagMesh,
+      lane: this.currentLane,
+      vy: 6.0,
+      vz: -28.0,
+      y: this.player.position.y + 0.5,
+      z: PLAYER_START_Z - 1.0
     });
   }
 
@@ -802,48 +1099,57 @@ class GameEngine {
     this.bashCooldownTimer = 0;
     this.currentHoverHeight = 0.35;
 
-    // Toggle BASH/SPIN/FIRE/MAGNET UI indicators based on character selection
+    // Toggle BASH/SPIN/FIRE/MAGNET/HOVER/TRASH UI indicators based on character selection
+    const dict = TRANSLATIONS[this.currentLanguage || 'en'] || TRANSLATIONS.en;
     const hudLabel = document.querySelector('#hud-bash-container .label');
     if (this.selectedCharacter === 'monster_truck') {
       this.domBashContainer.classList.remove('hidden');
       this.domBashContainer.classList.remove('cooldown');
-      if (hudLabel) hudLabel.textContent = 'BASH';
-      this.domBash.textContent = 'READY';
+      if (hudLabel) hudLabel.textContent = dict.bash;
+      this.domBash.textContent = dict.ready;
       this.btnTouchBash.classList.remove('hidden');
       this.btnTouchBash.classList.remove('cooldown');
-      this.btnTouchBash.textContent = 'BASH';
+      this.btnTouchBash.textContent = dict.bash;
     } else if (this.selectedCharacter === 'car') {
       this.domBashContainer.classList.remove('hidden');
       this.domBashContainer.classList.remove('cooldown');
-      if (hudLabel) hudLabel.textContent = 'SPIN';
-      this.domBash.textContent = 'READY';
+      if (hudLabel) hudLabel.textContent = dict.spin;
+      this.domBash.textContent = dict.ready;
       this.btnTouchBash.classList.remove('hidden');
       this.btnTouchBash.classList.remove('cooldown');
-      this.btnTouchBash.textContent = 'SPIN';
+      this.btnTouchBash.textContent = dict.spin;
     } else if (this.selectedCharacter === 'tank') {
       this.domBashContainer.classList.remove('hidden');
       this.domBashContainer.classList.remove('cooldown');
-      if (hudLabel) hudLabel.textContent = 'FIRE';
-      this.domBash.textContent = 'READY';
+      if (hudLabel) hudLabel.textContent = dict.fire;
+      this.domBash.textContent = dict.ready;
       this.btnTouchBash.classList.remove('hidden');
       this.btnTouchBash.classList.remove('cooldown');
-      this.btnTouchBash.textContent = 'FIRE';
+      this.btnTouchBash.textContent = dict.fire;
     } else if (this.selectedCharacter === 'cybertruck') {
       this.domBashContainer.classList.remove('hidden');
       this.domBashContainer.classList.remove('cooldown');
-      if (hudLabel) hudLabel.textContent = 'MAGNET';
-      this.domBash.textContent = 'READY';
+      if (hudLabel) hudLabel.textContent = dict.magnet;
+      this.domBash.textContent = dict.ready;
       this.btnTouchBash.classList.remove('hidden');
       this.btnTouchBash.classList.remove('cooldown');
-      this.btnTouchBash.textContent = 'MAGNET';
+      this.btnTouchBash.textContent = dict.magnet;
     } else if (this.selectedCharacter === 'hovercraft') {
       this.domBashContainer.classList.remove('hidden');
       this.domBashContainer.classList.remove('cooldown');
-      if (hudLabel) hudLabel.textContent = 'HOVER';
-      this.domBash.textContent = 'READY';
+      if (hudLabel) hudLabel.textContent = dict.hover;
+      this.domBash.textContent = dict.ready;
       this.btnTouchBash.classList.remove('hidden');
       this.btnTouchBash.classList.remove('cooldown');
-      this.btnTouchBash.textContent = 'HOVER';
+      this.btnTouchBash.textContent = dict.hover;
+    } else if (this.selectedCharacter === 'truck') {
+      this.domBashContainer.classList.remove('hidden');
+      this.domBashContainer.classList.remove('cooldown');
+      if (hudLabel) hudLabel.textContent = dict.trash;
+      this.domBash.textContent = dict.ready;
+      this.btnTouchBash.classList.remove('hidden');
+      this.btnTouchBash.classList.remove('cooldown');
+      this.btnTouchBash.textContent = dict.trash;
     } else {
       this.domBashContainer.classList.add('hidden');
       this.btnTouchBash.classList.add('hidden');
@@ -873,10 +1179,14 @@ class GameEngine {
     if (this.shells) {
       this.shells.forEach(s => this.scene.remove(s.mesh));
     }
+    if (this.trashBags) {
+      this.trashBags.forEach(tb => this.scene.remove(tb.mesh));
+    }
     this.obstacles = [];
     this.points = [];
     this.particles = [];
     this.shells = [];
+    this.trashBags = [];
   }
 
   /**
@@ -951,7 +1261,8 @@ class GameEngine {
 
     try {
       this.btnSubmitScore.disabled = true;
-      this.btnSubmitScore.textContent = 'SAVING...';
+      const dict = TRANSLATIONS[this.currentLanguage || 'en'] || TRANSLATIONS.en;
+      this.btnSubmitScore.textContent = dict.saving;
       
       await fetch('/api/scores', {
         method: 'POST',
@@ -968,7 +1279,8 @@ class GameEngine {
       console.error(e);
     } finally {
       this.btnSubmitScore.disabled = false;
-      this.btnSubmitScore.textContent = 'UPLOAD';
+      const dict = TRANSLATIONS[this.currentLanguage || 'en'] || TRANSLATIONS.en;
+      this.btnSubmitScore.textContent = dict.upload;
     }
   }
 
@@ -983,7 +1295,8 @@ class GameEngine {
     const titleEl = transitionEl.querySelector('.transition-title');
     const subtitleEl = transitionEl.querySelector('.transition-subtitle');
     
-    titleEl.textContent = `WORLD ${this.world}`;
+    const dict = TRANSLATIONS[this.currentLanguage || 'en'] || TRANSLATIONS.en;
+    titleEl.textContent = `${dict.world} ${this.world}`;
     const colorHexStr = `#${theme.gridColor.toString(16).padStart(6, '0')}`;
     const subColorHexStr = `#${theme.dirColor.toString(16).padStart(6, '0')}`;
 
@@ -1103,7 +1416,8 @@ class GameEngine {
 
     try {
       this.btnVicSubmitScore.disabled = true;
-      this.btnVicSubmitScore.textContent = 'SAVING...';
+      const dict = TRANSLATIONS[this.currentLanguage || 'en'] || TRANSLATIONS.en;
+      this.btnVicSubmitScore.textContent = dict.saving;
       
       await fetch('/api/scores', {
         method: 'POST',
@@ -1120,7 +1434,8 @@ class GameEngine {
       console.error(e);
     } finally {
       this.btnVicSubmitScore.disabled = false;
-      this.btnVicSubmitScore.textContent = 'UPLOAD';
+      const dict = TRANSLATIONS[this.currentLanguage || 'en'] || TRANSLATIONS.en;
+      this.btnVicSubmitScore.textContent = dict.upload;
     }
   }
 
@@ -1304,8 +1619,8 @@ class GameEngine {
     this.domDistance.textContent = Math.floor(this.distance);
     this.domSpeed.textContent = Math.floor(this.speed * 4); // Virtual MPH
 
-    // Update BASH/SPIN/FIRE/MAGNET/HOVER cooldowns and HUD
-    if (this.selectedCharacter === 'monster_truck' || this.selectedCharacter === 'car' || this.selectedCharacter === 'tank' || this.selectedCharacter === 'cybertruck' || this.selectedCharacter === 'hovercraft') {
+    // Update BASH/SPIN/FIRE/MAGNET/HOVER/TRASH cooldowns and HUD
+    if (this.selectedCharacter === 'monster_truck' || this.selectedCharacter === 'car' || this.selectedCharacter === 'tank' || this.selectedCharacter === 'cybertruck' || this.selectedCharacter === 'hovercraft' || this.selectedCharacter === 'truck') {
       if (this.bashCooldownTimer > 0) {
         this.bashCooldownTimer -= dt;
         if (this.bashCooldownTimer < 0) this.bashCooldownTimer = 0;
@@ -1316,7 +1631,8 @@ class GameEngine {
         if (this.bashTimer < 0) this.bashTimer = 0;
       }
 
-      const activeText = this.selectedCharacter === 'car' ? 'SPINNING' : (this.selectedCharacter === 'monster_truck' ? 'BASHING' : (this.selectedCharacter === 'cybertruck' ? 'ACTIVE' : (this.selectedCharacter === 'hovercraft' ? 'HOVERING' : 'READY')));
+      const dict = TRANSLATIONS[this.currentLanguage || 'en'] || TRANSLATIONS.en;
+      const activeText = this.selectedCharacter === 'car' ? dict.spinning : (this.selectedCharacter === 'monster_truck' ? dict.bashing : (this.selectedCharacter === 'cybertruck' ? dict.active : (this.selectedCharacter === 'hovercraft' ? dict.hovering : dict.ready)));
 
       // Sync BASH/SPIN/FIRE/MAGNET/HOVER UI
       if (this.bashTimer > 0) {
@@ -1328,7 +1644,7 @@ class GameEngine {
         this.domBashContainer.classList.add('cooldown');
         this.btnTouchBash.classList.add('cooldown');
       } else {
-        this.domBash.textContent = 'READY';
+        this.domBash.textContent = dict.ready;
         this.domBashContainer.classList.remove('cooldown');
         this.btnTouchBash.classList.remove('cooldown');
       }
@@ -1584,6 +1900,35 @@ class GameEngine {
         if (hitObstacle) {
           this.scene.remove(shell.mesh);
           this.shells.splice(i, 1);
+        }
+      }
+    }
+
+    // Update trash bags
+    if (this.trashBags) {
+      for (let i = this.trashBags.length - 1; i >= 0; i--) {
+        const bag = this.trashBags[i];
+        
+        bag.vy += this.gravity * dt;
+        bag.y += bag.vy * dt;
+        bag.z += bag.vz * dt;
+        
+        bag.mesh.position.y = bag.y;
+        bag.mesh.position.z = bag.z;
+        bag.mesh.rotation.x += 5 * dt;
+        bag.mesh.rotation.y += 2 * dt;
+        
+        if (bag.z < SPAWN_START_Z - 20) {
+          this.scene.remove(bag.mesh);
+          this.trashBags.splice(i, 1);
+          continue;
+        }
+        
+        if (bag.y <= 0) {
+          this.explodeTrashBag(bag);
+          this.scene.remove(bag.mesh);
+          this.trashBags.splice(i, 1);
+          continue;
         }
       }
     }
@@ -2060,6 +2405,91 @@ class GameEngine {
         point.userData.rotX = (Math.random() - 0.5) * 15;
         point.userData.rotY = (Math.random() - 0.5) * 15;
         point.userData.rotZ = (Math.random() - 0.5) * 15;
+      }
+    }
+  }
+
+  explodeTrashBag(bag) {
+    const explX = bag.mesh.position.x;
+    const explY = 0;
+    const explZ = bag.mesh.position.z;
+
+    // Trigger visual/audio feedback
+    audio.playTrashExplosion();
+    this.cameraShakeTimer = 0.25;
+
+    // Spawn rubbish/trash explosion particles!
+    const particleCount = 28;
+    const trashColors = [
+      0x4caf50, 0x8bc34a, // Toxic green/brown
+      0x795548, 0x5d4037, // Rotten brown
+      0x9e9e9e, 0xe0e0e0, // Aluminum cans/foil
+      0xffffff, 0xf5f5f5, // Crumpled paper
+      0xffeb3b, 0xffc107  // Banana peel yellow / orange peel
+    ];
+
+    for (let k = 0; k < particleCount; k++) {
+      const sizeX = Math.random() * 0.18 + 0.06;
+      const sizeY = Math.random() * 0.18 + 0.06;
+      const sizeZ = Math.random() * 0.18 + 0.06;
+      
+      const color = trashColors[Math.floor(Math.random() * trashColors.length)];
+      const geom = new THREE.BoxGeometry(sizeX, sizeY, sizeZ);
+      const mat = new THREE.MeshStandardMaterial({ 
+        color: color, 
+        roughness: 0.8,
+        flatShading: true 
+      });
+      const mesh = new THREE.Mesh(geom, mat);
+      
+      mesh.position.set(
+        explX + (Math.random() - 0.5) * 0.6,
+        explY + 0.1,
+        explZ + (Math.random() - 0.5) * 0.6
+      );
+      mesh.castShadow = true;
+      this.scene.add(mesh);
+
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 8 + 4;
+      this.particles.push({
+        mesh: mesh,
+        vx: Math.cos(angle) * speed,
+        vy: Math.random() * 11 + 6,
+        vz: Math.sin(angle) * speed - 5,
+        life: 0.8,
+        maxLife: 0.8
+      });
+    }
+
+    // Explode nearby obstacles in a 7.0 unit radius
+    const radius = 7.0;
+    for (let j = 0; j < this.obstacles.length; j++) {
+      const other = this.obstacles[j];
+      if (other.userData.isKnockedOut || other.userData.type === 'shield') continue;
+
+      const dx = other.position.x - explX;
+      const dz = other.position.z - explZ;
+      const dist = Math.sqrt(dx * dx + dz * dz);
+      
+      if (dist < radius) {
+        other.userData.isKnockedOut = true;
+        const force = 12 + (radius - dist) * 3;
+        
+        const targetLaneX = LANES[Math.floor(Math.random() * 3)];
+        const vy0 = Math.random() * 5 + 12;
+        other.userData.velocityY = vy0;
+        
+        const tAir = vy0 / 12.5;
+        other.userData.velocityX = (targetLaneX - other.position.x) / tAir;
+        other.userData.velocityZ = -(force + 8);
+        
+        other.userData.rotX = (Math.random() - 0.5) * 15;
+        other.userData.rotY = (Math.random() - 0.5) * 15;
+        other.userData.rotZ = (Math.random() - 0.5) * 15;
+
+        // Add to score for blasting obstacles with garbage!
+        this.score += 250 * this.multiplier;
       }
     }
   }

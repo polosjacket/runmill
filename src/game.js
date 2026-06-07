@@ -198,6 +198,39 @@ const TRANSLATIONS = {
   }
 };
 
+// Comprehensive list of supported languages for dynamic translation
+const LANGUAGES_SUPPORTED = {
+  en: "English",
+  es: "Español",
+  ja: "日本語",
+  fr: "Français",
+  de: "Deutsch",
+  it: "Italiano",
+  pt: "Português",
+  zh: "中文 (简体)",
+  zt: "中文 (繁體)",
+  ko: "한국어",
+  ru: "Русский",
+  ar: "العربية",
+  hi: "हिन्दी",
+  tr: "Türkçe",
+  pl: "Polski",
+  nl: "Nederlands",
+  sv: "Svenska",
+  vi: "Tiếng Việt",
+  th: "ไทย",
+  id: "Bahasa Indonesia",
+  el: "Ελληνικά",
+  he: "עברית (Hebrew)",
+  uk: "Українська",
+  da: "Dansk",
+  fi: "Suomi",
+  no: "Norsk",
+  cs: "Čeština",
+  ro: "Română",
+  hu: "Magyar"
+};
+
 // Game Configuration Constants
 const VEHICLES_CONFIG = {
   car: { cost: 0, maxLives: 3 },
@@ -394,6 +427,7 @@ class GameEngine {
     this.btnSettings = document.getElementById('settings-btn');
     this.modalSettings = document.getElementById('settings-modal');
     this.btnCloseSettings = document.getElementById('close-settings-btn');
+    this.selectLang = document.getElementById('lang-select');
     this.currentLanguage = localStorage.getItem('runmill_language') || 'en';
 
     // 8. Core Initialization Steps
@@ -402,6 +436,7 @@ class GameEngine {
     this.createStaticScenery();
     this.setupEventListeners();
     this.initAudioSettingsUI();
+    this.populateLanguageDropdown();
     this.applyLanguage(this.currentLanguage);
     this.fetchLeaderboard();
     this.updateWalletDisplay();
@@ -492,13 +527,98 @@ class GameEngine {
   }
 
   /**
+   * populateLanguageDropdown - Populates the retro-select element with supported options.
+   */
+  populateLanguageDropdown() {
+    if (!this.selectLang) return;
+    this.selectLang.innerHTML = '';
+    Object.keys(LANGUAGES_SUPPORTED).forEach(lang => {
+      const opt = document.createElement('option');
+      opt.value = lang;
+      opt.textContent = LANGUAGES_SUPPORTED[lang].toUpperCase();
+      this.selectLang.appendChild(opt);
+    });
+  }
+
+  /**
+   * fetchTranslations - Dynamically fetches and parses translations for any language using the Google Translate Free API.
+   * Caches results in localStorage.
+   */
+  async fetchTranslations(lang) {
+    if (TRANSLATIONS[lang]) {
+      return TRANSLATIONS[lang];
+    }
+
+    const cacheKey = `runmill_lang_cache_${lang}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (e) {
+        console.error("Failed to parse cached translation", e);
+      }
+    }
+
+    const baseDict = TRANSLATIONS.en;
+    const keys = Object.keys(baseDict);
+    const values = keys.map(k => baseDict[k]);
+    const joinedText = values.join('\n');
+
+    let apiLang = lang;
+    if (lang === 'zh') apiLang = 'zh-CN';
+    if (lang === 'zt') apiLang = 'zh-TW';
+
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${apiLang}&dt=t&q=${encodeURIComponent(joinedText)}`;
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      
+      const newDict = {};
+      Object.assign(newDict, baseDict);
+
+      if (data && data[0]) {
+        data[0].forEach(segment => {
+          const trans = segment[0];
+          const orig = segment[1];
+          if (trans && orig) {
+            const cleanOrig = orig.trim();
+            const cleanTrans = trans.trim();
+            keys.forEach(k => {
+              if (baseDict[k].trim().toUpperCase() === cleanOrig.toUpperCase()) {
+                newDict[k] = cleanTrans;
+              }
+            });
+          }
+        });
+      }
+
+      localStorage.setItem(cacheKey, JSON.stringify(newDict));
+      return newDict;
+    } catch (err) {
+      console.error(`Failed to fetch translations for ${lang}`, err);
+      return baseDict;
+    }
+  }
+
+  /**
    * applyLanguage - Persists language selection and updates DOM nodes translation text.
    */
-  applyLanguage(lang) {
+  async applyLanguage(lang) {
     this.currentLanguage = lang;
     localStorage.setItem('runmill_language', lang);
 
-    const dict = TRANSLATIONS[lang] || TRANSLATIONS.en;
+    if (this.selectLang) {
+      this.selectLang.value = lang;
+    }
+
+    const titleEl = document.getElementById('settings-modal-title');
+    if (titleEl) {
+      titleEl.textContent = "...";
+    }
+
+    const dict = await this.fetchTranslations(lang);
 
     // 1. Update text content for translatable keys
     document.querySelectorAll('[data-lang-key]').forEach(el => {
@@ -516,26 +636,16 @@ class GameEngine {
       }
     });
 
-    // 3. Highlight the active language selector button
-    document.querySelectorAll('.lang-btn').forEach(btn => {
-      if (btn.getAttribute('data-lang') === lang) {
-        btn.classList.add('active');
-      } else {
-        btn.classList.remove('active');
-      }
-    });
-
-    // 4. Update Modal Titles & Labels
-    const titleEl = document.getElementById('settings-modal-title');
-    if (titleEl && dict.language_select) {
-      titleEl.textContent = dict.language_select;
+    // 3. Update Modal Titles & Labels
+    if (titleEl) {
+      titleEl.textContent = dict.language_select || "LANGUAGE SELECT";
     }
     const closeEl = document.getElementById('close-settings-btn');
     if (closeEl && dict.back) {
       closeEl.textContent = dict.back;
     }
 
-    // 5. Update audio labels immediately
+    // 4. Update audio labels immediately
     this.updateAudioSettingsUI();
   }
 
@@ -951,13 +1061,13 @@ class GameEngine {
       });
     }
 
-    // Language selector buttons
-    document.querySelectorAll('.lang-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const lang = e.currentTarget.getAttribute('data-lang');
+    // Language selector dropdown change handler
+    if (this.selectLang) {
+      this.selectLang.addEventListener('change', (e) => {
+        const lang = e.target.value;
         this.applyLanguage(lang);
       });
-    });
+    }
   }
 
   /**

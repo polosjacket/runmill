@@ -1089,4 +1089,38 @@ body {
   box-shadow: 0 0 15px rgba(255, 250, 102, 0.4);
 }
 
+/* Retro select dropdown styling */
+.retro-select {
+  width: 100%;
+  font-family: var(--font-pixel);
+  font-size: 0.95rem;
+  background: rgba(0, 0, 0, 0.85);
+  border: 2px solid var(--neon-cyan);
+  color: #fff;
+  padding: 10px;
+  cursor: pointer;
+  outline: none;
+  letter-spacing: 2px;
+  text-align: center;
+  border-radius: 4px;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+  appearance: none; /* remove default arrow to style our own or use text centering */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.retro-select:hover {
+  border-color: #fff;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
+}
+
+.retro-select option {
+  background: #19082b;
+  color: #fff;
+  font-family: sans-serif;
+  font-size: 0.95rem;
+}
+
 

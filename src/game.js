@@ -429,6 +429,7 @@ class GameEngine {
     this.btnCloseSettings = document.getElementById('close-settings-btn');
     this.selectLang = document.getElementById('lang-select');
     this.currentLanguage = localStorage.getItem('runmill_language') || 'en';
+    this.currentLanguageDict = TRANSLATIONS[this.currentLanguage] || TRANSLATIONS.en;
 
     // 8. Core Initialization Steps
     this.initThree();
@@ -501,7 +502,7 @@ class GameEngine {
    * updateAudioSettingsUI - Syncs the audio settings DOM buttons and labels.
    */
   updateAudioSettingsUI() {
-    const dict = TRANSLATIONS[this.currentLanguage || 'en'] || TRANSLATIONS.en;
+    const dict = this.currentLanguageDict || TRANSLATIONS.en;
 
     if (this.btnToggleMusic) {
       if (audio.musicMuted) {
@@ -619,6 +620,7 @@ class GameEngine {
     }
 
     const dict = await this.fetchTranslations(lang);
+    this.currentLanguageDict = dict;
 
     // 1. Update text content for translatable keys
     document.querySelectorAll('[data-lang-key]').forEach(el => {
@@ -1210,7 +1212,7 @@ class GameEngine {
     this.currentHoverHeight = 0.35;
 
     // Toggle BASH/SPIN/FIRE/MAGNET/HOVER/TRASH UI indicators based on character selection
-    const dict = TRANSLATIONS[this.currentLanguage || 'en'] || TRANSLATIONS.en;
+    const dict = this.currentLanguageDict || TRANSLATIONS.en;
     const hudLabel = document.querySelector('#hud-bash-container .label');
     if (this.selectedCharacter === 'monster_truck') {
       this.domBashContainer.classList.remove('hidden');
@@ -1371,7 +1373,7 @@ class GameEngine {
 
     try {
       this.btnSubmitScore.disabled = true;
-      const dict = TRANSLATIONS[this.currentLanguage || 'en'] || TRANSLATIONS.en;
+      const dict = this.currentLanguageDict || TRANSLATIONS.en;
       this.btnSubmitScore.textContent = dict.saving;
       
       await fetch('/api/scores', {
@@ -1389,7 +1391,7 @@ class GameEngine {
       console.error(e);
     } finally {
       this.btnSubmitScore.disabled = false;
-      const dict = TRANSLATIONS[this.currentLanguage || 'en'] || TRANSLATIONS.en;
+      const dict = this.currentLanguageDict || TRANSLATIONS.en;
       this.btnSubmitScore.textContent = dict.upload;
     }
   }
@@ -1405,7 +1407,7 @@ class GameEngine {
     const titleEl = transitionEl.querySelector('.transition-title');
     const subtitleEl = transitionEl.querySelector('.transition-subtitle');
     
-    const dict = TRANSLATIONS[this.currentLanguage || 'en'] || TRANSLATIONS.en;
+    const dict = this.currentLanguageDict || TRANSLATIONS.en;
     titleEl.textContent = `${dict.world} ${this.world}`;
     const colorHexStr = `#${theme.gridColor.toString(16).padStart(6, '0')}`;
     const subColorHexStr = `#${theme.dirColor.toString(16).padStart(6, '0')}`;
@@ -1526,7 +1528,7 @@ class GameEngine {
 
     try {
       this.btnVicSubmitScore.disabled = true;
-      const dict = TRANSLATIONS[this.currentLanguage || 'en'] || TRANSLATIONS.en;
+      const dict = this.currentLanguageDict || TRANSLATIONS.en;
       this.btnVicSubmitScore.textContent = dict.saving;
       
       await fetch('/api/scores', {
@@ -1544,7 +1546,7 @@ class GameEngine {
       console.error(e);
     } finally {
       this.btnVicSubmitScore.disabled = false;
-      const dict = TRANSLATIONS[this.currentLanguage || 'en'] || TRANSLATIONS.en;
+      const dict = this.currentLanguageDict || TRANSLATIONS.en;
       this.btnVicSubmitScore.textContent = dict.upload;
     }
   }
@@ -1741,7 +1743,7 @@ class GameEngine {
         if (this.bashTimer < 0) this.bashTimer = 0;
       }
 
-      const dict = TRANSLATIONS[this.currentLanguage || 'en'] || TRANSLATIONS.en;
+      const dict = this.currentLanguageDict || TRANSLATIONS.en;
       const activeText = this.selectedCharacter === 'car' ? dict.spinning : (this.selectedCharacter === 'monster_truck' ? dict.bashing : (this.selectedCharacter === 'cybertruck' ? dict.active : (this.selectedCharacter === 'hovercraft' ? dict.hovering : dict.ready)));
 
       // Sync BASH/SPIN/FIRE/MAGNET/HOVER UI

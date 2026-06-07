@@ -30,7 +30,8 @@ const TRANSLATIONS = {
     controls_right: "→ / D : MOVE RIGHT",
     controls_jump: "SPACE / W : JUMP",
     controls_special: "↓ / S : SPIN (CAR) / BASH (MONSTER) / SHOOT (TANK)",
-    controls_info: "SPECIALS: CYBER TRUCK = COIN MAGNET | HOVERCRAFT = GLIDE OVER SPIKES",
+    controls_specials_cyber: "SPECIALS: CYBER TRUCK = COIN MAGNET",
+    controls_specials_hover: "HOVERCRAFT = GLIDE OVER SPIKES",
     top_runners: "TOP RUNNERS",
     afk_mode: "AFK MODE",
     music_on: "MUSIC: ON",
@@ -94,7 +95,8 @@ const TRANSLATIONS = {
     controls_right: "→ / D : MOVER DERECHA",
     controls_jump: "ESPACIO / W : SALTAR",
     controls_special: "↓ / S : GIRO (AUTO) / CHOQUE (MONS.) / DISPARO (TANQ.)",
-    controls_info: "ESPECIALES: CYBER TRUCK = IMÁN COINS | HOVERCRAFT = FLOTAR SOBRE PICOS",
+    controls_specials_cyber: "ESPECIALES: CYBER TRUCK = IMÁN COINS",
+    controls_specials_hover: "HOVERCRAFT = FLOTAR SOBRE PICOS",
     top_runners: "MEJORES MARCAS",
     afk_mode: "MODO AFK",
     music_on: "MÚSICA: SÍ",
@@ -158,7 +160,8 @@ const TRANSLATIONS = {
     controls_right: "→ / D : 右に移動",
     controls_jump: "スペース / W : ジャンプ",
     controls_special: "↓ / S : スピン(スポーツ) / バッシュ(モンスタ) / ショット(戦車)",
-    controls_info: "トクベツ: サイバー = コインすいよせ | ホバー = トゲ無効化",
+    controls_specials_cyber: "トクベツ: サイバー = コインすいよせ",
+    controls_specials_hover: "ホバー = トゲ無効化",
     top_runners: "トップスコア",
     afk_mode: "AFKモード",
     music_on: "音楽: オン",
@@ -550,7 +553,7 @@ class GameEngine {
       return TRANSLATIONS[lang];
     }
 
-    const cacheKey = `runmill_lang_cache_${lang}`;
+    const cacheKey = `runmill_lang_cache_v3_${lang}`;
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
       try {

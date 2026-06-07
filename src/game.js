@@ -579,15 +579,35 @@ class GameEngine {
       const newDict = {};
       Object.assign(newDict, baseDict);
 
+      // Extract full translated text
+      let translatedText = '';
+      if (data && data[0]) {
+        data[0].forEach(segment => {
+          if (segment[0]) {
+            translatedText += segment[0];
+          }
+        });
+      }
+
+      // 1. Primary match using index order (highly robust when newlines are preserved)
+      const translatedLines = translatedText.split('\n');
+      keys.forEach((key, index) => {
+        if (translatedLines[index] !== undefined && translatedLines[index].trim() !== '') {
+          newDict[key] = translatedLines[index].trim();
+        }
+      });
+
+      // 2. Secondary fallback using text value matching (handles order shifts)
       if (data && data[0]) {
         data[0].forEach(segment => {
           const trans = segment[0];
           const orig = segment[1];
           if (trans && orig) {
-            const cleanOrig = orig.trim();
+            const cleanOrig = orig.trim().replace(/\s+/g, ' ').toUpperCase();
             const cleanTrans = trans.trim();
             keys.forEach(k => {
-              if (baseDict[k].trim().toUpperCase() === cleanOrig.toUpperCase()) {
+              const cleanBase = baseDict[k].trim().replace(/\s+/g, ' ').toUpperCase();
+              if (cleanBase === cleanOrig) {
                 newDict[k] = cleanTrans;
               }
             });
@@ -1174,7 +1194,8 @@ class GameEngine {
     this.applyWorldTheme(1);
     if (this.domWorld) this.domWorld.textContent = '1';
     if (this.domTimer) this.domTimer.textContent = '01:00';
-    if (this.domTimerLabel) this.domTimerLabel.textContent = 'NEXT WORLD';
+    const dict = this.currentLanguageDict || TRANSLATIONS.en;
+    if (this.domTimerLabel) this.domTimerLabel.textContent = dict.next_world;
     let startLives = VEHICLES_CONFIG[this.selectedCharacter] ? VEHICLES_CONFIG[this.selectedCharacter].maxLives : 3;
     this.lives = startLives;
     this.maxLives = startLives;
@@ -1212,7 +1233,6 @@ class GameEngine {
     this.currentHoverHeight = 0.35;
 
     // Toggle BASH/SPIN/FIRE/MAGNET/HOVER/TRASH UI indicators based on character selection
-    const dict = this.currentLanguageDict || TRANSLATIONS.en;
     const hudLabel = document.querySelector('#hud-bash-container .label');
     if (this.selectedCharacter === 'monster_truck') {
       this.domBashContainer.classList.remove('hidden');
@@ -1710,7 +1730,8 @@ class GameEngine {
 
     // Toggle timer label on World 5
     if (this.domTimerLabel) {
-      this.domTimerLabel.textContent = this.world === 5 ? 'VICTORY IN' : 'NEXT WORLD';
+      const dict = this.currentLanguageDict || TRANSLATIONS.en;
+      this.domTimerLabel.textContent = this.world === 5 ? dict.victory_in : dict.next_world;
     }
 
     if (this.worldTime >= maxTime) {

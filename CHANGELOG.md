@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.9.0] - 2026-06-08
+
+### Added
+- **Unified Settings Overlay Modal**:
+  - Replaced start-screen audio elements with a dedicated floating Settings gear modal container.
+  - Relocated volume control slider, music toggle (Music: ON/OFF), and SFX toggle (SFX: ON/OFF) into the new settings overlay.
+  - Automatically loads and saves volume levels, music, and SFX preferences in `localStorage`.
+- **First-Person View Camera Mode**:
+  - Integrated a new HUD toggle button to switch between first-person (hood/windshield tracking) and third-person (lerped follow chase) camera views.
+  - Automatically disables player vehicle visibility (sets `visible = false`) in first-person mode to prevent visual clipping of the vehicle meshes inside the viewport.
+- **Customization Settings (Text Font, Grid Color, Text Color)**:
+  - Added a **Text Font Selector** inside Settings offering four styles: Share Tech (Mono default), Retro Pixel, Orbitron Cyber, and Modern Inter.
+  - Added a **Grid Color Selector** providing custom color selections (Default, Cyan, Pink, Green, Yellow, Purple, White) that override default world theme highway grid colors on the fly.
+  - Added a **Text Color Selector** allowing players to override standard text color styling with Cyan, Pink, Green, Yellow, or Purple.
+  - Standardized all preferences to persist in `localStorage` and automatically apply on boot.
+- **Garbage Truck & Trash Bag Projectiles**:
+  - Rewrote the base "TRUCK" vehicle model to a themed **Garbage Truck** complete with a sloped rear hopper, hazard warning stripes, and a side-loading robotic grabber arm.
+  - Added **Trash Bag Throw Ability** (S / Down Arrow / mobile TRASH button): throws a custom 3D voxel dark grey garbage bag with yellow ties onto the road lane ahead.
+  - Trash bags detonate on ground impact, triggering a chain-reaction explosion that eliminates spikes, CRT TVs, cassettes, and other hazards in proximity.
+  - Synthesized a custom sound effect `playTrashExplosion` featuring a wet low punch and clattering square/sawtooth noise sweeps to simulate garbage bags exploding.
+- **Dynamic 30-Language Google Translate Integration**:
+  - Implemented a dynamic language selection dictionary supporting 30+ languages (e.g., English, Spanish, Japanese, French, German, Italian, Portuguese, Chinese, Korean, Russian, etc.).
+  - Configured automatic translation retrieval using the Google Translate Free API.
+  - Integrated `localStorage` translation caching (`runmill_lang_cache_v4_...`) to speed up UI loading and limit redundant API requests.
+  - Built an alphanumeric-stripped string matching parser to handle dynamic spacing shifts introduced by automated translation engines (e.g. mapping "v1.8.0" to "v 1.8.0").
+  - Fixed translating key components including HUD headers ("specials", "next world"), subtitles, and game alerts to match the chosen system language.
+- **AFK Coin Mining Screensaver Mode**:
+  - Created an idle AFK mode with a custom floating overlay showing Matrix code rain and scanner lines.
+  - Automatically deposits 100 "Data Coins" into the persistent wallet for every 60 seconds of idle time.
+  - Added a button to safely return to the main system dashboard.
+
 ## [1.8.0] - 2026-05-29
 
 ### Added

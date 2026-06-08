@@ -13,9 +13,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - Replaced start-screen audio elements with a dedicated floating Settings gear modal container.
   - Relocated volume control slider, music toggle (Music: ON/OFF), and SFX toggle (SFX: ON/OFF) into the new settings overlay.
   - Automatically loads and saves volume levels, music, and SFX preferences in `localStorage`.
-- **First-Person View Camera Mode**:
-  - Integrated a new HUD toggle button to switch between first-person (hood/windshield tracking) and third-person (lerped follow chase) camera views.
-  - Automatically disables player vehicle visibility (sets `visible = false`) in first-person mode to prevent visual clipping of the vehicle meshes inside the viewport.
+- **Gameplay Camera View Modes (Chase, Hood, and Cockpit)**:
+  - Integrated a HUD toggle button that cycles between **Third-Person Follow** (`3RD`), **First-Person Hood** (`1ST`), and **Cockpit Cabin** (`CAB`) views.
+  - Implemented a detailed 3D interior Cockpit view for `CAB` mode featuring a carbon dashboard console, windshield pillars, roof trim, glowing LED indicators, and a dynamic digital speed gauge.
+  - Added an interactive cyber steering yoke inside the cockpit that rotates in real time in response to lane change movement.
+  - Automatically disables player vehicle mesh visibility in `1ST` and `CAB` modes to prevent chassis clipping, and forces a third-person camera perspective on start and game ending menu screens so the vehicle is always visible.
 - **Customization Settings (Text Font, Grid Color, Text Color)**:
   - Added a **Text Font Selector** inside Settings offering four styles: Share Tech (Mono default), Retro Pixel, Orbitron Cyber, and Modern Inter.
   - Added a **Grid Color Selector** providing custom color selections (Default, Cyan, Pink, Green, Yellow, Purple, White) that override default world theme highway grid colors on the fly.

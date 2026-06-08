@@ -378,6 +378,9 @@ class GameEngine {
 
     // 4. Scene Collections
     this.player = null;             // Reference to player's 3D voxel group
+    this.cockpitGroup = null;       // Custom 3D dashboard/steering wheel cockpit overlay
+    this.yokeGroup = null;          // Rotating steer group inside cockpit
+    this.cockpitSpeedBar = null;    // Speedometer bar mesh
     this.roadGrid1 = null;          // First segment of looping cyber grid
     this.roadGrid2 = null;          // Second segment of looping cyber grid
     this.sun = null;                // far-distance striped sunset sun mesh
@@ -640,7 +643,13 @@ class GameEngine {
    */
   updateCameraBtnUI() {
     if (this.btnCamera) {
-      this.btnCamera.textContent = this.cameraView === 'first' ? '1ST' : '3RD';
+      if (this.cameraView === 'first') {
+        this.btnCamera.textContent = '1ST';
+      } else if (this.cameraView === 'cockpit') {
+        this.btnCamera.textContent = 'CAB';
+      } else {
+        this.btnCamera.textContent = '3RD';
+      }
     }
   }
 
@@ -1224,11 +1233,17 @@ class GameEngine {
     // Camera toggle button click handler
     if (this.btnCamera) {
       this.btnCamera.addEventListener('click', () => {
-        this.cameraView = this.cameraView === 'third' ? 'first' : 'third';
+        if (this.cameraView === 'third') {
+          this.cameraView = 'first';
+        } else if (this.cameraView === 'first') {
+          this.cameraView = 'cockpit';
+        } else {
+          this.cameraView = 'third';
+        }
         localStorage.setItem('runmill_camera_view', this.cameraView);
         this.updateCameraBtnUI();
         if (this.player) {
-          this.player.visible = (this.cameraView !== 'first');
+          this.player.visible = (this.cameraView === 'third');
         }
       });
     }
@@ -1400,11 +1415,17 @@ class GameEngine {
     // Flush hazards from scene
     this.clearObstaclesAndPoints();
 
+    // Clean up cockpit group to force recreation with the selected character color
+    if (this.cockpitGroup) {
+      this.camera.remove(this.cockpitGroup);
+      this.cockpitGroup = null;
+    }
+
     // Spawn player mesh
     if (this.player) this.scene.remove(this.player);
     this.player = createVehicleModel(this.selectedCharacter, this.selectedColor);
     this.player.position.set(0, 0, PLAYER_START_Z);
-    this.player.visible = (this.cameraView !== 'first');
+    this.player.visible = (this.cameraView === 'third');
     this.scene.add(this.player);
 
     // Sync HUD DOM elements
@@ -1764,6 +1785,149 @@ class GameEngine {
   }
 
   /**
+   * createCockpitView - Builds the 3D cockpit HUD elements attached directly to the camera.
+   */
+  createCockpitView() {
+    if (this.cockpitGroup) {
+      this.camera.remove(this.cockpitGroup);
+    }
+    
+    this.cockpitGroup = new THREE.Group();
+    
+    // Determine active color mapping from selected vehicle color
+    const colorMap = {
+      pink: 0xff66cc,
+      cyan: 0x80f7ff,
+      green: 0x73ff66,
+      yellow: 0xfffa66,
+      purple: 0xd666ff
+    };
+    
+    const activeColorHex = colorMap[this.selectedColor] || 0xff66cc;
+    
+    const chassisMat = new THREE.MeshStandardMaterial({
+      color: activeColorHex,
+      emissive: activeColorHex,
+      emissiveIntensity: 0.5,
+      roughness: 0.1,
+      metalness: 0.8,
+      flatShading: true
+    });
+    
+    const dashMat = new THREE.MeshStandardMaterial({
+      color: 0x111115,
+      roughness: 0.7,
+      metalness: 0.2,
+      flatShading: true
+    });
+    
+    const neonCyanMat = new THREE.MeshStandardMaterial({
+      color: 0x00f0ff,
+      emissive: 0x00f0ff,
+      emissiveIntensity: 1.2,
+      flatShading: true
+    });
+
+    const neonPinkMat = new THREE.MeshStandardMaterial({
+      color: 0xff007f,
+      emissive: 0xff007f,
+      emissiveIntensity: 1.2,
+      flatShading: true
+    });
+
+    const metalMat = new THREE.MeshStandardMaterial({
+      color: 0x333333,
+      metalness: 0.8,
+      roughness: 0.2,
+      flatShading: true
+    });
+
+    // 1. Dashboard Base (extends beyond the screen edges at z = -0.5)
+    const dashboard = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.18, 0.25), dashMat);
+    dashboard.position.set(0, -0.22, -0.5);
+    this.cockpitGroup.add(dashboard);
+
+    // Glowing dashboard accent line
+    const accentLine = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.012, 0.02), neonCyanMat);
+    accentLine.position.set(0, -0.135, -0.38);
+    this.cockpitGroup.add(accentLine);
+
+    // 2. Cyber Yoke (Steering Wheel) Group
+    this.yokeGroup = new THREE.Group();
+    this.yokeGroup.position.set(-0.18, -0.13, -0.42); // Left-hand drive
+    
+    // Central Hub
+    const hub = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.02), metalMat);
+    this.yokeGroup.add(hub);
+    
+    // Spokes
+    const spokeL = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.015, 0.015), metalMat);
+    spokeL.position.x = -0.025;
+    const spokeR = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.015, 0.015), metalMat);
+    spokeR.position.x = 0.025;
+    this.yokeGroup.add(spokeL, spokeR);
+
+    // Yoke grips
+    const gripL = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.07, 0.02), dashMat);
+    gripL.position.x = -0.05;
+    const gripR = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.07, 0.02), dashMat);
+    gripR.position.x = 0.05;
+    
+    // Neon details on grips
+    const gripGlowL = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.05, 0.022), neonCyanMat);
+    gripGlowL.position.x = -0.05;
+    const gripGlowR = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.05, 0.022), neonCyanMat);
+    gripGlowR.position.x = 0.05;
+
+    this.yokeGroup.add(gripL, gripR, gripGlowL, gripGlowR);
+    this.cockpitGroup.add(this.yokeGroup);
+
+    // 3. Glowing LED Indicators & Speed Screen
+    const speedGaugeBg = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.01), metalMat);
+    speedGaugeBg.position.set(0.12, -0.17, -0.45);
+    this.cockpitGroup.add(speedGaugeBg);
+    
+    this.cockpitSpeedBar = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.02, 0.012), neonPinkMat);
+    this.cockpitSpeedBar.position.set(0.12, -0.17, -0.448);
+    this.cockpitGroup.add(this.cockpitSpeedBar);
+
+    // Indicator LEDs
+    const ledGreen = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.015, 0.01), new THREE.MeshStandardMaterial({ color: 0x39ff14, emissive: 0x39ff14, emissiveIntensity: 1.0 }));
+    ledGreen.position.set(-0.02, -0.17, -0.45);
+    const ledYellow = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.015, 0.01), new THREE.MeshStandardMaterial({ color: 0xfff600, emissive: 0xfff600, emissiveIntensity: 1.0 }));
+    ledYellow.position.set(0.01, -0.17, -0.45);
+    const ledBlue = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.015, 0.01), new THREE.MeshStandardMaterial({ color: 0x00f0ff, emissive: 0x00f0ff, emissiveIntensity: 1.0 }));
+    ledBlue.position.set(0.04, -0.17, -0.45);
+    this.cockpitGroup.add(ledGreen, ledYellow, ledBlue);
+
+    // 4. Windshield Frame (A-Pillars & Roof beam)
+    const pillarL = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.45, 0.03), dashMat);
+    pillarL.position.set(-0.45, 0.02, -0.48);
+    pillarL.rotation.z = 0.35;
+    
+    const pillarR = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.45, 0.03), dashMat);
+    pillarR.position.set(0.45, 0.02, -0.48);
+    pillarR.rotation.z = -0.35;
+    
+    const roofBeam = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.03, 0.03), dashMat);
+    roofBeam.position.set(0, 0.22, -0.48);
+
+    this.cockpitGroup.add(pillarL, pillarR, roofBeam);
+
+    // 5. Hood / Nose of the selected vehicle extending forward
+    const hood = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.05, 0.45), chassisMat);
+    hood.position.set(0, -0.22, -0.7);
+    hood.rotation.x = -0.05;
+    this.cockpitGroup.add(hood);
+
+    const hoodStripe = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.005, 0.46), neonCyanMat);
+    hoodStripe.position.set(0, -0.19, -0.7);
+    this.cockpitGroup.add(hoodStripe);
+
+    this.camera.add(this.cockpitGroup);
+  }
+
+  /**
    * spawnObstacleOrPoint - Randomly chooses and spawns floppy disk items or voxel hazards.
    */
   spawnObstacleOrPoint() {
@@ -1845,7 +2009,9 @@ class GameEngine {
     let camX, camY, camZ;
     let lookTargetX, lookTargetY, lookTargetZ;
 
-    if (this.cameraView === 'first') {
+    const activeCameraView = (this.state === 'PLAYING') ? this.cameraView : 'third';
+
+    if (activeCameraView === 'first') {
       camX = this.player ? this.player.position.x : 0;
       camY = this.player ? this.player.position.y + 0.8 : 0.8;
       camZ = PLAYER_START_Z - 0.4;
@@ -1860,6 +2026,56 @@ class GameEngine {
       lookTargetX = camX;
       lookTargetY = camY - 0.1;
       lookTargetZ = PLAYER_START_Z - 15;
+
+      if (this.cockpitGroup) {
+        this.cockpitGroup.visible = false;
+      }
+    } else if (activeCameraView === 'cockpit') {
+      camX = this.player ? this.player.position.x : 0;
+      camY = this.player ? this.player.position.y + 0.65 : 0.65;
+      camZ = PLAYER_START_Z + 0.1;
+      
+      if (this.cameraShakeTimer > 0) {
+        this.cameraShakeTimer -= dt;
+        const shakeAmt = 0.15;
+        camX += (Math.random() - 0.5) * shakeAmt;
+        camY += (Math.random() - 0.5) * shakeAmt;
+      }
+      
+      lookTargetX = camX;
+      lookTargetY = camY - 0.05;
+      lookTargetZ = PLAYER_START_Z - 15;
+
+      // Ensure cockpit model is created and visible
+      if (!this.cockpitGroup || !this.cockpitGroup.parent) {
+        this.createCockpitView();
+      }
+      this.cockpitGroup.visible = true;
+
+      // Animate Steering wheel based on lateral target movement delta
+      let targetYokeRotation = 0;
+      if (this.player) {
+        const dx = this.targetX - this.player.position.x;
+        if (dx > 0.05) {
+          targetYokeRotation = -0.6; // steer right
+        } else if (dx < -0.05) {
+          targetYokeRotation = 0.6; // steer left
+        }
+      }
+      if (this.yokeGroup) {
+        this.yokeGroup.rotation.z = THREE.MathUtils.lerp(
+          this.yokeGroup.rotation.z,
+          targetYokeRotation,
+          1 - Math.exp(-10 * dt)
+        );
+      }
+
+      // Update Digital Speed screen bar
+      if (this.cockpitSpeedBar) {
+        const speedRatio = Math.min(this.speed / 40.0, 1.0);
+        this.cockpitSpeedBar.scale.x = speedRatio;
+        this.cockpitSpeedBar.position.x = 0.12 - 0.05 * (1.0 - speedRatio);
+      }
     } else {
       // Third Person (Default)
       let targetCamX = 0;
@@ -1882,6 +2098,25 @@ class GameEngine {
       lookTargetX = targetCamX * 0.5;
       lookTargetY = 1.2;
       lookTargetZ = PLAYER_START_Z - 5;
+
+      if (this.cockpitGroup) {
+        this.cockpitGroup.visible = false;
+      }
+    }
+
+    // Dynamic visibility check: hide outer vehicle structure when in first person or cockpit views
+    if (this.player) {
+      this.player.visible = (activeCameraView === 'third');
+    }
+
+    // Invincibility flash visibility loop override for active views
+    const time = this.clock.getElapsedTime();
+    if (this.isInvincible && this.player) {
+      if (activeCameraView === 'third') {
+        this.player.visible = Math.floor(time * 20) % 2 === 0;
+      } else {
+        this.player.visible = false;
+      }
     }
 
     this.camera.position.set(camX, camY, camZ);
@@ -2173,14 +2408,11 @@ class GameEngine {
       }
     }
 
-    // 9. Invincibility flash visibility loop
+    // 9. Invincibility flash updates (toggled visibility is handled at camera rendering stage)
     if (this.isInvincible) {
       this.invincibilityTimer -= dt;
-      this.player.visible = Math.floor(time * 20) % 2 === 0; // toggles visibility fast
-      
       if (this.invincibilityTimer <= 0) {
         this.isInvincible = false;
-        this.player.visible = true;
       }
     }
 

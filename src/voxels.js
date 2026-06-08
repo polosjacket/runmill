@@ -1094,3 +1094,202 @@ export function createTrashBagModel() {
   return group;
 }
 
+/**
+ * createCockpitModel - Procedurally constructs a 3D cockpit dashboard mesh for 1st-person view.
+ * 
+ * @param {string} type - 'car', 'monster_truck', 'truck', 'cybertruck', 'hovercraft', or 'tank'
+ * @param {string|number} colorNameOrHex - Chassis paint color parameter
+ * @returns {THREE.Group} - Cockpit model assembly
+ */
+export function createCockpitModel(type, colorNameOrHex) {
+  let bodyColor = null;
+  if (colorNameOrHex !== undefined && colorNameOrHex !== null) {
+    if (typeof colorNameOrHex === 'string' && colorMap[colorNameOrHex] !== undefined) {
+      bodyColor = colorMap[colorNameOrHex];
+    } else if (typeof colorNameOrHex === 'number') {
+      bodyColor = colorNameOrHex;
+    } else if (typeof colorNameOrHex === 'string' && colorNameOrHex.startsWith('#')) {
+      bodyColor = parseInt(colorNameOrHex.substring(1), 16);
+    }
+  }
+  if (bodyColor === null) {
+    bodyColor = (
+      type === 'car' ? 0xfffa66 :
+      type === 'monster_truck' ? 0xd666ff :
+      type === 'truck' ? 0x80f7ff :
+      type === 'cybertruck' ? 0x73ff66 :
+      type === 'hovercraft' ? 0x80f7ff :
+      0x00aa33 // tank
+    );
+  }
+
+  const group = new THREE.Group();
+
+  // Materials
+  const dashMat = new THREE.MeshStandardMaterial({ color: 0x222225, roughness: 0.8, flatShading: true });
+  const frameMat = new THREE.MeshStandardMaterial({ color: 0x111113, roughness: 0.6, flatShading: true });
+  const accentMat = new THREE.MeshStandardMaterial({
+    color: bodyColor,
+    emissive: bodyColor,
+    emissiveIntensity: 0.5,
+    roughness: 0.2,
+    metalness: 0.8,
+    flatShading: true
+  });
+  const wheelMat = new THREE.MeshStandardMaterial({ color: 0x151517, roughness: 0.7, flatShading: true });
+  const columnMat = new THREE.MeshStandardMaterial({ color: 0x333337, metalness: 0.8, roughness: 0.3, flatShading: true });
+  
+  // LED Glowing materials (swapping visibility is cleaner, so these are the lit states)
+  const ledCyan = new THREE.MeshStandardMaterial({ color: 0x00f0ff, emissive: 0x00f0ff, emissiveIntensity: 1.5, flatShading: true });
+  const ledPink = new THREE.MeshStandardMaterial({ color: 0xff007f, emissive: 0xff007f, emissiveIntensity: 1.5, flatShading: true });
+  const ledGreen = new THREE.MeshStandardMaterial({ color: 0x39ff14, emissive: 0x39ff14, emissiveIntensity: 1.5, flatShading: true });
+
+  // Custom height/depth offsets for dashboard positioning relative to vehicle cabin height
+  const config = {
+    car: { dy: 0, dz: 0, hoodY: 0.32, hoodL: 0.85, hoodZ: -1.2 },
+    monster_truck: { dy: 0.53, dz: 0.2, hoodY: 0.88, hoodL: 0.75, hoodZ: -1.0 },
+    truck: { dy: 0.16, dz: 0.5, hoodY: 0.48, hoodL: 0.3, hoodZ: -0.38 },
+    cybertruck: { dy: 0.03, dz: 0.15, hoodY: 0.38, hoodL: 0.85, hoodZ: -1.1 },
+    hovercraft: { dy: -0.1, dz: 0.1, hoodY: 0.22, hoodL: 0.75, hoodZ: -1.15 },
+    tank: { dy: 0.13, dz: 0.35, hoodY: 0.48, hoodL: 0.85, hoodZ: -1.0 }
+  }[type] || { dy: 0, dz: 0, hoodY: 0.32, hoodL: 0.85, hoodZ: -1.2 };
+
+  const dy = config.dy;
+  const dz = config.dz;
+
+  // 1. Dashboard panel block
+  const dash = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.24, 0.25), dashMat);
+  dash.position.set(0, 0.38 + dy, -0.75 + dz);
+  dash.castShadow = true;
+  dash.receiveShadow = true;
+  group.add(dash);
+
+  // 2. Windshield Frame (A-Pillars & Roof Beam)
+  const pillarL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.7, 0.06), frameMat);
+  pillarL.position.set(-0.5, 0.65 + dy, -0.75 + dz);
+  pillarL.rotation.z = -0.12;
+  group.add(pillarL);
+
+  const pillarR = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.7, 0.06), frameMat);
+  pillarR.position.set(0.5, 0.65 + dy, -0.75 + dz);
+  pillarR.rotation.z = 0.12;
+  group.add(pillarR);
+
+  const topBar = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.06, 0.06), frameMat);
+  topBar.position.set(0, 0.95 + dy, -0.75 + dz);
+  group.add(topBar);
+
+  // 3. Outer Hood visible through windshield
+  const hood = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.04, config.hoodL), accentMat);
+  hood.position.set(0, config.hoodY, config.hoodZ);
+  hood.castShadow = true;
+  hood.receiveShadow = true;
+  group.add(hood);
+
+  // 4. Steering Controls (Steering wheel, yoke, or dual levers)
+  if (type === 'hovercraft' || type === 'tank') {
+    // Dual Levers
+    const leverMat = columnMat;
+    const gripColor = type === 'tank' ? 0x39ff14 : 0x00f0ff;
+    const gripMat = new THREE.MeshStandardMaterial({
+      color: gripColor,
+      emissive: gripColor,
+      emissiveIntensity: 0.8,
+      flatShading: true
+    });
+
+    // Left Lever
+    const leftLever = new THREE.Group();
+    leftLever.name = "leftLever";
+    leftLever.position.set(-0.25, 0.38 + dy, -0.6 + dz);
+    const rodL = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.15, 0.02), leverMat);
+    rodL.position.y = 0.075;
+    const gripL = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.05), gripMat);
+    gripL.position.y = 0.15;
+    leftLever.add(rodL, gripL);
+    group.add(leftLever);
+
+    // Right Lever
+    const rightLever = new THREE.Group();
+    rightLever.name = "rightLever";
+    rightLever.position.set(-0.07, 0.38 + dy, -0.6 + dz);
+    const rodR = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.15, 0.02), leverMat);
+    rodR.position.y = 0.075;
+    const gripR = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.05), gripMat);
+    gripR.position.y = 0.15;
+    rightLever.add(rodR, gripR);
+    group.add(rightLever);
+  } else {
+    // Steering column
+    const steeringColumn = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.2), columnMat);
+    steeringColumn.position.set(-0.16, 0.42 + dy, -0.68 + dz);
+    steeringColumn.rotation.x = 0.25;
+    group.add(steeringColumn);
+
+    // Steering Wheel Group
+    const wheelGroup = new THREE.Group();
+    wheelGroup.name = "steeringWheel";
+    wheelGroup.position.set(-0.16, 0.44 + dy, -0.58 + dz);
+    wheelGroup.rotation.x = 0.25;
+
+    if (type === 'cybertruck') {
+      // Yoke Steering Wheel (Futuristic boxy yoke)
+      const topPart = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.02, 0.02), wheelMat);
+      topPart.position.y = 0.055;
+      const bottomPart = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.02, 0.02), wheelMat);
+      bottomPart.position.y = -0.055;
+      const leftPart = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.11, 0.02), wheelMat);
+      leftPart.position.x = -0.08;
+      const rightPart = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.11, 0.02), wheelMat);
+      rightPart.position.x = 0.08;
+      const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.02, 0.015), wheelMat);
+      wheelGroup.add(topPart, bottomPart, leftPart, rightPart, spoke);
+    } else {
+      // Standard Circular Voxel Steering Wheel
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.015, 6, 16), wheelMat);
+      const spokeH = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.018, 0.018), wheelMat);
+      const spokeV = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.09, 0.018), wheelMat);
+      spokeV.position.y = -0.045;
+      wheelGroup.add(rim, spokeH, spokeV);
+    }
+    group.add(wheelGroup);
+  }
+
+  // 5. Speed Indicator LEDs (5 cyan boxes, toggled by visibility)
+  for (let i = 0; i < 5; i++) {
+    const led = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.01), ledCyan);
+    led.name = `speedLED_${i}`;
+    led.position.set(-0.06 + i * 0.03, 0.44 + dy, -0.63 + dz);
+    group.add(led);
+  }
+
+  // 6. Heart (HP) Indicator LEDs (4 pink boxes, toggled by visibility)
+  for (let i = 0; i < 4; i++) {
+    const heart = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.025, 0.01), ledPink);
+    heart.name = `hpLED_${i}`;
+    heart.position.set(-0.06 + i * 0.03, 0.40 + dy, -0.63 + dz);
+    group.add(heart);
+  }
+
+  // 7. Special Ability indicator LED (grows green when ready)
+  const specBtn = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.02), ledGreen);
+  specBtn.name = "specialIndicatorBtn";
+  specBtn.position.set(0.12, 0.42 + dy, -0.63 + dz);
+  group.add(specBtn);
+
+  // 8. Central Radar Screen
+  const screenBg = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.12, 0.01), new THREE.MeshStandardMaterial({ color: 0x0a0a0f, roughness: 0.9 }));
+  screenBg.position.set(0.24, 0.41 + dy, -0.63 + dz);
+  group.add(screenBg);
+
+  const screenLines = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.10, 0.012), new THREE.MeshStandardMaterial({
+    color: type === 'tank' ? 0x39ff14 : 0x00f0ff,
+    emissive: type === 'tank' ? 0x39ff14 : 0x00f0ff,
+    emissiveIntensity: 0.6,
+    wireframe: true
+  }));
+  screenLines.position.set(0.24, 0.41 + dy, -0.63 + dz);
+  group.add(screenLines);
+
+  return group;
+}

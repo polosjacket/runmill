@@ -39,6 +39,10 @@ const TRANSLATIONS = {
     sfx_on: "SFX: ON",
     sfx_off: "SFX: OFF",
     language_select: "LANGUAGE SELECT",
+    settings_title: "SYSTEM SETTINGS",
+    font_select: "TEXT FONT",
+    grid_color_title: "GRID COLOR",
+    text_color_title: "TEXT COLOR",
     back: "BACK",
     connection_lost: "CONNECTION LOST",
     session_terminated: "SESSION TERMINATED",
@@ -104,6 +108,10 @@ const TRANSLATIONS = {
     sfx_on: "SFX: SÍ",
     sfx_off: "SFX: NO",
     language_select: "ELEGIR IDIOMA",
+    settings_title: "AJUSTES DEL SISTEMA",
+    font_select: "FUENTE DE TEXTO",
+    grid_color_title: "COLOR DE REJILLA",
+    text_color_title: "COLOR DE TEXTO",
     back: "VOLVER",
     connection_lost: "CONEXIÓN PERDIDA",
     session_terminated: "SESIÓN TERMINADA",
@@ -169,6 +177,10 @@ const TRANSLATIONS = {
     sfx_on: "効果音: オン",
     sfx_off: "効果音: オフ",
     language_select: "げんごせんたく",
+    settings_title: "システム設定",
+    font_select: "フォント",
+    grid_color_title: "グリッドカラー",
+    text_color_title: "テキストカラー",
     back: "もどる",
     connection_lost: "オフライン",
     session_terminated: "セッション終了",
@@ -431,8 +443,20 @@ class GameEngine {
     this.modalSettings = document.getElementById('settings-modal');
     this.btnCloseSettings = document.getElementById('close-settings-btn');
     this.selectLang = document.getElementById('lang-select');
+    this.selectFont = document.getElementById('font-select');
+    this.gridColorContainer = document.getElementById('grid-color-select');
+    this.textColorContainer = document.getElementById('text-color-select');
+    this.btnCamera = document.getElementById('camera-btn');
+
     this.currentLanguage = localStorage.getItem('runmill_language') || 'en';
     this.currentLanguageDict = TRANSLATIONS[this.currentLanguage] || TRANSLATIONS.en;
+
+    // Load custom settings preferences
+    this.cameraView = localStorage.getItem('runmill_camera_view') || 'third';
+    const savedGridColor = localStorage.getItem('runmill_grid_color');
+    this.customGridColorOverride = savedGridColor && savedGridColor !== 'default' ? parseInt(savedGridColor, 16) : null;
+    this.customTextColorOverride = localStorage.getItem('runmill_text_color') || 'default';
+    this.customFontOverride = localStorage.getItem('runmill_font') || 'mono';
 
     // 8. Core Initialization Steps
     this.initThree();
@@ -442,6 +466,10 @@ class GameEngine {
     this.initAudioSettingsUI();
     this.populateLanguageDropdown();
     this.applyLanguage(this.currentLanguage);
+    this.applyTextColor(this.customTextColorOverride);
+    this.applyFont(this.customFontOverride);
+    this.syncSettingsUI();
+    this.updateCameraBtnUI();
     this.fetchLeaderboard();
     this.updateWalletDisplay();
     this.updateVehicleButtons();
@@ -531,6 +559,92 @@ class GameEngine {
   }
 
   /**
+   * applyTextColor - Dynamic CSS property overrides for standard text labels.
+   */
+  applyTextColor(val) {
+    this.customTextColorOverride = val;
+    localStorage.setItem('runmill_text_color', val);
+    
+    let colorHex = '#f1e4ff'; // default lilac
+    if (val !== 'default' && val !== null) {
+      colorHex = val;
+    }
+    document.documentElement.style.setProperty('--text-color', colorHex);
+  }
+
+  /**
+   * applyFont - Dynamic CSS font family overrides globally.
+   */
+  applyFont(fontKey) {
+    this.customFontOverride = fontKey;
+    localStorage.setItem('runmill_font', fontKey);
+    
+    let pixelFont = "'Press Start 2P', monospace";
+    let cyberFont = "'Orbitron', sans-serif";
+    let monoFont = "'Share Tech Mono', monospace";
+    
+    if (fontKey === 'pixel') {
+      pixelFont = "'Press Start 2P', monospace";
+      cyberFont = "'Press Start 2P', monospace";
+      monoFont = "'Press Start 2P', monospace";
+    } else if (fontKey === 'cyber') {
+      pixelFont = "'Orbitron', sans-serif";
+      cyberFont = "'Orbitron', sans-serif";
+      monoFont = "'Orbitron', sans-serif";
+    } else if (fontKey === 'sans') {
+      pixelFont = "'Outfit', sans-serif";
+      cyberFont = "'Outfit', sans-serif";
+      monoFont = "'Outfit', sans-serif";
+    }
+
+    document.documentElement.style.setProperty('--font-pixel', pixelFont);
+    document.documentElement.style.setProperty('--font-cyber', cyberFont);
+    document.documentElement.style.setProperty('--font-mono', monoFont);
+
+    if (this.selectFont) {
+      this.selectFont.value = fontKey;
+    }
+  }
+
+  /**
+   * syncSettingsUI - Synchronizes active neon classes and selectors with localStorage on load.
+   */
+  syncSettingsUI() {
+    if (this.gridColorContainer) {
+      const savedGridColor = localStorage.getItem('runmill_grid_color') || 'default';
+      this.gridColorContainer.querySelectorAll('.color-btn').forEach(btn => {
+        const val = btn.getAttribute('data-grid-color');
+        if (val === savedGridColor) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+
+    if (this.textColorContainer) {
+      const savedTextColor = localStorage.getItem('runmill_text_color') || 'default';
+      this.textColorContainer.querySelectorAll('.color-btn').forEach(btn => {
+        const val = btn.getAttribute('data-text-color');
+        if (val === savedTextColor) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+  }
+
+  /**
+   * updateCameraBtnUI - Syncs the HUD button text representing current view mode.
+   */
+  updateCameraBtnUI() {
+    if (this.btnCamera) {
+      this.btnCamera.textContent = this.cameraView === 'first' ? '1ST' : '3RD';
+    }
+  }
+
+  /**
    * populateLanguageDropdown - Populates the retro-select element with supported options.
    */
   populateLanguageDropdown() {
@@ -553,7 +667,7 @@ class GameEngine {
       return TRANSLATIONS[lang];
     }
 
-    const cacheKey = `runmill_lang_cache_v3_${lang}`;
+    const cacheKey = `runmill_lang_cache_v4_${lang}`;
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
       try {
@@ -582,7 +696,30 @@ class GameEngine {
       const newDict = {};
       Object.assign(newDict, baseDict);
 
-      // Extract full translated text
+      // Clean string utility to strip all non-alphanumeric characters for absolute matching robustness
+      const cleanString = (str) => str.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+
+      // 1. Primary match: value-based matching (robust against Google Translate spacing/punctuation changes, e.g., "v1.8.0" vs "v 1.8.0")
+      if (data && data[0]) {
+        data[0].forEach(segment => {
+          const trans = segment[0];
+          const orig = segment[1];
+          if (trans && orig) {
+            const cleanOrig = cleanString(orig);
+            const cleanTrans = trans.trim();
+            if (cleanOrig !== '') {
+              keys.forEach(k => {
+                const cleanBase = cleanString(baseDict[k]);
+                if (cleanBase === cleanOrig) {
+                  newDict[k] = cleanTrans;
+                }
+              });
+            }
+          }
+        });
+      }
+
+      // Extract full translated text for index-based matching fallback
       let translatedText = '';
       if (data && data[0]) {
         data[0].forEach(segment => {
@@ -592,31 +729,13 @@ class GameEngine {
         });
       }
 
-      // 1. Primary match using index order (highly robust when newlines are preserved)
+      // 2. Secondary fallback: match using index order for any key that wasn't successfully matched by value
       const translatedLines = translatedText.split('\n');
       keys.forEach((key, index) => {
-        if (translatedLines[index] !== undefined && translatedLines[index].trim() !== '') {
+        if (newDict[key] === baseDict[key] && translatedLines[index] !== undefined && translatedLines[index].trim() !== '') {
           newDict[key] = translatedLines[index].trim();
         }
       });
-
-      // 2. Secondary fallback using text value matching (handles order shifts)
-      if (data && data[0]) {
-        data[0].forEach(segment => {
-          const trans = segment[0];
-          const orig = segment[1];
-          if (trans && orig) {
-            const cleanOrig = orig.trim().replace(/\s+/g, ' ').toUpperCase();
-            const cleanTrans = trans.trim();
-            keys.forEach(k => {
-              const cleanBase = baseDict[k].trim().replace(/\s+/g, ' ').toUpperCase();
-              if (cleanBase === cleanOrig) {
-                newDict[k] = cleanTrans;
-              }
-            });
-          }
-        });
-      }
 
       localStorage.setItem(cacheKey, JSON.stringify(newDict));
       return newDict;
@@ -833,11 +952,19 @@ class GameEngine {
     // We add two adjacent 100m GridHelpers.
     // As one moves past the screen, we scroll both backward and reset positions to form an infinite road loop.
     // Both center and grid lines are set to a lighter, glowing electric cyan.
-    this.roadGrid1 = new THREE.GridHelper(size, divisions, 0x80f7ff, 0x80f7ff);
+    let gridColorVal = 0x80f7ff;
+    if (this.customGridColorOverride !== undefined && this.customGridColorOverride !== null) {
+      gridColorVal = this.customGridColorOverride;
+    } else {
+      const theme = WORLD_THEMES[this.world || 1];
+      if (theme) gridColorVal = theme.gridColor;
+    }
+
+    this.roadGrid1 = new THREE.GridHelper(size, divisions, gridColorVal, gridColorVal);
     this.roadGrid1.position.set(0, 0, 0);
     this.scene.add(this.roadGrid1);
 
-    this.roadGrid2 = new THREE.GridHelper(size, divisions, 0x80f7ff, 0x80f7ff);
+    this.roadGrid2 = new THREE.GridHelper(size, divisions, gridColorVal, gridColorVal);
     this.roadGrid2.position.set(0, 0, -size);
     this.scene.add(this.roadGrid2);
 
@@ -1093,6 +1220,57 @@ class GameEngine {
         this.applyLanguage(lang);
       });
     }
+
+    // Camera toggle button click handler
+    if (this.btnCamera) {
+      this.btnCamera.addEventListener('click', () => {
+        this.cameraView = this.cameraView === 'third' ? 'first' : 'third';
+        localStorage.setItem('runmill_camera_view', this.cameraView);
+        this.updateCameraBtnUI();
+        if (this.player) {
+          this.player.visible = (this.cameraView !== 'first');
+        }
+      });
+    }
+
+    // Font select change handler
+    if (this.selectFont) {
+      this.selectFont.addEventListener('change', (e) => {
+        this.applyFont(e.target.value);
+      });
+    }
+
+    // Grid color buttons change handler
+    if (this.gridColorContainer) {
+      this.gridColorContainer.querySelectorAll('.color-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const val = e.currentTarget.getAttribute('data-grid-color');
+          this.gridColorContainer.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+          e.currentTarget.classList.add('active');
+
+          if (val === 'default') {
+            this.customGridColorOverride = null;
+            localStorage.setItem('runmill_grid_color', 'default');
+          } else {
+            this.customGridColorOverride = parseInt(val, 16);
+            localStorage.setItem('runmill_grid_color', val);
+          }
+          this.applyWorldTheme(this.world || 1);
+        });
+      });
+    }
+
+    // Text color buttons change handler
+    if (this.textColorContainer) {
+      this.textColorContainer.querySelectorAll('.color-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const val = e.currentTarget.getAttribute('data-text-color');
+          this.textColorContainer.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+          e.currentTarget.classList.add('active');
+          this.applyTextColor(val);
+        });
+      });
+    }
   }
 
   /**
@@ -1188,6 +1366,11 @@ class GameEngine {
     // Acquire focus on window for immediate keyboard controls responsiveness
     window.focus();
 
+    if (this.btnCamera) {
+      this.btnCamera.classList.remove('hidden');
+      this.updateCameraBtnUI();
+    }
+
     // Reset game counters
     this.score = 0;
     this.distance = 0;
@@ -1221,6 +1404,7 @@ class GameEngine {
     if (this.player) this.scene.remove(this.player);
     this.player = createVehicleModel(this.selectedCharacter, this.selectedColor);
     this.player.position.set(0, 0, PLAYER_START_Z);
+    this.player.visible = (this.cameraView !== 'first');
     this.scene.add(this.player);
 
     // Sync HUD DOM elements
@@ -1331,6 +1515,7 @@ class GameEngine {
     this.state = 'GAMEOVER';
     audio.playGameOver();
 
+    if (this.btnCamera) this.btnCamera.classList.add('hidden');
     this.domHud.classList.add('hidden');
     document.getElementById('touch-controls').classList.add('hidden');
 
@@ -1488,7 +1673,10 @@ class GameEngine {
 
       const size = 100;
       const divisions = 50;
-      const col = theme.gridColor;
+      let col = theme.gridColor;
+      if (this.customGridColorOverride !== undefined && this.customGridColorOverride !== null) {
+        col = this.customGridColorOverride;
+      }
 
       this.roadGrid1 = new THREE.GridHelper(size, divisions, col, col);
       this.roadGrid1.position.set(0, 0, z1);
@@ -1529,6 +1717,7 @@ class GameEngine {
     this.state = 'VICTORY';
     audio.playVictory();
 
+    if (this.btnCamera) this.btnCamera.classList.add('hidden');
     this.domHud.classList.add('hidden');
     document.getElementById('touch-controls').classList.add('hidden');
     document.getElementById('world-transition').classList.add('hidden');
@@ -1653,29 +1842,50 @@ class GameEngine {
       this.updateMenu(dt);
     }
 
-    // Smooth camera X tracking follow (dynamic lane offset centering)
-    let targetCamX = 0;
-    if (this.state === 'PLAYING') {
-      targetCamX = this.player.position.x * 0.45; // camera tracks 45% of player's lateral displacement
-    }
-    
-    // Smoothly lerp camera X using exponential decay
-    const currentCamX = THREE.MathUtils.lerp(this.camera.position.x, targetCamX, 1 - Math.exp(-5 * dt));
-    
-    // Handle hit impact screen-shake on top of smooth position
-    if (this.cameraShakeTimer > 0) {
-      this.cameraShakeTimer -= dt;
-      const shakeAmt = 0.15;
-      this.camera.position.x = currentCamX + (Math.random() - 0.5) * shakeAmt;
-      this.camera.position.y = 3.2 + (Math.random() - 0.5) * shakeAmt;
-    } else {
-      this.camera.position.x = currentCamX;
-      this.camera.position.y = 3.2;
-    }
-    this.camera.position.z = PLAYER_START_Z + 4.5; // lock depth
+    let camX, camY, camZ;
+    let lookTargetX, lookTargetY, lookTargetZ;
 
-    // Focus camera slightly offset towards the track ahead
-    this.camera.lookAt(targetCamX * 0.5, 1.2, PLAYER_START_Z - 5);
+    if (this.cameraView === 'first') {
+      camX = this.player ? this.player.position.x : 0;
+      camY = this.player ? this.player.position.y + 0.8 : 0.8;
+      camZ = PLAYER_START_Z - 0.4;
+      
+      if (this.cameraShakeTimer > 0) {
+        this.cameraShakeTimer -= dt;
+        const shakeAmt = 0.15;
+        camX += (Math.random() - 0.5) * shakeAmt;
+        camY += (Math.random() - 0.5) * shakeAmt;
+      }
+      
+      lookTargetX = camX;
+      lookTargetY = camY - 0.1;
+      lookTargetZ = PLAYER_START_Z - 15;
+    } else {
+      // Third Person (Default)
+      let targetCamX = 0;
+      if (this.state === 'PLAYING' && this.player) {
+        targetCamX = this.player.position.x * 0.45;
+      }
+      const currentCamX = THREE.MathUtils.lerp(this.camera.position.x, targetCamX, 1 - Math.exp(-5 * dt));
+      
+      camX = currentCamX;
+      camY = 3.2;
+      camZ = PLAYER_START_Z + 4.5;
+      
+      if (this.cameraShakeTimer > 0) {
+        this.cameraShakeTimer -= dt;
+        const shakeAmt = 0.15;
+        camX += (Math.random() - 0.5) * shakeAmt;
+        camY += (Math.random() - 0.5) * shakeAmt;
+      }
+      
+      lookTargetX = targetCamX * 0.5;
+      lookTargetY = 1.2;
+      lookTargetZ = PLAYER_START_Z - 5;
+    }
+
+    this.camera.position.set(camX, camY, camZ);
+    this.camera.lookAt(lookTargetX, lookTargetY, lookTargetZ);
 
     this.renderer.render(this.scene, this.camera);
   }

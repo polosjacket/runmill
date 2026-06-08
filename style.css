@@ -1123,4 +1123,34 @@ body {
   font-size: 0.95rem;
 }
 
+/* Camera Floating Button */
+.camera-floating-btn {
+  position: absolute;
+  top: 15px;
+  right: 65px; /* next to settings button */
+  width: 38px;
+  height: 38px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid var(--neon-cyan);
+  border-radius: 50%;
+  color: var(--neon-cyan);
+  font-family: var(--font-pixel);
+  font-size: 0.6rem; /* small text for "3RD" or "1ST" */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  z-index: 15;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.camera-floating-btn:hover {
+  box-shadow: 0 0 15px var(--neon-cyan);
+  color: #fff;
+  border-color: #fff;
+  transform: scale(1.1);
+}
+
 

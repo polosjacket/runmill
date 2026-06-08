@@ -21,6 +21,7 @@
 
     <!-- Settings Button (Gear icon) -->
     <button id="settings-btn" class="settings-floating-btn" aria-label="Settings">⚙</button>
+    <button id="camera-btn" class="camera-floating-btn hidden" aria-label="Toggle Camera">3RD</button>
 
     <!-- HUD (Heads-Up Display) -->
     <div id="hud" class="hidden">
@@ -103,20 +104,6 @@
             <button class="color-btn" data-color="green" style="background-color: var(--neon-green); color: var(--neon-green);"></button>
             <button class="color-btn" data-color="yellow" style="background-color: var(--neon-yellow); color: var(--neon-yellow);"></button>
             <button class="color-btn" data-color="purple" style="background-color: var(--neon-purple); color: var(--neon-purple);"></button>
-          </div>
-        </div>
-
-        <!-- Audio Settings Section -->
-        <div class="audio-settings-section">
-          <h3 data-lang-key="audio_system">AUDIO SYSTEM</h3>
-          <div class="audio-controls-row">
-            <button id="toggle-music-btn" class="audio-toggle-btn active neon-pink-glow">MUSIC: ON</button>
-            <button id="toggle-sfx-btn" class="audio-toggle-btn active neon-cyan-glow">SFX: ON</button>
-          </div>
-          <div class="volume-slider-container">
-            <span class="volume-label" data-lang-key="volume">VOLUME</span>
-            <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="0.8">
-            <span id="volume-display" class="volume-value">80%</span>
           </div>
         </div>
         
@@ -247,17 +234,71 @@
 
     <!-- SETTINGS / LANGUAGE MODAL OVERLAY -->
     <div id="settings-modal" class="overlay-panel hidden" style="z-index: 20;">
-      <div class="retro-box settings-box" style="border-color: var(--neon-cyan); box-shadow: 0 0 25px rgba(0, 240, 255, 0.5);">
-        <h2 id="settings-modal-title" class="game-subtitle" style="font-size: 1.5rem; color: var(--neon-cyan); text-shadow: 0 0 8px var(--neon-cyan); margin-bottom: 20px;">LANGUAGE SELECT</h2>
+      <div class="retro-box settings-box" style="border-color: var(--neon-cyan); box-shadow: 0 0 25px rgba(0, 240, 255, 0.5); max-height: 90vh; overflow-y: auto;">
+        <h2 id="settings-modal-title" class="game-subtitle" data-lang-key="settings_title" style="font-size: 1.4rem; color: var(--neon-cyan); text-shadow: 0 0 8px var(--neon-cyan); margin-bottom: 15px; text-align: center;">SYSTEM SETTINGS</h2>
         
-        <div class="settings-control-row" style="margin: 20px 0; width: 100%;">
-          <select id="lang-select" class="retro-select">
+        <!-- Audio Settings Section (Moved here) -->
+        <div class="settings-section-container" style="border-bottom: 1px solid rgba(0, 240, 255, 0.2); padding-bottom: 15px; margin-bottom: 15px; width: 100%;">
+          <h3 data-lang-key="audio_system" style="font-size: 0.8rem; color: var(--neon-cyan); margin-bottom: 10px; font-family: var(--font-pixel); letter-spacing: 1px;">AUDIO SYSTEM</h3>
+          <div class="audio-controls-row" style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <button id="toggle-music-btn" class="audio-toggle-btn active neon-pink-glow" style="flex: 1; font-size: 0.75rem; padding: 8px; font-family: var(--font-pixel); border-radius: 4px; border: 2px solid var(--neon-pink); background: rgba(0,0,0,0.6); color: #fff; cursor: pointer; transition: all 0.3s ease;">MUSIC: ON</button>
+            <button id="toggle-sfx-btn" class="audio-toggle-btn active neon-cyan-glow" style="flex: 1; font-size: 0.75rem; padding: 8px; font-family: var(--font-pixel); border-radius: 4px; border: 2px solid var(--neon-cyan); background: rgba(0,0,0,0.6); color: #fff; cursor: pointer; transition: all 0.3s ease;">SFX: ON</button>
+          </div>
+          <div class="volume-slider-container" style="display: flex; align-items: center; gap: 10px;">
+            <span class="volume-label" data-lang-key="volume" style="font-size: 0.7rem; font-family: var(--font-pixel); color: #aaa;">VOLUME</span>
+            <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="0.8" style="flex: 1; cursor: pointer;">
+            <span id="volume-display" class="volume-value" style="font-size: 0.7rem; font-family: var(--font-pixel); color: var(--neon-cyan);">80%</span>
+          </div>
+        </div>
+
+        <!-- Language Select Section -->
+        <div class="settings-section-container" style="border-bottom: 1px solid rgba(0, 240, 255, 0.2); padding-bottom: 15px; margin-bottom: 15px; width: 100%;">
+          <h3 data-lang-key="language_select" style="font-size: 0.8rem; color: var(--neon-cyan); margin-bottom: 10px; font-family: var(--font-pixel); letter-spacing: 1px;">LANGUAGE SELECT</h3>
+          <select id="lang-select" class="retro-select" style="font-size: 0.8rem; padding: 8px; width: 100%;">
             <!-- Will be populated dynamically by Javascript -->
           </select>
         </div>
 
-        <div class="menu-section" style="margin-top: 30px;">
-          <button id="close-settings-btn" class="retro-btn neon-cyan-glow">BACK</button>
+        <!-- Font Select Section -->
+        <div class="settings-section-container" style="border-bottom: 1px solid rgba(0, 240, 255, 0.2); padding-bottom: 15px; margin-bottom: 15px; width: 100%;">
+          <h3 data-lang-key="font_select" style="font-size: 0.8rem; color: var(--neon-cyan); margin-bottom: 10px; font-family: var(--font-pixel); letter-spacing: 1px;">TEXT FONT</h3>
+          <select id="font-select" class="retro-select" style="font-size: 0.8rem; padding: 8px; width: 100%;">
+            <option value="mono">SHARE TECH (DEFAULT)</option>
+            <option value="pixel">RETRO PIXEL</option>
+            <option value="cyber">ORBITRON CYBER</option>
+            <option value="sans">MODERN INTER</option>
+          </select>
+        </div>
+
+        <!-- Grid Color Select Section -->
+        <div class="settings-section-container" style="border-bottom: 1px solid rgba(0, 240, 255, 0.2); padding-bottom: 15px; margin-bottom: 15px; width: 100%;">
+          <h3 data-lang-key="grid_color_title" style="font-size: 0.8rem; color: var(--neon-cyan); margin-bottom: 10px; font-family: var(--font-pixel); letter-spacing: 1px;">GRID COLOR</h3>
+          <div class="color-grid" id="grid-color-select" style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+            <button class="color-btn active" data-grid-color="default" style="background-color: transparent; border: 2px dashed #888; color: #fff; font-size: 0.5rem; display: flex; align-items: center; justify-content: center; font-family: var(--font-pixel);">DEF</button>
+            <button class="color-btn" data-grid-color="0x00f0ff" style="background-color: var(--neon-cyan); color: var(--neon-cyan);"></button>
+            <button class="color-btn" data-grid-color="0xff007f" style="background-color: var(--neon-pink); color: var(--neon-pink);"></button>
+            <button class="color-btn" data-grid-color="0x39ff14" style="background-color: var(--neon-green); color: var(--neon-green);"></button>
+            <button class="color-btn" data-grid-color="0xfff600" style="background-color: var(--neon-yellow); color: var(--neon-yellow);"></button>
+            <button class="color-btn" data-grid-color="0xbd00ff" style="background-color: var(--neon-purple); color: var(--neon-purple);"></button>
+            <button class="color-btn" data-grid-color="0xffffff" style="background-color: #ffffff; color: #ffffff;"></button>
+          </div>
+        </div>
+
+        <!-- Text Color Select Section -->
+        <div class="settings-section-container" style="padding-bottom: 5px; width: 100%;">
+          <h3 data-lang-key="text_color_title" style="font-size: 0.8rem; color: var(--neon-cyan); margin-bottom: 10px; font-family: var(--font-pixel); letter-spacing: 1px;">TEXT COLOR</h3>
+          <div class="color-grid" id="text-color-select" style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+            <button class="color-btn active" data-text-color="default" style="background-color: transparent; border: 2px dashed #888; color: #fff; font-size: 0.5rem; display: flex; align-items: center; justify-content: center; font-family: var(--font-pixel);">DEF</button>
+            <button class="color-btn" data-text-color="#00f0ff" style="background-color: var(--neon-cyan); color: var(--neon-cyan);"></button>
+            <button class="color-btn" data-text-color="#ff007f" style="background-color: var(--neon-pink); color: var(--neon-pink);"></button>
+            <button class="color-btn" data-text-color="#39ff14" style="background-color: var(--neon-green); color: var(--neon-green);"></button>
+            <button class="color-btn" data-text-color="#fff600" style="background-color: var(--neon-yellow); color: var(--neon-yellow);"></button>
+            <button class="color-btn" data-text-color="#bd00ff" style="background-color: var(--neon-purple); color: var(--neon-purple);"></button>
+          </div>
+        </div>
+
+        <div class="menu-section" style="margin-top: 25px; width: 100%; display: flex; justify-content: center;">
+          <button id="close-settings-btn" class="retro-btn neon-cyan-glow" data-lang-key="back" style="width: 100%; max-width: 200px;">BACK</button>
         </div>
       </div>
     </div>

@@ -131,6 +131,19 @@
       </div>
     </div>
 
+    <!-- PAUSE SCREEN OVERLAY -->
+    <div id="pause-screen" class="overlay-panel hidden" style="z-index: 15;">
+      <div class="retro-box">
+        <h2 class="game-over-title text-glitch" data-lang-key="paused_title" style="color: var(--neon-cyan); text-shadow: 0 0 12px var(--neon-cyan);">PAUSED</h2>
+        <p class="game-subtitle" data-lang-key="paused_subtitle">SYSTEM EXECUTION SUSPENDED</p>
+        
+        <div class="menu-section" style="margin-top: 25px;">
+          <button id="resume-btn" class="retro-btn neon-pink-glow" data-lang-key="resume_btn">RESUME</button>
+          <button id="pause-exit-btn" class="retro-btn neon-cyan-glow" data-lang-key="reboot_menu" style="margin-top: 15px;">REBOOT MENU</button>
+        </div>
+      </div>
+    </div>
+
     <!-- GAME OVER SCREEN OVERLAY -->
     <div id="game-over-screen" class="overlay-panel hidden">
       <div class="retro-box game-over-box">

@@ -52,6 +52,9 @@ const TRANSLATIONS = {
     enter_initials: "ENTER INITIALS",
     upload: "UPLOAD",
     reboot_menu: "REBOOT MENU",
+    paused_title: "PAUSED",
+    paused_subtitle: "SYSTEM EXECUTION SUSPENDED",
+    resume_btn: "RESUME",
     program_completed: "PROGRAM COMPLETED",
     cyber_grid_dominated: "CYBER-GRID DOMINATED",
     legendary_runner: "YOU ARE A LEGENDARY RUNNER!",
@@ -121,6 +124,9 @@ const TRANSLATIONS = {
     enter_initials: "INICIALES",
     upload: "SUBIR",
     reboot_menu: "REINICIAR MENÚ",
+    paused_title: "PAUSADO",
+    paused_subtitle: "EJECUCIÓN DEL SISTEMA SUSPENDIDA",
+    resume_btn: "REANUDAR",
     program_completed: "PROGRAMA COMPLETADO",
     cyber_grid_dominated: "CIBER-REJILLA DOMINADA",
     legendary_runner: "¡ERES UN CORREDOR LEGENDARIO!",
@@ -190,6 +196,9 @@ const TRANSLATIONS = {
     enter_initials: "イニシャル",
     upload: "アップロード",
     reboot_menu: "メニュー再起動",
+    paused_title: "一時停止",
+    paused_subtitle: "システム実行一時停止中",
+    resume_btn: "再開",
     program_completed: "プログラム完了",
     cyber_grid_dominated: "グリッド制覇",
     legendary_runner: "キミは伝説 of ランナーだ！",
@@ -394,6 +403,9 @@ class GameEngine {
     // 6. DOM Element Bindings (Menus and HUD overlays)
     this.domStartScreen = document.getElementById('start-screen');
     this.domGameOverScreen = document.getElementById('game-over-screen');
+    this.domPauseScreen = document.getElementById('pause-screen');
+    this.btnResume = document.getElementById('resume-btn');
+    this.btnPauseExit = document.getElementById('pause-exit-btn');
     this.domHud = document.getElementById('hud');
     this.domScore = document.getElementById('hud-score');
     this.domSpeed = document.getElementById('hud-speed');
@@ -1074,6 +1086,13 @@ class GameEngine {
   setupEventListeners() {
     // Key bindings
     window.addEventListener('keydown', (e) => {
+      // Toggle pause state
+      if (e.key === 'p' || e.key === 'P') {
+        e.preventDefault();
+        this.togglePause();
+        return;
+      }
+
       if (this.state !== 'PLAYING') return;
 
       if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
@@ -1171,6 +1190,25 @@ class GameEngine {
       this.updateVehicleButtons();
     });
     this.btnVicSubmitScore.addEventListener('click', () => this.submitVicHighScore());
+
+    // Pause Screen Listeners
+    if (this.btnResume) {
+      this.btnResume.addEventListener('click', () => this.togglePause());
+    }
+    if (this.btnPauseExit) {
+      this.btnPauseExit.addEventListener('click', () => {
+        if (this.domPauseScreen) this.domPauseScreen.classList.add('hidden');
+        this.domStartScreen.classList.remove('hidden');
+        this.state = 'START';
+        audio.startMusic('menu');
+        this.fetchLeaderboard();
+        this.updateWalletDisplay();
+        this.updateVehicleButtons();
+        if (this.player) this.scene.remove(this.player);
+        if (this.cockpit) this.scene.remove(this.cockpit);
+        this.resetCamera();
+      });
+    }
 
     // AFK Mode Listeners
     if (this.btnAfk) {
@@ -1526,6 +1564,32 @@ class GameEngine {
 
     this.state = 'PLAYING';
     audio.startMusic(); // Starts procedural synth soundtrack
+  }
+
+  /**
+   * togglePause - Toggles between PLAYING and PAUSED states.
+   */
+  togglePause() {
+    if (this.state === 'PLAYING') {
+      this.state = 'PAUSED';
+      audio.playCollect();
+      if (audio.musicGain) {
+        this.originalMusicGain = audio.musicGain.gain.value;
+        audio.musicGain.gain.setValueAtTime(this.originalMusicGain * 0.15, audio.ctx.currentTime);
+      }
+      if (this.domPauseScreen) {
+        this.domPauseScreen.classList.remove('hidden');
+      }
+    } else if (this.state === 'PAUSED') {
+      this.state = 'PLAYING';
+      audio.playCollect();
+      if (audio.musicGain) {
+        audio.musicGain.gain.setValueAtTime(this.originalMusicGain !== undefined ? this.originalMusicGain : 0.3, audio.ctx.currentTime);
+      }
+      if (this.domPauseScreen) {
+        this.domPauseScreen.classList.add('hidden');
+      }
+    }
   }
 
   clearObstaclesAndPoints() {

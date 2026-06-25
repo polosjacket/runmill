@@ -1948,10 +1948,16 @@ class GameEngine {
       const targetCamY = (this.player ? this.player.position.y : 0) + config.camY;
       const targetCamZ = (this.player ? this.player.position.z : PLAYER_START_Z) + config.camZ;
 
-      // Apply G-force camera drift/inertia lag
-      camX = THREE.MathUtils.lerp(this.camera.position.x, targetCamX, 1 - Math.exp(-8 * dt));
-      camY = THREE.MathUtils.lerp(this.camera.position.y, targetCamY, 1 - Math.exp(-8 * dt));
-      camZ = THREE.MathUtils.lerp(this.camera.position.z, targetCamZ, 1 - Math.exp(-8 * dt));
+      // Lock Y and Z to the vehicle coordinates to prevent clipping and dashboard occlusion.
+      // Lerp and clamp X coordinate relative to the player to simulate G-force steering drift safely.
+      const playerX = this.player ? this.player.position.x : 0;
+      const currentLocalX = this.camera.position.x - playerX;
+      const nextLocalX = THREE.MathUtils.lerp(currentLocalX, config.camX, 1 - Math.exp(-6 * dt));
+      const clampedLocalX = THREE.MathUtils.clamp(nextLocalX, -0.45, 0.15);
+
+      camX = playerX + clampedLocalX;
+      camY = targetCamY;
+      camZ = targetCamZ;
       
       if (this.cameraShakeTimer > 0) {
         this.cameraShakeTimer -= dt;

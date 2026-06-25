@@ -1146,42 +1146,58 @@ export function createCockpitModel(type, colorNameOrHex) {
 
   // Custom height/depth offsets for dashboard positioning relative to vehicle cabin height
   const config = {
-    car: { dy: 0, dz: 0, hoodY: 0.32, hoodL: 0.85, hoodZ: -1.2 },
-    monster_truck: { dy: 0.53, dz: 0.2, hoodY: 0.88, hoodL: 0.75, hoodZ: -1.0 },
-    truck: { dy: 0.16, dz: 0.5, hoodY: 0.48, hoodL: 0.3, hoodZ: -0.38 },
-    cybertruck: { dy: 0.03, dz: 0.15, hoodY: 0.38, hoodL: 0.85, hoodZ: -1.1 },
-    hovercraft: { dy: -0.1, dz: 0.1, hoodY: 0.22, hoodL: 0.75, hoodZ: -1.15 },
-    tank: { dy: 0.13, dz: 0.35, hoodY: 0.48, hoodL: 0.85, hoodZ: -1.0 }
-  }[type] || { dy: 0, dz: 0, hoodY: 0.32, hoodL: 0.85, hoodZ: -1.2 };
+    car: { dy: 0, hoodY: 0.32, hoodL: 0.85 },
+    monster_truck: { dy: 0.53, hoodY: 0.88, hoodL: 0.75 },
+    truck: { dy: 0.16, hoodY: 0.48, hoodL: 0.3 },
+    cybertruck: { dy: 0.03, hoodY: 0.38, hoodL: 0.85 },
+    hovercraft: { dy: -0.1, hoodY: 0.22, hoodL: 0.75 },
+    tank: { dy: 0.13, hoodY: 0.48, hoodL: 0.85 }
+  }[type] || { dy: 0, hoodY: 0.32, hoodL: 0.85 };
+
+  const vehicleCamZ = {
+    car: -0.15,
+    monster_truck: 0.05,
+    truck: 0.35,
+    cybertruck: 0.0,
+    hovercraft: -0.05,
+    tank: 0.2
+  }[type] || 0.0;
 
   const dy = config.dy;
-  const dz = config.dz;
+  
+  // Local positive Z targets relative to vehicleCamZ (since cab rotated 180, positive Z extends forward towards windshield)
+  const zDash = vehicleCamZ + 0.55;
+  const zPillars = vehicleCamZ + 0.55;
+  const zGauges = vehicleCamZ + 0.53;
+  const zControls = vehicleCamZ + 0.42;
+  const zColumn = vehicleCamZ + 0.45;
+  const zHood = vehicleCamZ + 0.55 + config.hoodL / 2;
 
   // 1. Dashboard panel block
-  const dash = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.24, 0.25), dashMat);
-  dash.position.set(0, 0.38 + dy, -0.75 + dz);
+  const dash = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.24, 0.25), dashMat);
+  dash.position.set(0, 0.38 + dy, zDash);
   dash.castShadow = true;
   dash.receiveShadow = true;
   group.add(dash);
 
   // 2. Windshield Frame (A-Pillars & Roof Beam)
   const pillarL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.7, 0.06), frameMat);
-  pillarL.position.set(-0.5, 0.65 + dy, -0.75 + dz);
+  pillarL.position.set(-0.65, 0.65 + dy, zPillars);
   pillarL.rotation.z = -0.12;
   group.add(pillarL);
 
   const pillarR = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.7, 0.06), frameMat);
-  pillarR.position.set(0.5, 0.65 + dy, -0.75 + dz);
+  pillarR.position.set(0.65, 0.65 + dy, zPillars);
   pillarR.rotation.z = 0.12;
   group.add(pillarR);
 
-  const topBar = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.06, 0.06), frameMat);
-  topBar.position.set(0, 0.95 + dy, -0.75 + dz);
+  const topBar = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.06, 0.06), frameMat);
+  topBar.position.set(0, 0.95 + dy, zPillars);
   group.add(topBar);
 
   // 3. Outer Hood visible through windshield
   const hood = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.04, config.hoodL), accentMat);
-  hood.position.set(0, config.hoodY, config.hoodZ);
+  hood.position.set(0, config.hoodY, zHood);
   hood.castShadow = true;
   hood.receiveShadow = true;
   group.add(hood);
@@ -1201,7 +1217,7 @@ export function createCockpitModel(type, colorNameOrHex) {
     // Left Lever
     const leftLever = new THREE.Group();
     leftLever.name = "leftLever";
-    leftLever.position.set(-0.25, 0.38 + dy, -0.6 + dz);
+    leftLever.position.set(-0.25, 0.38 + dy, zControls);
     const rodL = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.15, 0.02), leverMat);
     rodL.position.y = 0.075;
     const gripL = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.05), gripMat);
@@ -1212,7 +1228,7 @@ export function createCockpitModel(type, colorNameOrHex) {
     // Right Lever
     const rightLever = new THREE.Group();
     rightLever.name = "rightLever";
-    rightLever.position.set(-0.07, 0.38 + dy, -0.6 + dz);
+    rightLever.position.set(-0.07, 0.38 + dy, zControls);
     const rodR = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.15, 0.02), leverMat);
     rodR.position.y = 0.075;
     const gripR = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.05), gripMat);
@@ -1222,14 +1238,14 @@ export function createCockpitModel(type, colorNameOrHex) {
   } else {
     // Steering column
     const steeringColumn = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.2), columnMat);
-    steeringColumn.position.set(-0.16, 0.42 + dy, -0.68 + dz);
+    steeringColumn.position.set(-0.16, 0.42 + dy, zColumn);
     steeringColumn.rotation.x = 0.25;
     group.add(steeringColumn);
 
     // Steering Wheel Group
     const wheelGroup = new THREE.Group();
     wheelGroup.name = "steeringWheel";
-    wheelGroup.position.set(-0.16, 0.44 + dy, -0.58 + dz);
+    wheelGroup.position.set(-0.16, 0.44 + dy, zControls);
     wheelGroup.rotation.x = 0.25;
 
     if (type === 'cybertruck') {
@@ -1259,7 +1275,7 @@ export function createCockpitModel(type, colorNameOrHex) {
   for (let i = 0; i < 5; i++) {
     const led = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.01), ledCyan);
     led.name = `speedLED_${i}`;
-    led.position.set(-0.06 + i * 0.03, 0.44 + dy, -0.63 + dz);
+    led.position.set(-0.06 + i * 0.03, 0.44 + dy, zGauges);
     group.add(led);
   }
 
@@ -1267,19 +1283,19 @@ export function createCockpitModel(type, colorNameOrHex) {
   for (let i = 0; i < 4; i++) {
     const heart = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.025, 0.01), ledPink);
     heart.name = `hpLED_${i}`;
-    heart.position.set(-0.06 + i * 0.03, 0.40 + dy, -0.63 + dz);
+    heart.position.set(-0.06 + i * 0.03, 0.40 + dy, zGauges);
     group.add(heart);
   }
 
   // 7. Special Ability indicator LED (grows green when ready)
   const specBtn = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.02), ledGreen);
   specBtn.name = "specialIndicatorBtn";
-  specBtn.position.set(0.12, 0.42 + dy, -0.63 + dz);
+  specBtn.position.set(0.12, 0.42 + dy, zGauges);
   group.add(specBtn);
 
   // 8. Central Radar Screen
   const screenBg = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.12, 0.01), new THREE.MeshStandardMaterial({ color: 0x0a0a0f, roughness: 0.9 }));
-  screenBg.position.set(0.24, 0.41 + dy, -0.63 + dz);
+  screenBg.position.set(0.24, 0.41 + dy, zGauges);
   group.add(screenBg);
 
   const screenLines = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.10, 0.012), new THREE.MeshStandardMaterial({
@@ -1288,7 +1304,7 @@ export function createCockpitModel(type, colorNameOrHex) {
     emissiveIntensity: 0.6,
     wireframe: true
   }));
-  screenLines.position.set(0.24, 0.41 + dy, -0.63 + dz);
+  screenLines.position.set(0.24, 0.41 + dy, zGauges);
   group.add(screenLines);
 
   return group;

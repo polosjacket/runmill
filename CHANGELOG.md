@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.10.0] - 2026-06-25
+
+### Added
+- **Gameplay Cockpit Cabin Camera View Mode**:
+  - Integrated a first-person vehicle cockpit view inside the HUD camera toggle.
+  - Generated custom vehicle-specific dashboard consoles, windshield pillars, roof trims, and interactive steering controls (rotating steering wheels/yokes for cars/cybertrucks, dual control levers for tanks/hovercrafts).
+  - Added physical vehicle hood models visible through the windshield.
+  - Placed dynamic speed indicator LEDs, health/heart LEDs, and special ability cooldown indicator buttons directly on the interactive dashboard panel.
+- **Full Game Pause Functionality**:
+  - Added the ability to suspend/pause the game run by pressing the `P` key (or `p`).
+  - Designed and implemented a dedicated neon-cyan `#pause-screen` overlay menu showing status text ("SYSTEM EXECUTION SUSPENDED") and control buttons ("RESUME" and "REBOOT MENU").
+  - Configured localized translations for the paused state strings in English, Spanish, and Japanese.
+  - Programmed audio volume ducking to 15% when paused, restoring it to the original levels upon resuming gameplay.
+
+### Changed
+- **First-Person Camera Drift Mechanics**:
+  - Re-engineered the camera movement to lock Y and Z viewport axes directly to the vehicle coordinates to prevent clipping and dashboard occlusion.
+  - Decoupled and smoothed the camera's local X-coordinate lerping (lerp factor: `6`) with a wider lateral clamp range (`[-0.45, 0.15]`) to simulate realistic G-force chassis sway.
+- **Modularized Cockpit Generation**:
+  - Extracted cockpit geometry creation logic from the main game loop in `src/game.js` into a dedicated `createCockpitModel(type, colorNameOrHex)` helper function in `src/voxels.js`.
+
+### Fixed
+- **Cockpit Interior Mesh Visibility and Inversion**:
+  - Corrected the Z-positioning offsets inside the 180-degree-rotated player vehicle group. Repositioned windshield pillars, console dashboard dials, steering wheels, and hoods along positive local Z coordinates relative to the vehicle camera origin (`vehicleCamZ`) instead of negative coordinates, bringing them in front of the camera viewport instead of rendering them invisibly behind it.
+  - Broadened the windshield frame scale to a wider format (width `1.3`, pillars offset to `0.65`) to improve spatial tracking and prevent visual occlusion of side hazards.
+
 ## [1.9.0] - 2026-06-08
 
 ### Added
